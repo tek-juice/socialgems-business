@@ -306,7 +306,7 @@ const Login = () => {
         </p>
         
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-6">
+        <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <Mail className="w-4 h-4" />
@@ -362,38 +362,6 @@ const Login = () => {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
-        {/* Divider */}
-        <div className="flex items-center w-full my-4">
-          <div className="flex-grow border-t border-gray-200"></div>
-          <span className="mx-3 text-xs text-gray-500">Or sign in with</span>
-          <div className="flex-grow border-t border-gray-200"></div>
-        </div>
-        
-        {/* Social Login */}
-        <div className="flex gap-3 w-full justify-center mb-6">
-          <button className="flex items-center justify-center w-12 h-12 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors grow max-w-16">
-            <img
-              src="https://www.svgrepo.com/show/475656/google-color.svg"
-              alt="Google"
-              className="w-5 h-5"
-            />
-          </button>
-          <button className="flex items-center justify-center w-12 h-12 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors grow max-w-16">
-            <img
-              src="https://www.svgrepo.com/show/448224/facebook.svg"
-              alt="Facebook"
-              className="w-5 h-5"
-            />
-          </button>
-          <button className="flex items-center justify-center w-12 h-12 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors grow max-w-16">
-            <img
-              src="https://www.svgrepo.com/show/511330/apple-173.svg"
-              alt="Apple"
-              className="w-5 h-5"
-            />
-          </button>
-        </div>
 
         {/* Sign up link */}
         <div className="text-center">
