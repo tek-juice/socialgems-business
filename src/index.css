@@ -1,0 +1,455 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@reference tailwindcss;
+
+/* Averta Font Imports */
+@font-face {
+  font-family: 'Averta';
+  src: url('/fonts/Averta-Light.woff2') format('woff2'),
+       url('/fonts/Averta-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Averta';
+  src: url('/fonts/Averta-Regular.woff2') format('woff2'),
+       url('/fonts/Averta-Regular.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Averta';
+  src: url('/fonts/Averta-Semibold.woff2') format('woff2'),
+       url('/fonts/Averta-Semibold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Averta';
+  src: url('/fonts/Averta-Bold.woff2') format('woff2'),
+       url('/fonts/Averta-Bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Averta';
+  src: url('/fonts/Averta-ExtraBoldItalic.woff2') format('woff2'),
+       url('/fonts/Averta-ExtraBoldItalic.woff') format('woff');
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+
+:root {
+  font-family: 'Averta';
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: inherit;
+  color: inherit;
+}
+
+button {
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 244, 246, 1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 1);
+}
+
+/* Custom utilities for glass effects */
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .glass-strong {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Custom gradient utilities */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #F9D769 0%, #E8C547 50%, #734D20 100%);
+  }
+  
+  .bg-gradient-primary-soft {
+    background: linear-gradient(135deg, #F9D769 0%, #E8C547 100%);
+  }
+  
+  .bg-gradient-primary-dark {
+    background: linear-gradient(135deg, #734D20 0%, #5A3C19 100%);
+  }
+  
+  .bg-gradient-radial-primary {
+    background: radial-gradient(circle, #F9D769 0%, #734D20 100%);
+  }
+
+  /* Averta Font Utilities */
+  .font-averta {
+    font-family: 'Averta', sans-serif;
+  }
+  
+  .font-averta-light {
+    font-family: 'Averta', sans-serif;
+    font-weight: 300;
+  }
+  
+  .font-averta-regular {
+    font-family: 'Averta', sans-serif;
+    font-weight: normal;
+  }
+  
+  .font-averta-semibold {
+    font-family: 'Averta', sans-serif;
+    font-weight: 600;
+  }
+  
+  .font-averta-bold {
+    font-family: 'Averta', sans-serif;
+    font-weight: bold;
+  }
+  
+  .font-averta-extrabold-italic {
+    font-family: 'Averta', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+  }
+}
+
+@layer components {
+  .text-responsive {
+    @apply text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-xs;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl;
+  }
+
+  @media (min-width: 640px) {
+    .text-responsive {
+      @apply text-base;
+    }
+    
+    .text-responsive-sm {
+      @apply text-sm;
+    }
+
+    .text-responsive-lg {
+      @apply text-xl;
+    }
+
+    .text-responsive-xl {
+      @apply text-2xl;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .text-responsive {
+      @apply text-lg;
+    }
+    
+    .text-responsive-sm {
+      @apply text-base;
+    }
+
+    .text-responsive-lg {
+      @apply text-2xl;
+    }
+
+    .text-responsive-xl {
+      @apply text-3xl;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .text-responsive {
+      @apply text-xl;
+    }
+
+    .text-responsive-lg {
+      @apply text-3xl;
+    }
+
+    .text-responsive-xl {
+      @apply text-4xl;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .text-responsive-xl {
+      @apply text-5xl;
+    }
+  }
+}
+
+/* Insane movement animations */
+@keyframes crazy-spin {
+  0% {
+    transform: rotate(0deg) scale(1) translateX(0);
+    filter: blur(40px) hue-rotate(0deg);
+  }
+  25% {
+    transform: rotate(180deg) scale(2) translateX(200px);
+    filter: blur(60px) hue-rotate(60deg);
+  }
+  50% {
+    transform: rotate(360deg) scale(1.5) translateX(-200px);
+    filter: blur(80px) hue-rotate(120deg);
+  }
+  75% {
+    transform: rotate(540deg) scale(2.5) translateX(100px);
+    filter: blur(50px) hue-rotate(180deg);
+  }
+  100% {
+    transform: rotate(720deg) scale(1) translateX(0);
+    filter: blur(40px) hue-rotate(360deg);
+  }
+}
+
+@keyframes crazy-wave {
+  0% {
+    transform: translateX(-50%) translateY(-50%) scale(2) skewX(0deg);
+    filter: blur(60px);
+  }
+  20% {
+    transform: translateX(50%) translateY(-100%) scale(1.5) skewX(20deg);
+    filter: blur(40px);
+  }
+  40% {
+    transform: translateX(100%) translateY(50%) scale(3) skewX(-20deg);
+    filter: blur(100px);
+  }
+  60% {
+    transform: translateX(-100%) translateY(100%) scale(1) skewX(10deg);
+    filter: blur(50px);
+  }
+  80% {
+    transform: translateX(0%) translateY(-50%) scale(2.5) skewX(-10deg);
+    filter: blur(70px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(-50%) scale(2) skewX(0deg);
+    filter: blur(60px);
+  }
+}
+
+@keyframes crazy-morph {
+  0%, 100% {
+    transform: scale(1) rotate(0deg) translateY(0);
+    filter: blur(50px) brightness(1);
+    border-radius: 50%;
+  }
+  14% {
+    transform: scale(1.8) rotate(72deg) translateY(-200px);
+    filter: blur(80px) brightness(1.2);
+    border-radius: 20%;
+  }
+  28% {
+    transform: scale(0.6) rotate(144deg) translateY(200px);
+    filter: blur(40px) brightness(0.8);
+    border-radius: 80%;
+  }
+  42% {
+    transform: scale(2.2) rotate(216deg) translateY(-100px);
+    filter: blur(90px) brightness(1.3);
+    border-radius: 30%;
+  }
+  57% {
+    transform: scale(1.2) rotate(288deg) translateY(150px);
+    filter: blur(60px) brightness(1.1);
+    border-radius: 70%;
+  }
+  71% {
+    transform: scale(1.5) rotate(360deg) translateY(-150px);
+    filter: blur(70px) brightness(0.9);
+    border-radius: 40%;
+  }
+  85% {
+    transform: scale(0.8) rotate(432deg) translateY(100px);
+    filter: blur(45px) brightness(1.2);
+    border-radius: 60%;
+  }
+}
+
+@keyframes crazy-spiral {
+  0% {
+    transform: rotate(0deg) scale(3) translateZ(0);
+    filter: blur(80px) contrast(2);
+  }
+  100% {
+    transform: rotate(1080deg) scale(3) translateZ(0);
+    filter: blur(80px) contrast(2);
+  }
+}
+
+@keyframes crazy-pulse {
+  0%, 100% {
+    transform: scale(0.5);
+    opacity: 0.8;
+    filter: blur(60px);
+  }
+  50% {
+    transform: scale(4);
+    opacity: 0.3;
+    filter: blur(120px);
+  }
+}
+
+/* Floating bubbles */
+@keyframes floating-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(200px, -300px) scale(1.5); }
+  66% { transform: translate(-150px, 200px) scale(0.8); }
+}
+
+@keyframes floating-2 {
+  0%, 100% { transform: translate(0, 0) scale(1.2); }
+  50% { transform: translate(-300px, 400px) scale(2); }
+}
+
+@keyframes floating-3 {
+  0%, 100% { transform: translate(0, 0) scale(0.8); }
+  25% { transform: translate(400px, 200px) scale(1.5); }
+  75% { transform: translate(-200px, -400px) scale(1.2); }
+}
+
+@keyframes floating-4 {
+  0%, 100% { transform: translate(0, 0) scale(1.5); }
+  60% { transform: translate(300px, -200px) scale(0.7); }
+}
+
+@keyframes floating-5 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-400px, -300px) scale(2); }
+  80% { transform: translate(200px, 300px) scale(0.5); }
+}
+
+@keyframes floating-6 {
+  0%, 100% { transform: translate(0, 0) scale(2); }
+  50% { transform: translate(500px, 100px) scale(1); }
+}
+
+@keyframes shimmer-fast {
+  0% { transform: translateX(-200%) skewX(-12deg); }
+  100% { transform: translateX(200%) skewX(-12deg); }
+}
+
+/* Apply animations with different speeds */
+.animate-crazy-spin {
+  animation: crazy-spin 3s linear infinite;
+}
+
+.animate-crazy-wave {
+  animation: crazy-wave 4s ease-in-out infinite;
+}
+
+.animate-crazy-morph {
+  animation: crazy-morph 5s ease-in-out infinite;
+}
+
+.animate-crazy-spiral {
+  animation: crazy-spiral 2s linear infinite;
+}
+
+.animate-crazy-pulse {
+  animation: crazy-pulse 1.5s ease-in-out infinite;
+}
+
+.animate-floating-1 { animation: floating-1 6s ease-in-out infinite; }
+.animate-floating-2 { animation: floating-2 8s ease-in-out infinite; }
+.animate-floating-3 { animation: floating-3 10s ease-in-out infinite; }
+.animate-floating-4 { animation: floating-4 7s ease-in-out infinite; }
+.animate-floating-5 { animation: floating-5 9s ease-in-out infinite; }
+.animate-floating-6 { animation: floating-6 5s ease-in-out infinite; }
+
+.animate-shimmer-fast {
+  animation: shimmer-fast 1s linear infinite;
+}
+
+/* Skew scroll animation for 3D tilted effect */
+@keyframes skew-scroll {
+  0% {
+    transform: rotateX(20deg) rotateZ(-20deg) skewX(20deg) translateZ(0) translateY(0);
+  }
+  100% {
+    transform: rotateX(20deg) rotateZ(-20deg) skewX(20deg) translateZ(0) translateY(-100%);
+  }
+}
+
+.animate-skew-scroll {
+  animation: skew-scroll 20s linear infinite;
+}
+
+@keyframes shake {
+  0%, 20%, 40%, 60%, 80% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
