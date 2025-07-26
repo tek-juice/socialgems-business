@@ -53,6 +53,14 @@ const decodeHtmlEntities = (text) => {
   return textArea.value;
 };
 
+// Add this helper function before the CampaignCard component
+const truncateToWords = (text, maxWords = 2) => {
+  if (!text) return '';
+  const words = text.split(' ');
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + '...';
+};
+
 const formatHtmlContent = (htmlContent) => {
   if (!htmlContent) return '';
   
@@ -170,7 +178,7 @@ const SkeletonCard = ({ isLastOdd = false }) => {
       )}
     >
       <div className="flex flex-col md:flex-row">
-        <div className="md:w-32 h-32 md:h-auto relative flex-shrink-0">
+        <div className="md:w-32 h-32 md:h-full relative flex-shrink-0">
           <div className="w-full h-full bg-gray-200 animate-pulse"></div>
         </div>
 
@@ -203,27 +211,14 @@ const SkeletonCard = ({ isLastOdd = false }) => {
 };
 
 // Campaign Card Component
-const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLastOdd = false }) => {
+const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
   const endDate = new Date(campaign.end_date);
   const now = new Date();
   const daysLeft = Math.max(0, differenceInDays(endDate, now));
-  
-  // Only draft campaigns can be edited or have members added
-  const isDraftCampaign = campaign.status === 'draft';
 
   const handleDelete = (e) => {
     e.stopPropagation();
     onDelete(campaign);
-  };
-
-  const handleEdit = (e) => {
-    e.stopPropagation();
-    onEdit(campaign);
-  };
-
-  const handleAddMember = (e) => {
-    e.stopPropagation();
-    onAddMember(campaign);
   };
   
   return (
@@ -239,48 +234,22 @@ const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLast
       )}
       onClick={() => onClick(campaign)}
     >
-      {/* Action Buttons - Only show edit/add member for draft campaigns */}
-      {isDraftCampaign && (
-        <div className="absolute top-3 right-3 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={handleEdit}
-            className="w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg"
-            title="Edit Campaign"
-          >
-            <FiEdit className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={handleAddMember}
-            className="w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg"
-            title="Add Member"
-          >
-            <FiUserPlus className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={handleDelete}
-            className="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-lg"
-            title="Delete Campaign"
-          >
-            <FiTrash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* Status badge at top right corner for all campaigns */}
+      <div className="absolute top-3 right-3 z-10 flex gap-2">
+        {getStatusBadge(campaign)}
+      </div>
 
-      {/* Delete button only for non-draft campaigns */}
-      {!isDraftCampaign && (
-        <button
-          onClick={handleDelete}
-          className="absolute top-3 right-3 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 shadow-lg"
-          title="Delete Campaign"
-        >
-          <FiTrash2 className="w-4 h-4" />
-        </button>
-      )}
+      {/* Delete button */}
+      <button
+        onClick={handleDelete}
+        className="absolute top-3 right-16 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 shadow-lg"
+        title="Delete Campaign"
+      >
+        <FiTrash2 className="w-4 h-4" />
+      </button>
 
-      <div className="flex flex-col md:flex-row">
-        <div className="md:w-32 h-32 md:h-auto relative flex-shrink-0">
+      <div className="flex flex-col md:flex-row md:h-40">
+        <div className="md:w-32 h-32 md:h-full relative flex-shrink-0">
           <div
             className="w-full h-full bg-cover bg-center"
             style={{
@@ -299,15 +268,10 @@ const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLast
 
         <div className="flex-1 p-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-sm md:text-base text-secondary line-clamp-2 pr-2">
-                {campaign.title}
+            <div className="mb-2 pr-20">
+              <h3 className="font-semibold text-sm md:text-base text-secondary truncate">
+              {truncateToWords(campaign.title, 2)}
               </h3>
-              {isDraftCampaign && (
-                <Badge variant="warning" className="ml-2 flex-shrink-0">
-                  Draft
-                </Badge>
-              )}
             </div>
             <div 
               className="text-xs text-gray-600 mb-3 line-clamp-2"
@@ -318,34 +282,24 @@ const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLast
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                {!isDraftCampaign && getStatusBadge(campaign)}
-                <span className="text-xs text-gray-500 ml-2">
-                  {campaign.number_of_influencers} influencer{campaign.number_of_influencers !== 1 ? 's' : ''}
-                </span>
-              </div>
+            <div className="flex items-center gap-1 text-gray-500">
+              <FiClock className="w-3 h-3" />
+              <span className="text-xs">
+                {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
+              </span>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-gray-500">
-                <FiClock className="w-3 h-3" />
-                <span className="text-xs">
-                  {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
-                </span>
-              </div>
-              <Button
-                variant="default"
-                size="sm"
-                className="text-xs px-3 py-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick(campaign);
-                }}
-              >
-                Details →
-              </Button>
-            </div>
+            
+            <Button
+              variant="default"
+              size="sm"
+              className="text-xs px-3 py-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick(campaign);
+              }}
+            >
+              Details →
+            </Button>
           </div>
         </div>
       </div>
@@ -734,18 +688,14 @@ const Campaigns = () => {
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      console.log('📋 Fetching campaigns...');
       
       const response = await get('campaigns/brandCampaigns');
       if (!response?.data) {
-        console.log('❌ No campaigns data received');
         setCampaigns([]);
         return;
       }
-
-      console.log(`📋 Found ${response.data.length} campaigns`);
       
-      // Filter out deleted campaigns and sort by creation date
+      // Filter out deleted campaigns and sort by creation date (most recent first)
       const activeCampaigns = response.data
         .filter(campaign => 
           campaign.status !== 'deleted' && 
@@ -753,15 +703,15 @@ const Campaigns = () => {
           !campaign.deleted_at &&
           !campaign.is_deleted
         )
-        .sort((a, b) => 
-          new Date(b.created_on || b.start_date).getTime() - new Date(a.created_on || a.start_date).getTime()
-        );
+        .sort((a, b) => {
+          const dateA = new Date(a.created_on || a.start_date || 0);
+          const dateB = new Date(b.created_on || b.start_date || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
 
-      console.log(`✅ Successfully loaded ${activeCampaigns.length} active campaigns`);
       setCampaigns(activeCampaigns);
       
     } catch (error) {
-      console.error('❌ Error fetching campaigns:', error);
       toast.error('Failed to fetch campaigns');
       setCampaigns([]);
     } finally {
@@ -829,7 +779,6 @@ const Campaigns = () => {
       toast.success('Campaign deleted successfully');
       
     } catch (error) {
-      console.error('Error deleting campaign:', error);
       toast.error('Failed to delete campaign. Please try again.');
     } finally {
       setDeletingCampaigns(prev => {
@@ -849,18 +798,6 @@ const Campaigns = () => {
     setDeleteModal({
       isOpen: false,
       campaign: null
-    });
-  };
-
-  const handleEditCampaign = (campaign) => {
-    navigate(`/campaigns/${campaign.campaign_id}/edit`, {
-      state: { campaign }
-    });
-  };
-
-  const handleAddMember = (campaign) => {
-    navigate(`/campaigns/${campaign.campaign_id}/add-member`, {
-      state: { campaign }
     });
   };
 
@@ -1159,8 +1096,6 @@ if (loading) {
                       campaign={campaign}
                       onClick={handleViewCampaign}
                       onDelete={handleDeleteRequest}
-                      onEdit={handleEditCampaign}
-                      onAddMember={handleAddMember}
                       isLastOdd={isLastOdd}
                     />
                   );
