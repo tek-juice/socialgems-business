@@ -202,43 +202,12 @@ const SkeletonCard = ({ isLastOdd = false }) => {
   );
 };
 
-// AvatarCircles Component
-const AvatarCircles = ({ numPeople, className, avatarUrls }) => {
-  const displayUrls = avatarUrls.slice(0, 3);
-  const remainingCount = Math.max(0, numPeople - 3);
-
-  return (
-    <div className={cn("z-10 flex -space-x-4 rtl:space-x-reverse", className)}>
-      {displayUrls.map((url, index) => (
-        <img
-          key={index}
-          className="h-10 w-10 rounded-full border-4 border-white"
-          src={url}
-          width={40}
-          height={40}
-          alt={`Avatar ${index + 1}`}
-        />
-      ))}
-      {remainingCount > 0 && (
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-secondary text-center text-xs font-medium text-white">
-          +{remainingCount}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Campaign Card Component
 const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLastOdd = false }) => {
   const endDate = new Date(campaign.end_date);
   const now = new Date();
   const daysLeft = Math.max(0, differenceInDays(endDate, now));
   
-  const hasActiveInfluencers = campaign.actionedUsers && campaign.actionedUsers.length > 0;
-  const influencerAvatars = hasActiveInfluencers 
-    ? campaign.actionedUsers.map(user => user.userProfile?.profile_pic || user.profile_pic).filter(Boolean)
-    : [];
-
   // Only draft campaigns can be edited or have members added
   const isDraftCampaign = campaign.status === 'draft';
 
@@ -350,16 +319,12 @@ const CampaignCard = ({ campaign, onClick, onDelete, onEdit, onAddMember, isLast
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {hasActiveInfluencers ? (
-                <AvatarCircles 
-                  numPeople={campaign.actionedUsers.length}
-                  avatarUrls={influencerAvatars}
-                />
-              ) : (
-                <div className="flex items-center gap-1">
-                  {!isDraftCampaign && getStatusBadge(campaign)}
-                </div>
-              )}
+              <div className="flex items-center gap-1">
+                {!isDraftCampaign && getStatusBadge(campaign)}
+                <span className="text-xs text-gray-500 ml-2">
+                  {campaign.number_of_influencers} influencer{campaign.number_of_influencers !== 1 ? 's' : ''}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-3">
@@ -765,13 +730,12 @@ const Campaigns = () => {
     saveToStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, activeStatusTab);
   }, [activeStatusTab]);
 
-  // Enhanced campaign fetching with proper API separation
+  // Simplified campaign fetching - only brandCampaigns endpoint
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      console.log('📋 Starting campaign fetch...');
+      console.log('📋 Fetching campaigns...');
       
-      // Step 1: Get list of all campaigns
       const response = await get('campaigns/brandCampaigns');
       if (!response?.data) {
         console.log('❌ No campaigns data received');
@@ -779,129 +743,25 @@ const Campaigns = () => {
         return;
       }
 
-      console.log(`📋 Found ${response.data.length} campaigns from brandCampaigns API`);
+      console.log(`📋 Found ${response.data.length} campaigns`);
       
-      // Filter out deleted campaigns immediately
-      const activeCampaigns = response.data.filter(campaign => 
-        campaign.status !== 'deleted' && 
-        campaign.status !== 'Deleted' &&
-        !campaign.deleted_at &&
-        !campaign.is_deleted
-      );
+      // Filter out deleted campaigns and sort by creation date
+      const activeCampaigns = response.data
+        .filter(campaign => 
+          campaign.status !== 'deleted' && 
+          campaign.status !== 'Deleted' &&
+          !campaign.deleted_at &&
+          !campaign.is_deleted
+        )
+        .sort((a, b) => 
+          new Date(b.created_on || b.start_date).getTime() - new Date(a.created_on || a.start_date).getTime()
+        );
 
-      console.log(`📋 ${activeCampaigns.length} active campaigns after filtering deleted ones`);
-
-      // Step 2: Process each campaign based on its status
-      const processedCampaigns = await Promise.all(
-        activeCampaigns.map(async (baseCampaign) => {
-          const campaignId = baseCampaign.campaign_id;
-          console.log(`🔍 Processing campaign ${campaignId} with status: ${baseCampaign.status}`);
-          
-          try {
-            if (baseCampaign.status === 'draft') {
-              // For draft campaigns, get detailed data from getDraftCampaign
-              console.log(`📝 Fetching draft campaign details for ${campaignId}`);
-              
-              try {
-                const draftResponse = await get(`campaigns/getDraftCampaign/${campaignId}`);
-                if (draftResponse?.data) {
-                  console.log(`✅ Draft campaign details loaded for ${campaignId}`);
-                  return {
-                    ...baseCampaign,
-                    ...draftResponse.data,
-                    actionedUsers: [], // Draft campaigns don't have actioned users
-                    isDraft: true
-                  };
-                } else {
-                  console.log(`⚠️ No draft details found for ${campaignId}, using base data`);
-                  return {
-                    ...baseCampaign,
-                    actionedUsers: [],
-                    isDraft: true
-                  };
-                }
-              } catch (draftError) {
-                console.error(`❌ Error fetching draft campaign details for ${campaignId}:`, draftError);
-                return {
-                  ...baseCampaign,
-                  actionedUsers: [],
-                  isDraft: true
-                };
-              }
-            } else {
-              // For non-draft campaigns, try to get actioned users
-              console.log(`👥 Fetching actioned users for campaign ${campaignId}`);
-              
-              try {
-                const actionedResponse = await get(`campaigns/getActionedInfluencers/${campaignId}`);
-                if (actionedResponse?.status === 200 && actionedResponse?.data) {
-                  console.log(`✅ Found ${actionedResponse.data.length} actioned users for ${campaignId}`);
-                  return {
-                    ...baseCampaign,
-                    actionedUsers: actionedResponse.data,
-                    isDraft: false
-                  };
-                } else {
-                  console.log(`⚠️ No actioned users found for ${campaignId}`);
-                  return {
-                    ...baseCampaign,
-                    actionedUsers: [],
-                    isDraft: false
-                  };
-                }
-              } catch (actionedError) {
-                console.error(`❌ Error fetching actioned users for ${campaignId}:`, actionedError);
-                
-                // If actioned users call fails with 404, might still be a draft
-                if (actionedError.response?.status === 404) {
-                  console.log(`🔄 Campaign ${campaignId} might be draft, trying draft endpoint`);
-                  
-                  try {
-                    const draftResponse = await get(`campaigns/getDraftCampaign/${campaignId}`);
-                    if (draftResponse?.data) {
-                      console.log(`✅ Found draft data for ${campaignId}`);
-                      return {
-                        ...baseCampaign,
-                        ...draftResponse.data,
-                        status: 'draft', // Override status
-                        actionedUsers: [],
-                        isDraft: true
-                      };
-                    }
-                  } catch (draftError) {
-                    console.error(`❌ Draft endpoint also failed for ${campaignId}:`, draftError);
-                  }
-                }
-                
-                // Return base campaign data if all else fails
-                return {
-                  ...baseCampaign,
-                  actionedUsers: [],
-                  isDraft: false
-                };
-              }
-            }
-          } catch (error) {
-            console.error(`❌ Error processing campaign ${campaignId}:`, error);
-            return {
-              ...baseCampaign,
-              actionedUsers: [],
-              isDraft: baseCampaign.status === 'draft'
-            };
-          }
-        })
-      );
-
-      // Step 3: Sort campaigns by creation date (newest first)
-      const sortedCampaigns = processedCampaigns.sort((a, b) => 
-        new Date(b.created_on || b.start_date).getTime() - new Date(a.created_on || a.start_date).getTime()
-      );
-
-      console.log(`✅ Successfully processed ${sortedCampaigns.length} campaigns`);
-      setCampaigns(sortedCampaigns);
+      console.log(`✅ Successfully loaded ${activeCampaigns.length} active campaigns`);
+      setCampaigns(activeCampaigns);
       
     } catch (error) {
-      console.error('❌ Error in campaign fetch process:', error);
+      console.error('❌ Error fetching campaigns:', error);
       toast.error('Failed to fetch campaigns');
       setCampaigns([]);
     } finally {
@@ -1078,7 +938,7 @@ const Campaigns = () => {
     navigate(`/campaigns/${campaign.campaign_id}`, {
       state: { 
         campaign,
-        isDraft: campaign.isDraft || campaign.status === 'draft'
+        isDraft: campaign.status === 'draft'
       }
     });
   };
@@ -1087,7 +947,7 @@ const Campaigns = () => {
     navigate('/campaigns/create');
   };
 
-  if (loading) {
+if (loading) {
     return (
       <div className="min-h-screen">
         <div className="border-b border-secondary py-4 mb-5">
