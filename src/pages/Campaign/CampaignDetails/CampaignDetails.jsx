@@ -32,7 +32,7 @@ import CampaignModals from './CampaignModals';
 // Import utilities
 import { formatDate, formatHtmlContent, getActionStatusBadge } from './utils';
 
-// TasksAccordion Component - Your improved version
+// TasksAccordion Component - Updated to ensure tasks are always visible
 export const TasksAccordion = ({ tasks }) => {
   const [openItem, setOpenItem] = useState(null);
   const contentRefs = useRef({});
@@ -321,10 +321,10 @@ export default function CampaignDetailsPage() {
     };
   }, [campaign, actionedMembers]);
 
-  // Get campaign status - keep your existing logic unchanged
+  // Get campaign status - Enhanced to properly detect draft status
   const getCampaignStatus = useCallback(() => {
     if (!campaign) return 'unknown';
-    if (isDraft) return 'draft';
+    if (isDraft || campaign.status === 'draft') return 'draft';
     if (campaign.closed_date) return 'closed';
     if (campaign.status) return campaign.status.toLowerCase();
     
@@ -342,8 +342,8 @@ export default function CampaignDetailsPage() {
   // FIXED: Only draft campaigns can be edited
   const canEditCampaign = useMemo(() => {
     if (!campaign) return false;
-    return campaign.status === 'draft';
-  }, [campaign]);
+    return getCampaignStatus() === 'draft';
+  }, [campaign, getCampaignStatus]);
 
   // Keep your existing logic for other actions
   const canActivateCampaign = useMemo(() => {
@@ -361,8 +361,8 @@ export default function CampaignDetailsPage() {
   // FIXED: Only draft campaigns can have members added
   const canAddMembers = useMemo(() => {
     if (!campaign) return false;
-    return campaign.status === 'draft';
-  }, [campaign]);
+    return getCampaignStatus() === 'draft';
+  }, [campaign, getCampaignStatus]);
 
   // Filter sent invites for current campaign - only non-accepted and non-expired invites
   const sentInvites = useMemo(() => {
@@ -488,13 +488,38 @@ export default function CampaignDetailsPage() {
     }
   }, [getCountryName]);
 
-  // Function to fetch actioned influencers
+  // Function to fetch actioned influencers with tasks
   const fetchActionedInfluencers = useCallback(async (campaignId) => {
     try {
       const response = await get(`campaigns/getActionedInfluencers/${campaignId}`);
       
       if (response?.status === 200 && response?.data) {
         setActionedInfluencers(response.data);
+        
+        // Extract all tasks from the actioned influencers response
+        const allTasksFromInfluencers = [];
+        response.data.forEach((influencer) => {
+          if (influencer.tasks && Array.isArray(influencer.tasks)) {
+            influencer.tasks.forEach((task) => {
+              allTasksFromInfluencers.push(task);
+            });
+          }
+        });
+        
+        // Remove duplicate tasks and set them
+        const uniqueTasks = allTasksFromInfluencers.reduce((acc, task) => {
+          const taskId = task.task_id || task.id || task.campaign_task_id;
+          if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
+            acc.push(task);
+          }
+          return acc;
+        }, []);
+        
+        // Set the tasks from actioned influencers
+        if (uniqueTasks.length > 0) {
+          setCampaignTasks(uniqueTasks);
+        }
+        
         return response.data;
       } else {
         setActionedInfluencers([]);
@@ -506,68 +531,45 @@ export default function CampaignDetailsPage() {
     }
   }, []);
 
-  // Function to fetch campaign tasks separately if needed
-  const fetchCampaignTasks = useCallback(async (campaignId) => {
-    try {
-      setTasksLoading(true);
-      
-      // Try to get tasks from campaign endpoint
-      const response = await get(`campaigns/tasks/${campaignId}`);
-      
-      if (response?.status === 200 && response?.data) {
-        setCampaignTasks(response.data);
-        return response.data;
-      } else {
-        return [];
-      }
-    } catch (error) {
-      return [];
-    } finally {
-      setTasksLoading(false);
-    }
-  }, []);
-
-  // FIXED: Enhanced task computation - moved before scroll sync to fix initialization error
+  // UPDATED: Enhanced task computation to properly use the right endpoints
   const allTasks = useMemo(() => {
     let computedTasks = [];
+    const currentStatus = getCampaignStatus();
     
-    if (isDraft) {
-      // For draft campaigns, prioritize campaign.tasks over campaignTasks
+    if (currentStatus === 'draft') {
+      // For draft campaigns, get tasks from getDraftCampaign endpoint (campaign.tasks)
       if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
         computedTasks = campaign.tasks;
       } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
         computedTasks = campaignTasks;
-      } else {
-        computedTasks = [];
       }
     } else {
-      // For active campaigns, extract tasks from actionedMembers
-      const allMemberTasks = [];
-      actionedMembers.forEach((member) => {
-        if (member.tasks && Array.isArray(member.tasks) && member.tasks.length > 0) {
-          member.tasks.forEach((task) => {
-            allMemberTasks.push(task);
-          });
-        }
-      });
-      
-      if (allMemberTasks.length > 0) {
-        // Remove duplicate tasks by task_id
-        const uniqueTasks = allMemberTasks.reduce((acc, task) => {
-          const taskId = task.task_id || task.id || task.campaign_task_id;
-          if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
-            acc.push(task);
-          }
-          return acc;
-        }, []);
-        
-        computedTasks = uniqueTasks;
-      } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
+      // For non-draft campaigns, get tasks from getActionedInfluencers endpoint
+      if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
         computedTasks = campaignTasks;
-      } else if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
-        computedTasks = campaign.tasks;
       } else {
-        computedTasks = [];
+        // Extract tasks from actionedInfluencers as fallback
+        const allMemberTasks = [];
+        actionedInfluencers.forEach((member) => {
+          if (member.tasks && Array.isArray(member.tasks) && member.tasks.length > 0) {
+            member.tasks.forEach((task) => {
+              allMemberTasks.push(task);
+            });
+          }
+        });
+        
+        if (allMemberTasks.length > 0) {
+          // Remove duplicate tasks by task_id
+          const uniqueTasks = allMemberTasks.reduce((acc, task) => {
+            const taskId = task.task_id || task.id || task.campaign_task_id;
+            if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
+              acc.push(task);
+            }
+            return acc;
+          }, []);
+          
+          computedTasks = uniqueTasks;
+        }
       }
     }
     
@@ -577,7 +579,7 @@ export default function CampaignDetailsPage() {
     }
     
     return computedTasks;
-  }, [isDraft, campaignTasks, actionedMembers, campaign?.tasks]);
+  }, [campaign?.tasks, campaignTasks, actionedInfluencers, getCampaignStatus]);
 
   // Calculate stats
   const stats = {
@@ -678,7 +680,7 @@ export default function CampaignDetailsPage() {
     fetchSentInvites();
   }, []);
 
-  // Enhanced campaign and task fetching logic
+  // UPDATED: Enhanced campaign and task fetching logic to use proper endpoints
   useEffect(() => {
     document.title = campaign ? `${campaign.title} | Campaign Details` : 'Campaign Details | Social Gems Admin';
     
@@ -689,6 +691,7 @@ export default function CampaignDetailsPage() {
 
       try {
         setLoading(true);
+        setTasksLoading(true);
         
         if (!campaign) {
           // First, try to get campaign as draft
@@ -701,6 +704,11 @@ export default function CampaignDetailsPage() {
             if (draftResponse?.data) {
               campaignData = draftResponse.data;
               isDraftCampaign = true;
+              
+              // For draft campaigns, tasks come from the getDraftCampaign endpoint
+              if (campaignData.tasks && Array.isArray(campaignData.tasks)) {
+                setCampaignTasks(campaignData.tasks);
+              }
             }
           } catch (draftError) {
             // Not a draft campaign, try regular campaign endpoint
@@ -714,6 +722,13 @@ export default function CampaignDetailsPage() {
               if (campaignResponse?.data) {
                 campaignData = campaignResponse.data;
                 isDraftCampaign = false;
+                
+                // For non-draft campaigns, fetch tasks from getActionedInfluencers
+                try {
+                  await fetchActionedInfluencers(campaignData.campaign_id);
+                } catch (actionedError) {
+                  console.error('Error fetching actioned influencers:', actionedError);
+                }
               }
             } catch (campaignError) {
               toast.error('Campaign not found');
@@ -724,37 +739,6 @@ export default function CampaignDetailsPage() {
           if (campaignData) {
             setCampaign(campaignData);
             setIsDraft(isDraftCampaign);
-            
-            // Enhanced task handling - check multiple sources
-            let tasksToSet = [];
-            
-            // Priority 1: tasks array directly in campaign data
-            if (campaignData.tasks && Array.isArray(campaignData.tasks) && campaignData.tasks.length > 0) {
-              tasksToSet = campaignData.tasks;
-            }
-            // Priority 2: tasks in campaign_tasks property
-            else if (campaignData.campaign_tasks && Array.isArray(campaignData.campaign_tasks) && campaignData.campaign_tasks.length > 0) {
-              tasksToSet = campaignData.campaign_tasks;
-            }
-            // Priority 3: Try to fetch tasks separately
-            else {
-              try {
-                const separateTasks = await fetchCampaignTasks(campaignData.campaign_id);
-                if (separateTasks && separateTasks.length > 0) {
-                  tasksToSet = separateTasks;
-                }
-              } catch (taskError) {
-                // Could not fetch tasks separately
-              }
-            }
-            
-            // Set the tasks
-            setCampaignTasks(tasksToSet);
-            
-            // If still no tasks, set empty array
-            if (tasksToSet.length === 0) {
-              setCampaignTasks([]);
-            }
           }
         }
         
@@ -762,11 +746,12 @@ export default function CampaignDetailsPage() {
         toast.error('Failed to load campaign data');
       } finally {
         setLoading(false);
+        setTasksLoading(false);
       }
     };
 
     fetchCampaignAndTasks();
-  }, [id, campaign, fetchCampaignTasks]);
+  }, [id, campaign, fetchActionedInfluencers]);
 
   // Separate effect to fetch applications and then actioned influencers
   useEffect(() => {
@@ -780,8 +765,10 @@ export default function CampaignDetailsPage() {
             setActionedMembers([]);
           }
 
-          // Fetch actioned influencers after applications
-          await fetchActionedInfluencers(campaign.campaign_id);
+          // For non-draft campaigns, also fetch actioned influencers for tasks
+          if (getCampaignStatus() !== 'draft') {
+            await fetchActionedInfluencers(campaign.campaign_id);
+          }
         } else {
           setActionedMembers([]);
           setActionedInfluencers([]);
@@ -790,7 +777,7 @@ export default function CampaignDetailsPage() {
     };
 
     fetchApplicationsAndActionedInfluencers();
-  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers]);
+  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers, getCampaignStatus]);
 
   // Handle edit campaign with proper date and task formatting
   const handleEditCampaign = useCallback(() => {
@@ -838,10 +825,8 @@ export default function CampaignDetailsPage() {
       });
     };
 
-    // Get tasks from the right source - prioritize campaign.tasks for draft
-    const tasksToUse = isDraft && campaign?.tasks && campaign.tasks.length > 0
-      ? campaign.tasks 
-      : (campaignTasks && campaignTasks.length > 0 ? campaignTasks : []);
+    // Get tasks from the computed allTasks
+    const tasksToUse = allTasks && allTasks.length > 0 ? allTasks : [];
 
     // Use the existing campaign data that's already loaded
     const editData = {
@@ -870,7 +855,7 @@ export default function CampaignDetailsPage() {
     });
     
     toast.success('Opening campaign editor...');
-  }, [campaign, campaignTasks, canEditCampaign, navigate, isDraft]);
+  }, [campaign, allTasks, canEditCampaign, navigate]);
 
   // Handle add members with pre-filled filter data (only for draft campaigns)
   const handleAddMembers = useCallback(() => {
@@ -919,6 +904,7 @@ export default function CampaignDetailsPage() {
       
       if (response?.status === 200) {
         setCampaign(prev => prev ? { ...prev, status: 'active' } : null);
+        setIsDraft(false);
         toast.success('Campaign activated successfully!');
         setActivateCampaignModal(false);
       } else {
@@ -1205,7 +1191,7 @@ export default function CampaignDetailsPage() {
                   <CampaignDescription description={campaign.description} />
                 )}
 
-                {/* Campaign Tasks Accordion */}
+                {/* Campaign Tasks Accordion - Always visible */}
                 <div className='border border-gray-100 rounded-xl overflow-hidden'>
                   <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
                     <div>
@@ -1216,7 +1202,7 @@ export default function CampaignDetailsPage() {
                     </div>
                   </div>
 
-                  {/* Enhanced Tasks Display */}
+                  {/* Enhanced Tasks Display - Always show */}
                   {tasksLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -1315,7 +1301,7 @@ export default function CampaignDetailsPage() {
           selectedMember={selectedMember}
           selectedInvite={selectedInvite}
           campaign={campaign}
-          campaignId={campaign?.campaign_id} // Add this line - pass campaign_id
+          campaignId={campaign?.campaign_id}
           stats={stats}
           isProcessing={isProcessing}
           industries={industries}
