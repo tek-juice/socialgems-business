@@ -184,7 +184,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               onClick={handleToggle}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="p-2 rounded-lg text-[#734D20] hover:bg-[#F9D769]/20 focus:outline-none transition-colors absolute right-4"
+              className="p-2 rounded-lg text-secondary hover:bg-primary/20 focus:outline-none transition-colors absolute right-4"
               aria-label="Collapse sidebar"
             >
               <FiChevronLeft size={20} />
@@ -202,10 +202,10 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="px-2 text-xs font-semibold text-[#734D20]/70 uppercase tracking-wider mb-4"
+              className="px-2 text-xs font-semibold text-secondary/70 uppercase tracking-wider mb-4"
             >
               {loading ? (
-                <div className="h-3 w-32 bg-[#F9D769]/20 rounded animate-pulse"></div>
+                <div className="h-3 w-32 bg-primary/20 rounded animate-pulse"></div>
               ) : (
                 'Navigation'
               )}
@@ -221,11 +221,11 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`flex items-center ${isOpen ? 'px-3' : 'justify-center'} py-2.5 rounded-lg transition-colors bg-[#F9D769]/10`}
+              className={`flex items-center ${isOpen ? 'px-3' : 'justify-center'} py-2.5 rounded-lg transition-colors bg-primary/10`}
             >
-              <div className="h-5 w-5 rounded bg-[#F9D769]/20 animate-pulse"></div>
+              <div className="h-5 w-5 rounded bg-primary/20 animate-pulse"></div>
               {isOpen && (
-                <div className="ml-3 h-4 w-24 bg-[#F9D769]/20 rounded animate-pulse"></div>
+                <div className="ml-3 h-4 w-24 bg-primary/20 rounded animate-pulse"></div>
               )}
             </motion.div>
           ))
@@ -246,10 +246,10 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                     className={({ isActive }) =>
                       `flex items-center ${isOpen ? 'px-3' : 'justify-center px-2'} py-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                         isActive
-                          ? 'bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] shadow-lg'
+                          ? 'bg-gradient-to-r from-primary to-[#E8C547] text-secondary shadow-lg'
                           : isParentActive(item)
-                          ? 'bg-[#F9D769]/30 text-[#734D20]'
-                          : 'text-[#734D20] hover:bg-[#F9D769]/20 hover:shadow-md backdrop-blur-sm'
+                          ? 'bg-primary/30 text-secondary'
+                          : 'text-secondary hover:bg-primary/20 hover:shadow-md backdrop-blur-sm'
                       }`
                     }
                     end
@@ -266,7 +266,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                         >
                           <span className="text-sm font-medium">{item.title}</span>
                           {item.badge && (
-                            <span className="ml-auto text-xs bg-[#734D20] text-white px-2 py-0.5 rounded-full font-medium">
+                            <span className="ml-auto text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-medium">
                               {item.badge}
                             </span>
                           )}
@@ -281,8 +281,8 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                     whileTap={{ scale: 0.98 }}
                     className={`w-full flex items-center ${isOpen ? 'px-3' : 'justify-center px-2'} py-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
                       isParentActive(item)
-                        ? 'bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] shadow-lg'
-                        : 'text-[#734D20] hover:bg-[#F9D769]/20 hover:shadow-md backdrop-blur-sm'
+                        ? 'bg-gradient-to-r from-primary to-[#E8C547] text-secondary shadow-lg'
+                        : 'text-secondary hover:bg-primary/20 hover:shadow-md backdrop-blur-sm'
                     }`}
                   >
                     <span className="text-lg flex-shrink-0">{item.icon}</span>
@@ -298,7 +298,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                           <span className="text-sm font-medium">{item.title}</span>
                           <div className="flex items-center space-x-2">
                             {item.badge && (
-                              <span className="text-xs bg-[#734D20] text-white px-2 py-0.5 rounded-full font-medium">
+                              <span className="text-xs bg-secondary text-white px-2 py-0.5 rounded-full font-medium">
                                 {item.badge}
                               </span>
                             )}
@@ -322,10 +322,10 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
 
 
                 {!isOpen && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-[#734D20] text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
                     {item.title}
                     {item.badge && (
-                      <span className="ml-1 bg-[#F9D769] text-[#734D20] px-1.5 py-0.5 rounded-full text-xs">
+                      <span className="ml-1 bg-primary text-secondary px-1.5 py-0.5 rounded-full text-xs">
                         {item.badge}
                       </span>
                     )}
@@ -356,8 +356,8 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                           className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                               isActive
-                                ? 'bg-[#734D20] text-white shadow-md'
-                                : 'text-[#734D20]/80 hover:bg-[#F9D769]/15 hover:text-[#734D20] backdrop-blur-sm'
+                                ? 'bg-secondary text-white shadow-md'
+                                : 'text-secondary/80 hover:bg-primary/15 hover:text-secondary backdrop-blur-sm'
                             }`
                           }
                           end
@@ -380,7 +380,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               {item.children && !isOpen && (
                 <div className="flex justify-center mt-1">
                   <div className={`w-1 h-1 rounded-full ${
-                    isParentActive(item) ? 'bg-[#F9D769]' : 'bg-[#734D20]/30'
+                    isParentActive(item) ? 'bg-primary' : 'bg-secondary/30'
                   }`}></div>
                 </div>
               )}
@@ -390,7 +390,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
       </nav>
 
 
-      <div className="relative z-10 border-t border-white/20 bg-[#734D20]/5 backdrop-blur-sm">
+      <div className="relative z-10 border-t border-white/20 bg-secondary/5 backdrop-blur-sm">
         <AnimatePresence>
           {isOpen ? (
             <motion.div
@@ -401,10 +401,10 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               className="px-4 py-3"
             >
               <div className="text-center">
-                <p className="text-xs text-[#734D20]/70 mb-1">
+                <p className="text-xs text-secondary/70 mb-1">
                   © {currentYear} Social Gems Business
                 </p>
-                <p className="text-xs text-[#734D20]/50">
+                <p className="text-xs text-secondary/50">
                   Version 1.0.0
                 </p>
               </div>
@@ -417,8 +417,8 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
               transition={{ duration: 0.2 }}
               className="flex justify-center py-3"
             >
-              <div className="w-6 h-6 bg-gradient-to-br from-[#F9D769] to-[#E8C547] rounded-md flex items-center justify-center">
-                <span className="text-[#734D20] font-bold text-xs">©</span>
+              <div className="w-6 h-6 bg-gradient-to-br from-primary to-[#E8C547] rounded-md flex items-center justify-center">
+                <span className="text-secondary font-bold text-xs">©</span>
               </div>
             </motion.div>
           )}

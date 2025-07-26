@@ -75,34 +75,34 @@ const Calendar = React.forwardRef(({
   };
 
   const getDateClassName = (date) => {
-    const baseClasses = "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-[#734D20] outline-offset-2 transition-all duration-200 cursor-pointer select-none";
+    const baseClasses = "relative flex size-9 items-center justify-center whitespace-nowrap rounded-lg p-0 text-secondary outline-offset-2 transition-all duration-200 cursor-pointer select-none";
     
     let classes = [baseClasses];
     
     if (isDateDisabled(date)) {
-      classes.push("pointer-events-none text-[#734D20]/30 line-through cursor-not-allowed");
+      classes.push("pointer-events-none text-secondary/30 line-through cursor-not-allowed");
     } else {
-      classes.push("hover:bg-[#F9D769]/30 hover:text-[#734D20]");
+      classes.push("hover:bg-primary/30 hover:text-secondary");
     }
 
     if (isDateSelected(date)) {
       if (mode === "range" && selected?.from && selected?.to) {
         if (isSameDay(date, selected.from)) {
-          classes.push("bg-[#F9D769] text-[#734D20] font-semibold rounded-r-none");
+          classes.push("bg-primary text-secondary font-semibold rounded-r-none");
         } else if (isSameDay(date, selected.to)) {
-          classes.push("bg-[#F9D769] text-[#734D20] font-semibold rounded-l-none");
+          classes.push("bg-primary text-secondary font-semibold rounded-l-none");
         } else {
-          classes.push("bg-[#F9D769]/50 text-[#734D20] rounded-none");
+          classes.push("bg-primary/50 text-secondary rounded-none");
         }
       } else {
-        classes.push("bg-[#F9D769] text-[#734D20] font-semibold shadow-sm");
+        classes.push("bg-primary text-secondary font-semibold shadow-sm");
       }
     }
 
     if (isToday(date)) {
       classes.push("after:pointer-events-none after:absolute after:bottom-1 after:start-1/2 after:z-10 after:size-[3px] after:-translate-x-1/2 after:rounded-full after:bg-[#E8C547] after:transition-colors");
       if (isDateSelected(date)) {
-        classes.push("[&]:after:bg-[#734D20]");
+        classes.push("[&]:after:bg-secondary");
       }
     }
 
@@ -184,21 +184,21 @@ const Calendar = React.forwardRef(({
             <>
               <button
                 onClick={() => navigateMonth(-1)}
-                className="absolute left-[-40px] size-8 bg-transparent p-0 text-[#734D20] hover:bg-[#F9D769]/20 hover:text-[#734D20] rounded-lg transition-colors flex items-center justify-center"
+                className="absolute left-[-40px] size-8 bg-transparent p-0 text-secondary hover:bg-primary/20 hover:text-secondary rounded-lg transition-colors flex items-center justify-center"
                 type="button"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => navigateMonth(1)}
-                className="absolute right-[-40px] size-8 bg-transparent p-0 text-[#734D20] hover:bg-[#F9D769]/20 hover:text-[#734D20] rounded-lg transition-colors flex items-center justify-center"
+                className="absolute right-[-40px] size-8 bg-transparent p-0 text-secondary hover:bg-primary/20 hover:text-secondary rounded-lg transition-colors flex items-center justify-center"
                 type="button"
               >
                 <ChevronRight size={16} />
               </button>
             </>
           )}
-          <div className="text-sm font-semibold text-[#734D20]">
+          <div className="text-sm font-semibold text-secondary">
             {MONTHS[displayDate.getMonth()]} {displayDate.getFullYear()}
           </div>
         </div>
@@ -208,7 +208,7 @@ const Calendar = React.forwardRef(({
           {DAYS_OF_WEEK.map((day) => (
             <div
               key={day}
-              className="size-9 p-0 text-xs font-medium text-[#734D20]/70 flex items-center justify-center"
+              className="size-9 p-0 text-xs font-medium text-secondary/70 flex items-center justify-center"
             >
               {day}
             </div>
@@ -229,7 +229,7 @@ const Calendar = React.forwardRef(({
                 key={index}
                 className={cn(
                   "size-9 bg-white flex items-center justify-center",
-                  !isCurrentMonth && "text-[#734D20]/40"
+                  !isCurrentMonth && "text-secondary/40"
                 )}
               >
                 <button

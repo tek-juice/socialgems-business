@@ -75,7 +75,7 @@ export const InfluencerCard = ({
       className={cn(
         "bg-white rounded-xl border border-gray-300 p-4 hover:shadow-md transition-all duration-200 cursor-pointer relative",
         isLastOdd ? "sm:col-span-2" : "",
-        isSelected ? "ring-2 ring-[#F9D769]" : ""
+        isSelected ? "ring-2 ring-primary" : ""
       )}
       onClick={() => onClick && onClick(member)}
     >
@@ -87,10 +87,10 @@ export const InfluencerCard = ({
               e.stopPropagation();
               onSelectionChange(); // This now calls the handler that uses user_id
             }}
-            className="flex items-center justify-center w-5 h-5 rounded border-2 border-gray-300 hover:border-[#F9D769] transition-colors"
+            className="flex items-center justify-center w-5 h-5 rounded border-2 border-gray-300 hover:border-primary transition-colors"
           >
             {isSelected ? (
-              <FiCheckSquare className="w-4 h-4 text-[#F9D769]" />
+              <FiCheckSquare className="w-4 h-4 text-primary" />
             ) : (
               <FiSquare className="w-4 h-4 text-gray-400" />
             )}
@@ -106,10 +106,10 @@ export const InfluencerCard = ({
               <img
                 src={member.profile_pic}
                 alt={`${member.first_name} ${member.last_name}`}
-                className="w-12 h-12 rounded-full object-cover border-2 border-yellow-300"
+                className="w-12 h-12 rounded-full object-cover border-2 border-primary-scale-300"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gray-200 border-2 border-yellow-300 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-gray-200 border-2 border-primary-scale-300 flex items-center justify-center">
                 <FiUser className="w-6 h-6 text-gray-500" />
               </div>
             )}
@@ -156,8 +156,8 @@ export const InfluencerCard = ({
 
           {/* Accepted Icon - Professional Yellow Circle with White Checkmark - SAME DESIGN FOR ALL */}
           {showAcceptedIcon && (
-              <div className="w-8 h-8 bg-[#F9D769] rounded-full flex items-center justify-center shadow-md ">
-                <FiCheck className="w-5 h-5 text-[#734D20] font-bold stroke-2" />
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-md ">
+                <FiCheck className="w-5 h-5 text-secondary font-bold stroke-2" />
               </div>
           )}
 
@@ -205,7 +205,7 @@ export const InfluencerCard = ({
         )}
 
         {(member.application_status === 'submitted' || member.application_status === 'pending') && !showApplicationActions && (
-          <div className="text-xs text-yellow-600 font-medium mt-2">
+          <div className="text-xs text-primary-scale-600 font-medium mt-2">
             ⏳ Application submitted - Pending review
           </div>
         )}

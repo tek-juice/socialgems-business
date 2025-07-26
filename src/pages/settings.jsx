@@ -269,7 +269,7 @@ const SkeletonVerificationCard = () => (
 // UI Components
 const Button = ({ className, variant = "default", size = "default", children, disabled, ...props }) => {
   const variants = {
-    default: "bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] hover:from-[#E8C547] hover:to-[#F9D769] shadow-sm shadow-black/5",
+    default: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary shadow-sm shadow-black/5",
     outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shadow-sm shadow-black/5",
     ghost: "text-gray-700 hover:bg-gray-100",
     destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm shadow-black/5",
@@ -286,7 +286,7 @@ const Button = ({ className, variant = "default", size = "default", children, di
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
         sizes[size],
         className
@@ -304,7 +304,7 @@ const Input = ({ className, type, ...props }) => {
     <input
       type={type}
       className={cn(
-        "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-[#F9D769] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#F9D769]/20 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -316,7 +316,7 @@ const Textarea = ({ className, ...props }) => {
   return (
     <textarea
       className={cn(
-        "flex min-h-[80px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-[#F9D769] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#F9D769]/20 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[80px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -338,10 +338,10 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
   const variants = {
     default: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
+    warning: "bg-primary-scale-100 text-secondary",
     error: "bg-red-100 text-red-800",
     info: "bg-blue-100 text-blue-800",
-    gold: "bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20]",
+    gold: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary",
     pending: "bg-orange-100 text-orange-800"
   };
 
@@ -428,7 +428,7 @@ const ProfileOverviewCard = ({ userData, onEditProfile, loading }) => {
 
         {/* Username and Bio */}
         <div className="space-y-2">
-          <p className="text-[#734D20] font-medium">@{userData?.username || 'username'}</p>
+          <p className="text-secondary font-medium">@{userData?.username || 'username'}</p>
           <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
             {userData?.bio || 'No bio available'}
           </p>
@@ -559,7 +559,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
         <div className="bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
           {/* Profile Banner styled like cover image */}
           <div className="h-32">
-            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-r from-[#F9D769]/20 to-[#E8C547]/20 rounded-t-xl">
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-r from-primary/20 to-[#E8C547]/20 rounded-t-xl">
               {profileImageUpload.previewUrl && (
                 <img
                   className="h-full w-full object-cover"
@@ -581,7 +581,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
               <div className="absolute inset-0 flex items-center justify-center gap-2">
                 <button
                   type="button"
-                  className="z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F9D769]/70"
+                  className="z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/70"
                   onClick={profileImageUpload.handleThumbnailClick}
                   aria-label="Change profile image"
                 >
@@ -590,7 +590,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
                 {(profileImageUpload.previewUrl || userData?.profile_pic) && (
                   <button
                     type="button"
-                    className="z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F9D769]/70"
+                    className="z-50 flex size-10 cursor-pointer items-center justify-center rounded-full bg-black/60 text-white outline-offset-2 transition-colors hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary/70"
                     onClick={profileImageUpload.handleRemove}
                     aria-label="Remove profile image"
                   >
@@ -767,8 +767,8 @@ const QuickStatsCard = ({ userData, loading }) => {
       className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 space-y-6"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-r from-[#F9D769] to-[#E8C547] rounded-lg flex items-center justify-center">
-          <UserIcon className="w-5 h-5 text-[#734D20]" />
+        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+          <UserIcon className="w-5 h-5 text-secondary" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Quick Stats</h3>
@@ -777,13 +777,13 @@ const QuickStatsCard = ({ userData, loading }) => {
       </div>
 
       <div className="space-y-4">
-        <div className="p-4 bg-gradient-to-r from-[#F9D769]/10 to-[#E8C547]/10 rounded-lg border border-[#F9D769]/20">
+        <div className="p-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Account Type</p>
-              <p className="text-lg font-bold text-[#734D20] capitalize">{userData?.user_type || 'User'}</p>
+              <p className="text-lg font-bold text-secondary capitalize">{userData?.user_type || 'User'}</p>
             </div>
-            <BriefcaseIcon className="w-8 h-8 text-[#734D20]" />
+            <BriefcaseIcon className="w-8 h-8 text-secondary" />
           </div>
         </div>
 
@@ -807,10 +807,10 @@ const QuickStatsCard = ({ userData, loading }) => {
             <div>
               <p className="text-sm text-gray-600">Referral Code</p>
               <div className="flex items-center gap-2">
-                <p className="text-lg font-bold text-[#734D20]">{userData?.referral_code || 'N/A'}</p>
+                <p className="text-lg font-bold text-secondary">{userData?.referral_code || 'N/A'}</p>
                 {userData?.referral_code && (
                   <button 
-                    className="text-gray-500 hover:text-[#734D20] transition-colors"
+                    className="text-gray-500 hover:text-secondary transition-colors"
                     onClick={() => {
                       navigator.clipboard.writeText(userData.referral_code);
                       toast.success('Referral code copied!');
@@ -881,8 +881,8 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
       >
         <div className="p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-r from-[#F9D769] to-[#E8C547] rounded-lg flex items-center justify-center">
-              <LockIcon className="w-5 h-5 text-[#734D20]" />
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <LockIcon className="w-5 h-5 text-secondary" />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Set Wallet PIN</h3>
@@ -995,9 +995,9 @@ function BusinessVerification({ userData }) {
         title: 'Verification Required',
         description: 'Complete business verification to unlock campaign features',
         bgColor: 'bg-yellow-50',
-        borderColor: 'border-yellow-200',
-        textColor: 'text-yellow-900',
-        iconColor: 'text-yellow-600'
+        borderColor: 'border-primary-scale-200',
+        textColor: 'text-secondary',
+        iconColor: 'text-primary-scale-600'
       };
     }
 
@@ -1044,9 +1044,9 @@ function BusinessVerification({ userData }) {
           title: 'Verification Required',
           description: 'Complete business verification to unlock campaign features',
           bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
-          textColor: 'text-yellow-900',
-          iconColor: 'text-yellow-600'
+          borderColor: 'border-primary-scale-200',
+          textColor: 'text-secondary',
+          iconColor: 'text-primary-scale-600'
         };
     }
   };
@@ -1059,8 +1059,8 @@ function BusinessVerification({ userData }) {
       className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-[#F9D769] to-[#E8C547] rounded-lg flex items-center justify-center">
-          <BriefcaseIcon className="w-5 h-5 text-[#734D20]" />
+        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+          <BriefcaseIcon className="w-5 h-5 text-secondary" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Business Verification</h3>
@@ -1261,8 +1261,8 @@ function VerificationStatus({ userData, onVerifyEmail, onVerifyPhone }) {
       className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-[#F9D769] to-[#E8C547] rounded-lg flex items-center justify-center">
-          <ShieldIcon className="w-5 h-5 text-[#734D20]" />
+        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+          <ShieldIcon className="w-5 h-5 text-secondary" />
         </div>
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Account Verification</h3>
@@ -1350,9 +1350,9 @@ function VerificationStatus({ userData, onVerifyEmail, onVerifyPhone }) {
         </div>
 
         {/* Account Level */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#F9D769]/10 to-[#E8C547]/10 rounded-lg border border-[#F9D769]/20">
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
           <div className="flex items-center gap-3">
-            <CrownIcon className="w-5 h-5 text-[#734D20]" />
+            <CrownIcon className="w-5 h-5 text-secondary" />
             <div>
               <p className="font-medium text-gray-900">Account Level</p>
               <p className="text-sm text-gray-600">Level {userData?.level_id || 1} - Enhanced features unlocked</p>
@@ -1384,8 +1384,8 @@ function SecuritySettings({ userData, onRefresh }) {
         className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
       >
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-r from-[#F9D769] to-[#E8C547] rounded-lg flex items-center justify-center">
-            <SettingsIcon className="w-5 h-5 text-[#734D20]" />
+          <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+            <SettingsIcon className="w-5 h-5 text-secondary" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">Security & Privacy</h3>

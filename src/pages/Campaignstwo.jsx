@@ -115,7 +115,7 @@ const Button = ({
 }) => {
   const variants = {
     default:
-      "bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] hover:from-[#E8C547] hover:to-[#F9D769]",
+      "bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary",
     outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
     ghost: "text-gray-700 hover:bg-gray-100",
     destructive: "bg-red-500 text-white hover:bg-red-600",
@@ -131,7 +131,7 @@ const Button = ({
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
         sizes[size],
         className
@@ -146,7 +146,7 @@ const Button = ({
 const Input = ({ className, ...props }) => (
   <input
     className={cn(
-      "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
+      "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
       className
     )}
     {...props}
@@ -157,7 +157,7 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
   const variants = {
     default: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
+    warning: "bg-primary-scale-100 text-secondary",
     error: "bg-red-100 text-red-800",
     info: "bg-blue-100 text-blue-800",
   };
@@ -201,7 +201,7 @@ const PaginationItem = ({ className, children, ...props }) => (
 const PaginationLink = ({ className, isActive, children, ...props }) => (
   <button
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-full text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-full text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 w-8",
       isActive
         ? "bg-[#E8C547]/90 text-gray-900 shadow-xl"
         : "hover:bg-gray-100 text-gray-700",
@@ -216,7 +216,7 @@ const PaginationLink = ({ className, isActive, children, ...props }) => (
 const PaginationPrevious = ({ className, ...props }) => (
   <button
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 gap-1 pl-2.5 hover:bg-gray-100 text-gray-700",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 gap-1 pl-2.5 hover:bg-gray-100 text-gray-700",
       className
     )}
     {...props}
@@ -229,7 +229,7 @@ const PaginationPrevious = ({ className, ...props }) => (
 const PaginationNext = ({ className, ...props }) => (
   <button
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 gap-1 pr-2.5 hover:bg-gray-100 text-gray-700",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 gap-1 pr-2.5 hover:bg-gray-100 text-gray-700",
       className
     )}
     {...props}
@@ -543,7 +543,7 @@ const Campaigns = () => {
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-8 h-8 border-2 border-[#734D20] border-t-transparent rounded-full mx-auto mb-4"
+            className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full mx-auto mb-4"
           />
           <p className="text-gray-600 text-sm">Loading your campaigns...</p>
         </div>
@@ -554,7 +554,7 @@ const Campaigns = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="border-b border-[#734D20] py-4 mb-5">
+      <div className="border-b border-secondary py-4 mb-5">
         <div className="mx-auto flex flex-wrap sm:items-start justify-between gap-4">
           <div>
             <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
@@ -568,7 +568,7 @@ const Campaigns = () => {
             <Button 
               onClick={handleCreateCampaign} 
               size="sm"
-              className="bg-[#F9D769] hover:bg-[#E8C547] text-[#734D20] font-medium"
+              className="bg-primary hover:bg-[#E8C547] text-secondary font-medium"
             >
               <FiPlus className="w-4 h-4 mr-2" />
               Add Campaign
@@ -620,7 +620,7 @@ const Campaigns = () => {
                       checked: columnFilters.status === 'closed'
                     }
                   ]}
-                  className="text-[#734D20] border-[#F9D769]/50 hover:bg-[#F9D769]/20"
+                  className="text-secondary border-primary/50 hover:bg-primary/20"
                 >
                   Status
                 </FilterDropdownMenu>
@@ -643,7 +643,7 @@ const Campaigns = () => {
                       checked: columnFilters.budget === 'no-budget'
                     }
                   ]}
-                  className="text-[#734D20] border-[#F9D769]/50 hover:bg-[#F9D769]/20"
+                  className="text-secondary border-primary/50 hover:bg-primary/20"
                 >
                   Budget
                 </FilterDropdownMenu>
@@ -671,7 +671,7 @@ const Campaigns = () => {
                       checked: columnFilters.duration === 'long'
                     }
                   ]}
-                  className="text-[#734D20] border-[#F9D769]/50 hover:bg-[#F9D769]/20"
+                  className="text-secondary border-primary/50 hover:bg-primary/20"
                 >
                   Duration
                 </FilterDropdownMenu>
@@ -720,7 +720,7 @@ const Campaigns = () => {
                       {visibleColumns.includes("Title") && (
                         <TableCell>
                           <div>
-                            <div className="font-semibold text-[#734D20] text-sm">{campaign.title}</div>
+                            <div className="font-semibold text-secondary text-sm">{campaign.title}</div>
                             <div className="text-xs text-gray-600 truncate max-w-[250px]">
                               {campaign.description}
                             </div>
@@ -733,17 +733,17 @@ const Campaigns = () => {
                         </TableCell>
                       )}
                       {visibleColumns.includes("Start Date") && (
-                        <TableCell className="whitespace-nowrap text-sm text-[#734D20]">
+                        <TableCell className="whitespace-nowrap text-sm text-secondary">
                           {format(new Date(campaign.start_date), 'MMM dd, yyyy')}
                         </TableCell>
                       )}
                       {visibleColumns.includes("End Date") && (
-                        <TableCell className="whitespace-nowrap text-sm text-[#734D20]">
+                        <TableCell className="whitespace-nowrap text-sm text-secondary">
                           {format(new Date(campaign.end_date), 'MMM dd, yyyy')}
                         </TableCell>
                       )}
                       {visibleColumns.includes("Budget") && (
-                        <TableCell className="whitespace-nowrap text-sm text-[#734D20] font-medium">
+                        <TableCell className="whitespace-nowrap text-sm text-secondary font-medium">
                           {campaign.budget ? `$${campaign.budget}` : 'Not specified'}
                         </TableCell>
                       )}
@@ -753,7 +753,7 @@ const Campaigns = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => handleViewCampaign(campaign)}
-                            className="h-8 text-[#734D20] border-[#F9D769]/50 hover:bg-[#F9D769]/20"
+                            className="h-8 text-secondary border-primary/50 hover:bg-primary/20"
                           >
                             <FiEye className="mr-2 h-3 w-3" />
                             View
@@ -769,11 +769,11 @@ const Campaigns = () => {
                       className="text-center py-12"
                     >
                       <div className="flex flex-col items-center justify-center space-y-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-[#F9D769]/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
-                          <FiBriefcase className="w-8 h-8 text-[#734D20]" />
+                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
+                          <FiBriefcase className="w-8 h-8 text-secondary" />
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-lg font-semibold text-[#734D20]">
+                          <h3 className="text-lg font-semibold text-secondary">
                             No Campaigns Available
                           </h3>
                           <p className="text-sm text-gray-600 max-w-md">
@@ -802,7 +802,7 @@ const Campaigns = () => {
                 <select
                   value={itemsPerPage}
                   onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-transparent"
+                  className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value={5}>5</option>
                   <option value={10}>10</option>

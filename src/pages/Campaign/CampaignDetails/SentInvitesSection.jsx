@@ -46,10 +46,10 @@ const SentInviteCard = ({ invite, onResendInvite, onCancelInvite, isLastOdd = fa
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-300 to-yellow-400 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-300 to-primary-scale-400 flex items-center justify-center">
               <FiUser className="w-6 h-6 text-white" />
             </div>
-            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full border border-white"></div>
+            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary-scale-500 rounded-full border border-white"></div>
           </div>
           <div>
             <h3 className="font-semibold text-sm text-gray-900 mb-1">
@@ -193,7 +193,7 @@ export default function SentInvitesSection({
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <FiClock className="w-4 h-4 text-yellow-600" />
+            <FiClock className="w-4 h-4 text-primary-scale-600" />
             <span className="text-xs font-medium text-gray-700">
               {sentInvitesStats.pendingInvites} pending
             </span>
@@ -226,7 +226,7 @@ export default function SentInvitesSection({
               checked: sentInvitesFilters.status === 'rejected'
             }
           ]}
-          className="text-[#734D20] border-[#F9D769]/50 hover:bg-[#F9D769]/20"
+          className="text-secondary border-primary/50 hover:bg-primary/20"
         >
           <span className="hidden sm:inline">Invite Status</span>
           <span className="sm:hidden">Status</span>
@@ -257,7 +257,7 @@ export default function SentInvitesSection({
         ) : (
           <div className="col-span-full text-center py-12">
             <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-yellow-100 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-primary-scale-100 rounded-full flex items-center justify-center">
                 <FiMail className="w-8 h-8 text-orange-600" />
               </div>
               <div className="space-y-2">
@@ -282,7 +282,7 @@ export default function SentInvitesSection({
               <select
                 value={sentInvitesItemsPerPage}
                 onChange={(e) => handleSentInvitesItemsPerPageChange(e.target.value)}
-                className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-transparent"
+                className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
                 <option value={6}>6</option>
                 <option value={12}>12</option>

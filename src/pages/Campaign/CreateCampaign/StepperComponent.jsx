@@ -17,7 +17,7 @@ const StepperComponent = ({ steps, activeStep }) => {
                     index < activeStep
                       ? "bg-green-500 text-white"
                       : index === activeStep
-                      ? "bg-yellow-800 text-xs text-white font-semibold"
+                      ? "bg-secondary text-xs text-white font-semibold"
                       : "border-2 border-gray-300 text-gray-500 text-xs font-normal"
                   }`}
                 >

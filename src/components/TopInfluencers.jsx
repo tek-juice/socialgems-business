@@ -145,7 +145,7 @@ const Avatar = memo(({
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#F9D769] to-[#734D20] rounded-full flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-full h-full bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold text-sm">
             {avatar.initials}
           </div>
         )}
@@ -256,7 +256,7 @@ const AvatarGroup = memo(({
                 width: `${AVATAR_CONFIG.size}px`,
                 height: `${AVATAR_CONFIG.size}px`
               }}
-              className="bg-gradient-to-r from-[#F9D769] to-[#734D20] animate-pulse rounded-full opacity-50"
+              className="bg-gradient-to-r from-primary to-secondary animate-pulse rounded-full opacity-50"
             />
           ))}
         </div>
@@ -268,7 +268,7 @@ const AvatarGroup = memo(({
     return (
       <div className="flex items-center justify-center p-8 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-r from-[#F9D769] to-[#734D20] rounded-full mx-auto mb-3 flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full mx-auto mb-3 flex items-center justify-center">
             <FiPlus className="w-6 h-6 text-white" />
           </div>
           <p className="text-gray-600 text-sm font-medium">No influencers data available</p>

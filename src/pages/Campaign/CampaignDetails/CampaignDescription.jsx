@@ -36,7 +36,7 @@ export default function CampaignDescription({ description }) {
           {preview.isTruncated && (
             <button
               onClick={() => setExpanded(true)}
-              className="text-[#734D20] text-xs font-bold"
+              className="text-secondary text-xs font-bold"
             >
               Read More
             </button>
@@ -50,7 +50,7 @@ export default function CampaignDescription({ description }) {
           />
           <button
             onClick={() => setExpanded(false)}
-            className="mt-2 text-[#734D20] text-xs font-bold"
+            className="mt-2 text-secondary text-xs font-bold"
           >
             Read Less
           </button>

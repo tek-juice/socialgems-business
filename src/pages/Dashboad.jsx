@@ -63,7 +63,7 @@ const CampaignCard = ({ campaign, onClick }) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-700 border-green-200';
       case 'Completed': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Planned': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'Planned': return 'bg-primary-scale-100 text-primary-scale-700 border-primary-scale-200';
       case 'Closed': return 'bg-gray-100 text-gray-700 border-gray-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -80,8 +80,8 @@ const CampaignCard = ({ campaign, onClick }) => {
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#F9D769] to-[#E8C547] flex items-center justify-center">
-            <FiBriefcase className="w-4 h-4 text-[#734D20]" />
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-[#E8C547] flex items-center justify-center">
+            <FiBriefcase className="w-4 h-4 text-secondary" />
           </div>
           <h4 className="font-semibold text-gray-900 text-sm">
             {truncateText(campaign.title || 'Untitled Campaign', 20)}
@@ -115,7 +115,7 @@ const CampaignTable = ({ campaigns, onCampaignClick }) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-700';
       case 'Completed': return 'bg-blue-100 text-blue-700';
-      case 'Planned': return 'bg-yellow-100 text-yellow-700';
+      case 'Planned': return 'bg-primary-scale-100 text-primary-scale-700';
       case 'Closed': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -145,8 +145,8 @@ const CampaignTable = ({ campaigns, onCampaignClick }) => {
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-[#F9D769] to-[#E8C547] flex items-center justify-center flex-shrink-0">
-                        <FiBriefcase className="w-3 h-3 text-[#734D20]" />
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-[#E8C547] flex items-center justify-center flex-shrink-0">
+                        <FiBriefcase className="w-3 h-3 text-secondary" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 text-sm">
@@ -173,7 +173,7 @@ const CampaignTable = ({ campaigns, onCampaignClick }) => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center gap-1 text-[#734D20] hover:text-[#5A3C19] text-xs font-medium"
+                      className="flex items-center gap-1 text-secondary hover:text-[#5A3C19] text-xs font-medium"
                     >
                       <span>View</span>
                       <FiArrowUpRight className="w-3 h-3" />
@@ -210,15 +210,15 @@ const CampaignGrid = ({ campaigns, onCampaignClick }) => {
 // ============= BADGE COMPONENT =============
 const Badge = ({ className, variant = "default", ...props }) => {
   const variants = {
-    default: "border-transparent bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] hover:from-[#E8C547] hover:to-[#F9D769]",
-    secondary: "border-transparent bg-[#734D20] text-white hover:bg-[#734D20]/80",
-    outline: "text-[#734D20] border-[#F9D769]",
+    default: "border-transparent bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary",
+    secondary: "border-transparent bg-secondary text-white hover:bg-secondary/80",
+    outline: "text-secondary border-primary",
   };
 
   return (
     <div 
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:ring-offset-2",
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
         variants[variant],
         className
       )} 
@@ -375,7 +375,7 @@ const Avatar = memo(({
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#F9D769] to-[#734D20] rounded-full flex items-center justify-center text-white font-bold text-sm">
+          <div className="w-full h-full bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold text-sm">
             {avatar.initials}
           </div>
         )}
@@ -453,7 +453,7 @@ const AvatarGroup = memo(({
                 width: `${AVATAR_CONFIG.size}px`,
                 height: `${AVATAR_CONFIG.size}px`
               }}
-              className="bg-gradient-to-r from-[#F9D769] to-[#734D20] animate-pulse rounded-full opacity-50"
+              className="bg-gradient-to-r from-primary to-secondary animate-pulse rounded-full opacity-50"
             />
           ))}
         </div>
@@ -465,7 +465,7 @@ const AvatarGroup = memo(({
     return (
       <div className="flex items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
         <div className="text-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-[#F9D769] to-[#734D20] rounded-full mx-auto mb-3 flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full mx-auto mb-3 flex items-center justify-center">
             <FiPlus className="w-6 h-6 text-white" />
           </div>
           <p className="text-gray-600 text-sm font-medium">No influencers data available</p>
@@ -535,7 +535,7 @@ const TopInfluencers = memo(({ influencersData, loading, onRefresh }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-4">
-        <FiStar className="w-6 h-6 text-[#734D20]" />
+        <FiStar className="w-6 h-6 text-secondary" />
         <div>
           <h3 className="text-lg font-semibold text-gray-800">Top Performers</h3>
           <p className="text-gray-600 text-sm">Most active campaign participants</p>
@@ -904,7 +904,7 @@ export default function Dashboard() {
               disabled={refreshing}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] rounded-xl hover:from-[#E8C547] hover:to-[#F9D769] transition-all duration-300 font-medium shadow-lg ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-[#E8C547] text-secondary rounded-xl hover:from-[#E8C547] hover:to-primary transition-all duration-300 font-medium shadow-lg ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <motion.div
                 animate={refreshing ? { rotate: 360 } : { rotate: 0 }}
@@ -922,35 +922,35 @@ export default function Dashboard() {
             {/* Campaign Overview - Takes 2/3 width */}
             <motion.div 
               whileHover={{ y: -5 }}
-              className="bg-gradient-to-br from-[#F9D769] to-[#E8C547] rounded-xl lg:col-span-2 p-8 flex justify-between flex-col shadow-lg min-h-[320px]"
+              className="bg-gradient-to-br from-primary to-[#E8C547] rounded-xl lg:col-span-2 p-8 flex justify-between flex-col shadow-lg min-h-[320px]"
             >
-              <FiBriefcase className="w-5 h-5 sm:w-8 sm:h-8 stroke-1 text-[#734D20]" />
+              <FiBriefcase className="w-5 h-5 sm:w-8 sm:h-8 stroke-1 text-secondary" />
               <div className="flex flex-col">
-                <h3 className="text-2xl lg:text-3xl tracking-tight font-bold text-[#734D20] mb-3">
+                <h3 className="text-2xl lg:text-3xl tracking-tight font-bold text-secondary mb-3">
                   Campaign Overview
                 </h3>
-                <p className="text-[#734D20]/80 max-w-md text-base leading-relaxed mb-6">
+                <p className="text-secondary/80 max-w-md text-base leading-relaxed mb-6">
                   Monitor your active campaigns, completed tasks, and overall performance metrics in real-time.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-white/25 backdrop-blur-sm rounded-xl p-6">
-                    <p className="text-[#734D20]/70 text-sm font-medium mb-2">Total Campaigns</p>
-                    <p className="text-3xl font-bold text-[#734D20]">
+                    <p className="text-secondary/70 text-sm font-medium mb-2">Total Campaigns</p>
+                    <p className="text-3xl font-bold text-secondary">
                       <AnimatedCounter value={brandStats.total_campaigns} />
                     </p>
                     <div className="flex items-center mt-2">
-                      <FiTrendingUp className="w-4 h-4 text-[#734D20]/70 mr-1" />
-                      <span className="text-[#734D20]/70 text-sm font-medium">+12% this month</span>
+                      <FiTrendingUp className="w-4 h-4 text-secondary/70 mr-1" />
+                      <span className="text-secondary/70 text-sm font-medium">+12% this month</span>
                     </div>
                   </div>
                   <div className="bg-white/25 backdrop-blur-sm rounded-xl p-6">
-                    <p className="text-[#734D20]/70 text-sm font-medium mb-2">Active Users</p>
-                    <p className="text-3xl font-bold text-[#734D20]">
+                    <p className="text-secondary/70 text-sm font-medium mb-2">Active Users</p>
+                    <p className="text-3xl font-bold text-secondary">
                       <AnimatedCounter value={brandStats.total_completed_users} />
                     </p>
                     <div className="flex items-center mt-2">
-                      <FiUsers className="w-4 h-4 text-[#734D20]/70 mr-1" />
-                      <span className="text-[#734D20]/70 text-sm font-medium">Engaged users</span>
+                      <FiUsers className="w-4 h-4 text-secondary/70 mr-1" />
+                      <span className="text-secondary/70 text-sm font-medium">Engaged users</span>
                     </div>
                   </div>
                 </div>
@@ -962,7 +962,7 @@ export default function Dashboard() {
               {/* Total Investment Card */}
               <motion.div 
                 whileHover={{ y: -5 }}
-                className="bg-[#734D20] rounded-xl p-6 flex justify-between flex-col shadow-lg min-h-[150px]"
+                className="bg-secondary rounded-xl p-6 flex justify-between flex-col shadow-lg min-h-[150px]"
               >
                 <FiDollarSign className="w-6 h-6 stroke-1 text-white" />
                 <div className="flex flex-col">
@@ -970,7 +970,7 @@ export default function Dashboard() {
                   <p className="text-white/80 text-sm mb-3">
                     Your total campaign spend
                   </p>
-                  <p className="text-2xl font-bold text-[#F9D769]">
+                  <p className="text-2xl font-bold text-primary">
                     $<AnimatedCounter value={brandStats.total_amount_spent} />
                   </p>
                 </div>
@@ -981,13 +981,13 @@ export default function Dashboard() {
                 whileHover={{ y: -5 }}
                 className="bg-white rounded-xl p-6 flex justify-between flex-col shadow-lg border border-gray-200 min-h-[150px]"
               >
-                <FiCheckCircle className="w-6 h-6 stroke-1 text-[#734D20]" />
+                <FiCheckCircle className="w-6 h-6 stroke-1 text-secondary" />
                 <div className="flex flex-col">
                   <h3 className="text-lg tracking-tight font-semibold text-gray-900 mb-1">Completed Tasks</h3>
                   <p className="text-gray-600 text-sm mb-3">
                     Successfully completed campaigns
                   </p>
-                  <p className="text-2xl font-bold text-[#734D20]">
+                  <p className="text-2xl font-bold text-secondary">
                     <AnimatedCounter value={brandStats.total_completed_users} />
                   </p>
                 </div>
@@ -1019,7 +1019,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <FiGrid className="w-5 h-5 stroke-1 text-[#734D20]" />
+                  <FiGrid className="w-5 h-5 stroke-1 text-secondary" />
                   <div>
                     <h3 className="text-xl tracking-tight font-semibold text-gray-900">Campaign History</h3>
                     <p className="text-gray-600 text-sm">
@@ -1038,8 +1038,8 @@ export default function Dashboard() {
                         className={cn(
                           "px-3 py-1 rounded-md text-xs font-medium transition-colors",
                           viewMode === 'table' 
-                            ? "bg-white text-[#734D20] shadow-sm" 
-                            : "text-gray-600 hover:text-[#734D20]"
+                            ? "bg-white text-secondary shadow-sm" 
+                            : "text-gray-600 hover:text-secondary"
                         )}
                       >
                         <FiFileText className="w-3 h-3" />
@@ -1049,8 +1049,8 @@ export default function Dashboard() {
                         className={cn(
                           "px-3 py-1 rounded-md text-xs font-medium transition-colors",
                           viewMode === 'grid' 
-                            ? "bg-white text-[#734D20] shadow-sm" 
-                            : "text-gray-600 hover:text-[#734D20]"
+                            ? "bg-white text-secondary shadow-sm" 
+                            : "text-gray-600 hover:text-secondary"
                         )}
                       >
                         <FiGrid className="w-3 h-3" />
@@ -1061,7 +1061,7 @@ export default function Dashboard() {
                     onClick={handleCreateCampaign}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] rounded-lg hover:from-[#E8C547] hover:to-[#F9D769] transition-all duration-300 font-medium text-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-[#E8C547] text-secondary rounded-lg hover:from-[#E8C547] hover:to-primary transition-all duration-300 font-medium text-sm"
                   >
                     <FiPlus className="w-4 h-4" />
                     Add Campaign
@@ -1071,7 +1071,7 @@ export default function Dashboard() {
                       onClick={handleViewCampaigns}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="flex items-center gap-2 px-4 py-2 border border-[#F9D769] text-[#734D20] rounded-lg hover:bg-[#F9D769]/10 transition-all duration-300 font-medium text-sm"
+                      className="flex items-center gap-2 px-4 py-2 border border-primary text-secondary rounded-lg hover:bg-primary/10 transition-all duration-300 font-medium text-sm"
                     >
                       <FiEye className="w-4 h-4" />
                       View All
@@ -1084,10 +1084,10 @@ export default function Dashboard() {
                 {campaigns.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[#F9D769]/20 to-[#E8C547]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <FiBriefcase className="w-8 h-8 text-[#734D20]" />
+                      <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FiBriefcase className="w-8 h-8 text-secondary" />
                       </div>
-                      <h4 className="text-lg font-semibold text-[#734D20] mb-2">No Campaigns Yet</h4>
+                      <h4 className="text-lg font-semibold text-secondary mb-2">No Campaigns Yet</h4>
                       <p className="text-gray-500 text-sm mb-4 max-w-md">
                         Start your marketing journey by creating your first campaign. Track performance and engage with your audience.
                       </p>
@@ -1095,7 +1095,7 @@ export default function Dashboard() {
                         onClick={handleCreateCampaign}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#F9D769] to-[#E8C547] text-[#734D20] rounded-lg hover:from-[#E8C547] hover:to-[#F9D769] transition-all duration-300 font-medium mx-auto"
+                        className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-[#E8C547] text-secondary rounded-lg hover:from-[#E8C547] hover:to-primary transition-all duration-300 font-medium mx-auto"
                       >
                         <FiPlus className="w-4 h-4" />
                         Create Your First Campaign
@@ -1153,7 +1153,7 @@ export default function Dashboard() {
                       whileTap={{ scale: 0.98 }}
                       className="flex items-center gap-4 p-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-left"
                     >
-                      <action.icon className="w-5 h-5 text-[#F9D769] flex-shrink-0" />
+                      <action.icon className="w-5 h-5 text-primary flex-shrink-0" />
                       <div>
                         <p className="font-medium text-white text-sm">{action.label}</p>
                         <p className="text-gray-400 text-xs">{action.description}</p>

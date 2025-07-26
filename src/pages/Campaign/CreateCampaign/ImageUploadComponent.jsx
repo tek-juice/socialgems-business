@@ -190,7 +190,7 @@ const ImageUploadComponent = ({ onFileChange, currentFile, existingImageUrl }) =
           onDrop={handleDrop}
           className={cn(
             "flex h-64 cursor-pointer flex-col items-center justify-center gap-4 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:bg-gray-100",
-            isDragging && "border-yellow-400 bg-yellow-50",
+            isDragging && "border-primary-scale-400 bg-yellow-50",
           )}
         >
           <div className="rounded-full bg-white p-3 shadow-sm">

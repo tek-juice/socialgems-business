@@ -15,7 +15,7 @@ import {
   FiExternalLink,
 } from 'react-icons/fi';
 
-import { MdTask } from "react-icons/md";
+import { MdTask, MdArrowBackIosNew } from "react-icons/md";
 
 // Import components
 import { SkeletonCard, SkeletonStatsCard } from './SkeletonComponents';
@@ -291,6 +291,11 @@ export default function CampaignDetailsPage() {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedApplications, setSelectedApplications] = useState(new Set());
 
+  // Refs for scroll synchronization
+  const leftColumnRef = useRef(null);
+  const rightColumnRef = useRef(null);
+  const [scrollSync, setScrollSync] = useState({ leftTaller: false, rightTaller: false });
+
   // Helper function to get country name from ISO code
   const getCountryName = useCallback((isoCode) => {
     if (!countries.length || !isoCode) return isoCode || 'Unknown';
@@ -384,9 +389,7 @@ export default function CampaignDetailsPage() {
   // Helper function to get influencer details - UPDATED FOR NEW RESPONSE STRUCTURE
   const getInfluencerDetails = useCallback(async (userId) => {
     try {
-      console.log('🔍 Fetching influencer details for user ID:', userId);
       const response = await get(`users/influencerDetails/${userId}`);
-      console.log('✅ Influencer details response:', response);
       
       if (response?.status === 200 && response?.data) {
         // Transform the response to include additional computed fields
@@ -417,12 +420,10 @@ export default function CampaignDetailsPage() {
           })).filter(stat => stat.followers > 0)
         };
         
-        console.log('📊 Processed influencer data:', influencerData);
         return influencerData;
       }
       return null;
     } catch (error) {
-      console.error('❌ Error fetching influencer details:', error);
       return null;
     }
   }, [getCountryName]);
@@ -430,17 +431,11 @@ export default function CampaignDetailsPage() {
   // Function to fetch campaign applications - MATCH API STRUCTURE EXACTLY
   const fetchCampaignApplications = useCallback(async (campaignId) => {
     try {
-      console.log('📋 Fetching campaign applications for ID:', campaignId);
       const response = await get(`campaigns/get-applications/${campaignId}`);
-      console.log('📋 Campaign applications response:', response);
       
       if (response?.status === 200 && response?.data) {
-        console.log('✅ Campaign applications data:', response.data);
-        
         // Transform the API response to match your exact data structure
         const transformedData = response.data.map(member => {
-          console.log('📋 Processing member for tasks:', member.user_id, 'Tasks:', member.tasks);
-          
           return {
             // Original fields from API exactly as they are
             campaign_id: member.campaign_id,
@@ -482,17 +477,13 @@ export default function CampaignDetailsPage() {
           };
         });
         
-        console.log('🔄 Transformed applications data:', transformedData);
         return transformedData;
       } else if (response?.status === 404) {
-        console.log('⚠️ No applications found for campaign:', campaignId);
         return [];
       } else {
-        console.log('❌ Unexpected response for campaign applications:', response);
         return [];
       }
     } catch (error) {
-      console.error('❌ Error fetching campaign applications:', error);
       return [];
     }
   }, [getCountryName]);
@@ -500,21 +491,16 @@ export default function CampaignDetailsPage() {
   // Function to fetch actioned influencers
   const fetchActionedInfluencers = useCallback(async (campaignId) => {
     try {
-      console.log('👥 Fetching actioned influencers for ID:', campaignId);
       const response = await get(`campaigns/getActionedInfluencers/${campaignId}`);
-      console.log('👥 Actioned influencers response:', response);
       
       if (response?.status === 200 && response?.data) {
-        console.log('✅ Actioned influencers data:', response.data);
         setActionedInfluencers(response.data);
         return response.data;
       } else {
-        console.log('⚠️ No actioned influencers found for campaign:', campaignId);
         setActionedInfluencers([]);
         return [];
       }
     } catch (error) {
-      console.error('❌ Error fetching actioned influencers:', error);
       setActionedInfluencers([]);
       return [];
     }
@@ -523,28 +509,127 @@ export default function CampaignDetailsPage() {
   // Function to fetch campaign tasks separately if needed
   const fetchCampaignTasks = useCallback(async (campaignId) => {
     try {
-      console.log('📋 Fetching campaign tasks for ID:', campaignId);
       setTasksLoading(true);
       
       // Try to get tasks from campaign endpoint
       const response = await get(`campaigns/tasks/${campaignId}`);
-      console.log('📋 Campaign tasks response:', response);
       
       if (response?.status === 200 && response?.data) {
-        console.log('✅ Campaign tasks loaded:', response.data);
         setCampaignTasks(response.data);
         return response.data;
       } else {
-        console.log('⚠️ No tasks endpoint available, using campaign data');
         return [];
       }
     } catch (error) {
-      console.error('❌ Error fetching campaign tasks:', error);
       return [];
     } finally {
       setTasksLoading(false);
     }
   }, []);
+
+  // FIXED: Enhanced task computation - moved before scroll sync to fix initialization error
+  const allTasks = useMemo(() => {
+    let computedTasks = [];
+    
+    if (isDraft) {
+      // For draft campaigns, prioritize campaign.tasks over campaignTasks
+      if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
+        computedTasks = campaign.tasks;
+      } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
+        computedTasks = campaignTasks;
+      } else {
+        computedTasks = [];
+      }
+    } else {
+      // For active campaigns, extract tasks from actionedMembers
+      const allMemberTasks = [];
+      actionedMembers.forEach((member) => {
+        if (member.tasks && Array.isArray(member.tasks) && member.tasks.length > 0) {
+          member.tasks.forEach((task) => {
+            allMemberTasks.push(task);
+          });
+        }
+      });
+      
+      if (allMemberTasks.length > 0) {
+        // Remove duplicate tasks by task_id
+        const uniqueTasks = allMemberTasks.reduce((acc, task) => {
+          const taskId = task.task_id || task.id || task.campaign_task_id;
+          if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
+            acc.push(task);
+          }
+          return acc;
+        }, []);
+        
+        computedTasks = uniqueTasks;
+      } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
+        computedTasks = campaignTasks;
+      } else if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
+        computedTasks = campaign.tasks;
+      } else {
+        computedTasks = [];
+      }
+    }
+    
+    // Ensure tasks is always an array
+    if (!Array.isArray(computedTasks)) {
+      computedTasks = [];
+    }
+    
+    return computedTasks;
+  }, [isDraft, campaignTasks, actionedMembers, campaign?.tasks]);
+
+  // Calculate stats
+  const stats = {
+    totalMembers: actionedMembers.length,
+    completedActions: actionedMembers.filter(m => m.action_status === 'completed').length,
+    paidMembers: actionedMembers.filter(m => m.application_status === 'accepted').length,
+    pendingPayments: actionedMembers.filter(m => m.application_status === 'submitted').length,
+    totalAmount: actionedMembers.reduce((sum, m) => sum + parseFloat(m.payable_amount || 0), 0)
+  };
+
+  // Get user avatars
+  const hasActiveInfluencers = actionedMembers && actionedMembers.length > 0;
+  const influencerAvatars = hasActiveInfluencers 
+    ? actionedMembers.map(user => user.profile_pic || user.userProfile?.profile_pic).filter(Boolean)
+    : [];
+
+  // Professional scroll synchronization logic - moved after allTasks definition
+  useEffect(() => {
+    const calculateScrollBehavior = () => {
+      if (!leftColumnRef.current || !rightColumnRef.current) return;
+
+      const leftHeight = leftColumnRef.current.scrollHeight;
+      const rightHeight = rightColumnRef.current.scrollHeight;
+      
+      const leftTaller = leftHeight > rightHeight + 200; // 200px threshold
+      const rightTaller = rightHeight > leftHeight + 200; // 200px threshold
+      
+      setScrollSync({ leftTaller, rightTaller });
+    };
+
+    // Calculate on mount and when content changes
+    calculateScrollBehavior();
+    
+    // Recalculate on window resize
+    const handleResize = () => {
+      setTimeout(calculateScrollBehavior, 100);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    // Recalculate when tasks accordion opens/closes
+    const taskButtons = document.querySelectorAll('[data-task-toggle]');
+    taskButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        setTimeout(calculateScrollBehavior, 350); // After animation
+      });
+    });
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [campaign, actionedMembers, allTasks, hasActiveInfluencers]);
 
   // Fetch industries and countries data
   useEffect(() => {
@@ -563,7 +648,7 @@ export default function CampaignDetailsPage() {
           setCountries(countriesResponse.data);
         }
       } catch (error) {
-        console.error('Error fetching static data:', error);
+        // Handle error silently
       }
     };
 
@@ -575,19 +660,15 @@ export default function CampaignDetailsPage() {
     const fetchSentInvites = async () => {
       try {
         setSentInvitesLoading(true);
-        console.log('📧 Fetching all sent invites...');
         
         const response = await get('campaigns/sentInvites');
-        console.log('📧 All sent invites response:', response);
         
         if (response?.status === 200 && response?.data) {
           setAllSentInvites(response.data);
-          console.log('📧 All sent invites loaded:', response.data.length);
         } else {
           setAllSentInvites([]);
         }
       } catch (error) {
-        console.error('❌ Error fetching sent invites:', error);
         setAllSentInvites([]);
       } finally {
         setSentInvitesLoading(false);
@@ -603,49 +684,38 @@ export default function CampaignDetailsPage() {
     
     const fetchCampaignAndTasks = async () => {
       if (!id) {
-        console.error('❌ No campaign ID provided');
         return;
       }
 
       try {
         setLoading(true);
-        console.log('🔍 Starting campaign fetch for ID:', id);
         
         if (!campaign) {
-          console.log('📋 No campaign data from navigation, fetching from API...');
-          
           // First, try to get campaign as draft
           let campaignData = null;
           let isDraftCampaign = false;
           
           try {
-            console.log('📝 Trying to fetch as draft campaign...');
             const draftResponse = await get(`campaigns/getDraftCampaign/${id}`);
-            console.log('📝 Draft campaign response:', draftResponse);
             
             if (draftResponse?.data) {
               campaignData = draftResponse.data;
               isDraftCampaign = true;
-              console.log('✅ Draft campaign loaded:', draftResponse.data);
             }
           } catch (draftError) {
-            console.log('⚠️ Not a draft campaign, trying regular campaign endpoint...');
+            // Not a draft campaign, try regular campaign endpoint
           }
           
           // If not found as draft, try regular campaign endpoint
           if (!campaignData) {
             try {
-              console.log('🎯 Trying to fetch as regular campaign...');
               const campaignResponse = await get(`campaigns/${id}`);
-              console.log('🎯 Regular campaign response:', campaignResponse);
               
               if (campaignResponse?.data) {
                 campaignData = campaignResponse.data;
                 isDraftCampaign = false;
-                console.log('✅ Regular campaign loaded:', campaignResponse.data);
               }
             } catch (campaignError) {
-              console.error('❌ Error fetching regular campaign:', campaignError);
               toast.error('Campaign not found');
               return;
             }
@@ -656,46 +726,39 @@ export default function CampaignDetailsPage() {
             setIsDraft(isDraftCampaign);
             
             // Enhanced task handling - check multiple sources
-            console.log('📋 Processing campaign tasks...');
             let tasksToSet = [];
             
             // Priority 1: tasks array directly in campaign data
             if (campaignData.tasks && Array.isArray(campaignData.tasks) && campaignData.tasks.length > 0) {
-              console.log('📋 Found tasks in campaign.tasks:', campaignData.tasks);
               tasksToSet = campaignData.tasks;
             }
             // Priority 2: tasks in campaign_tasks property
             else if (campaignData.campaign_tasks && Array.isArray(campaignData.campaign_tasks) && campaignData.campaign_tasks.length > 0) {
-              console.log('📋 Found tasks in campaign.campaign_tasks:', campaignData.campaign_tasks);
               tasksToSet = campaignData.campaign_tasks;
             }
             // Priority 3: Try to fetch tasks separately
             else {
-              console.log('📋 No tasks in campaign data, trying separate fetch...');
               try {
                 const separateTasks = await fetchCampaignTasks(campaignData.campaign_id);
                 if (separateTasks && separateTasks.length > 0) {
                   tasksToSet = separateTasks;
                 }
               } catch (taskError) {
-                console.log('⚠️ Could not fetch tasks separately:', taskError);
+                // Could not fetch tasks separately
               }
             }
             
-            // Set the tasks with debugging
-            console.log('📋 Final tasks to set:', tasksToSet);
+            // Set the tasks
             setCampaignTasks(tasksToSet);
             
-            // If still no tasks, create a default one for debugging
+            // If still no tasks, set empty array
             if (tasksToSet.length === 0) {
-              console.log('⚠️ No tasks found anywhere, setting empty array');
               setCampaignTasks([]);
             }
           }
         }
         
       } catch (error) {
-        console.error('❌ Error in campaign fetch process:', error);
         toast.error('Failed to load campaign data');
       } finally {
         setLoading(false);
@@ -709,28 +772,17 @@ export default function CampaignDetailsPage() {
   useEffect(() => {
     const fetchApplicationsAndActionedInfluencers = async () => {
       if (campaign?.campaign_id && allSentInvites.length > 0) {
-        console.log('🔍 Checking if campaign has invites...', {
-          campaignId: campaign.campaign_id,
-          campaignHasInvites,
-          allSentInvitesCount: allSentInvites.length
-        });
-        
         if (campaignHasInvites) {
-          console.log('📧 Campaign has invites, fetching applications...');
           const applicationsData = await fetchCampaignApplications(campaign.campaign_id);
           if (applicationsData && applicationsData.length > 0) {
-            console.log('✅ Applications loaded:', applicationsData);
             setActionedMembers(applicationsData);
           } else {
-            console.log('⚠️ No applications found despite having invites');
             setActionedMembers([]);
           }
 
           // Fetch actioned influencers after applications
-          console.log('👥 Fetching actioned influencers...');
           await fetchActionedInfluencers(campaign.campaign_id);
         } else {
-          console.log('📭 No invites found for this campaign');
           setActionedMembers([]);
           setActionedInfluencers([]);
         }
@@ -761,7 +813,6 @@ export default function CampaignDetailsPage() {
         
         return `${year}-${month}-${day}`;
       } catch (error) {
-        console.error('Error formatting date:', error);
         return '';
       }
     };
@@ -769,13 +820,10 @@ export default function CampaignDetailsPage() {
     // Helper function to properly format tasks for the form
     const formatTasksForForm = (tasks) => {
       if (!tasks || !Array.isArray(tasks)) {
-        console.log('No tasks to format or invalid tasks array:', tasks);
         return [];
       }
       
-      return tasks.map((task, index) => {
-        console.log(`Formatting task ${index}:`, task);
-        
+      return tasks.map((task) => {
         // Handle different possible property names from API
         const formattedTask = {
           task: task.task || task.title || task.name || '',
@@ -786,17 +834,14 @@ export default function CampaignDetailsPage() {
           repeats_after: task.repeats_after || task.frequency || 'daily'
         };
         
-        console.log(`Formatted task ${index}:`, formattedTask);
         return formattedTask;
       });
     };
 
-    // FIXED: Get tasks from the right source - prioritize campaign.tasks for draft
+    // Get tasks from the right source - prioritize campaign.tasks for draft
     const tasksToUse = isDraft && campaign?.tasks && campaign.tasks.length > 0
       ? campaign.tasks 
       : (campaignTasks && campaignTasks.length > 0 ? campaignTasks : []);
-    
-    console.log('Tasks source data for editing:', tasksToUse);
 
     // Use the existing campaign data that's already loaded
     const editData = {
@@ -814,8 +859,6 @@ export default function CampaignDetailsPage() {
       min_level_id: campaign.min_level_id || 3,
       tasks: formatTasksForForm(tasksToUse)
     };
-
-    console.log('Final edit data being passed:', editData);
     
     // Navigate to create campaign with edit data
     navigate('/campaigns/create', {
@@ -882,7 +925,6 @@ export default function CampaignDetailsPage() {
         toast.error(response?.message || 'Failed to activate campaign');
       }
     } catch (error) {
-      console.error('Error activating campaign:', error);
       toast.error('Failed to activate campaign');
     } finally {
       setIsProcessing(false);
@@ -893,7 +935,6 @@ export default function CampaignDetailsPage() {
   const handleBatchProcessApplications = async (data) => {
     setIsProcessing(true);
     try {
-      console.log('📤 Batch processing applications with data:', data);
       const response = await post('campaigns/batch-process-applications', data);
       
       if (response?.status === 200 || response?.status === 204) {
@@ -923,7 +964,6 @@ export default function CampaignDetailsPage() {
         toast.error('Failed to process applications');
       }
     } catch (error) {
-      console.error('Error processing applications:', error);
       toast.error('Failed to process applications');
     } finally {
       setIsProcessing(false);
@@ -939,7 +979,6 @@ export default function CampaignDetailsPage() {
       return;
     }
     
-    console.log('✅ Accepting application from modal for member:', member);
     handleBatchProcessApplications({
       campaign_id: campaign.campaign_id,
       accepted_applications: [member.user_id],
@@ -952,7 +991,6 @@ export default function CampaignDetailsPage() {
 
   // Handle reject single application from modal
   const handleRejectApplicationFromModal = useCallback((member) => {
-    console.log('❌ Rejecting application from modal for member:', member);
     handleBatchProcessApplications({
       campaign_id: campaign.campaign_id,
       accepted_applications: [],
@@ -963,105 +1001,6 @@ export default function CampaignDetailsPage() {
     setUserProfileModal(false);
   }, [campaign, handleBatchProcessApplications]);
 
-  // Calculate stats
-  const stats = {
-    totalMembers: actionedMembers.length,
-    completedActions: actionedMembers.filter(m => m.action_status === 'completed').length,
-    paidMembers: actionedMembers.filter(m => m.application_status === 'accepted').length,
-    pendingPayments: actionedMembers.filter(m => m.application_status === 'submitted').length,
-    totalAmount: actionedMembers.reduce((sum, m) => sum + parseFloat(m.payable_amount || 0), 0)
-  };
-
-  // Get user avatars
-  const hasActiveInfluencers = actionedMembers && actionedMembers.length > 0;
-  const influencerAvatars = hasActiveInfluencers 
-    ? actionedMembers.map(user => user.profile_pic || user.userProfile?.profile_pic).filter(Boolean)
-    : [];
-
-  // FIXED: Enhanced task computation with better member tasks extraction
-  const allTasks = useMemo(() => {
-    console.log('🔄 Computing allTasks with ENHANCED logic...');
-    console.log('📋 isDraft:', isDraft);
-    console.log('📋 campaignTasks length:', campaignTasks?.length || 0);
-    console.log('📋 campaign.tasks length:', campaign?.tasks?.length || 0);
-    console.log('📋 actionedMembers length:', actionedMembers?.length || 0);
-    
-    // Debug actionedMembers tasks
-    console.log('📋 actionedMembers structure:');
-    actionedMembers.forEach((member, index) => {
-      console.log(`📋 Member ${index}:`, member.user_id, 'has tasks:', member.tasks?.length || 0, member.tasks);
-    });
-    
-    let computedTasks = [];
-    
-    if (isDraft) {
-      // For draft campaigns, prioritize campaign.tasks over campaignTasks
-      if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
-        computedTasks = campaign.tasks;
-        console.log('📋 Draft mode - using campaign.tasks:', computedTasks);
-      } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
-        computedTasks = campaignTasks;
-        console.log('📋 Draft mode - using campaignTasks:', computedTasks);
-      } else {
-        computedTasks = [];
-        console.log('📋 Draft mode - no tasks found');
-      }
-    } else {
-      // FIXED: For active campaigns, extract tasks from actionedMembers with better debugging
-      console.log('📋 Active mode - extracting member tasks...');
-      
-      const allMemberTasks = [];
-      actionedMembers.forEach((member, memberIndex) => {
-        console.log(`📋 Processing member ${memberIndex} (${member.user_id}):`);
-        console.log(`📋 - Member tasks array:`, member.tasks);
-        console.log(`📋 - Is tasks array?`, Array.isArray(member.tasks));
-        console.log(`📋 - Tasks length:`, member.tasks?.length || 0);
-        
-        if (member.tasks && Array.isArray(member.tasks) && member.tasks.length > 0) {
-          member.tasks.forEach((task, taskIndex) => {
-            console.log(`📋 - Adding task ${taskIndex}:`, task.task_id || task.id, task.title);
-            allMemberTasks.push(task);
-          });
-        }
-      });
-      
-      console.log('📋 All member tasks collected:', allMemberTasks.length, allMemberTasks);
-      
-      if (allMemberTasks.length > 0) {
-        // Remove duplicate tasks by task_id
-        const uniqueTasks = allMemberTasks.reduce((acc, task) => {
-          const taskId = task.task_id || task.id || task.campaign_task_id;
-          if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
-            acc.push(task);
-          }
-          return acc;
-        }, []);
-        
-        computedTasks = uniqueTasks;
-        console.log('📋 Using unique member tasks:', computedTasks);
-      } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
-        computedTasks = campaignTasks;
-        console.log('📋 Fallback to campaignTasks:', computedTasks);
-      } else if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
-        computedTasks = campaign.tasks;
-        console.log('📋 Fallback to campaign.tasks:', computedTasks);
-      } else {
-        computedTasks = [];
-        console.log('📋 Active mode - no tasks found anywhere');
-      }
-    }
-    
-    // Ensure tasks is always an array
-    if (!Array.isArray(computedTasks)) {
-      console.log('⚠️ computedTasks is not an array, converting:', computedTasks);
-      computedTasks = [];
-    }
-    
-    console.log('📋 Final computed tasks:', computedTasks);
-    console.log('📋 Final computed tasks length:', computedTasks.length);
-    return computedTasks;
-  }, [isDraft, campaignTasks, actionedMembers, campaign?.tasks]);
-
   if (loading) {
     return (
       <div className="w-full min-h-screen">
@@ -1071,17 +1010,18 @@ export default function CampaignDetailsPage() {
               <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
               <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
             </div>
-            <SkeletonCard />
-            <div className="flex gap-3">
-              <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
-              <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <SkeletonStatsCard />
-            <SkeletonStatsCard />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {Array.from({ length: 6 }, (_, index) => (
-                <div key={index} className="bg-gray-200 rounded-xl p-4 animate-pulse h-32"></div>
-              ))}
+            {/* Grid Layout for Loading */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-8">
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
+              <div className="lg:col-span-1 space-y-8">
+                <SkeletonStatsCard />
+                <SkeletonStatsCard />
+                <SkeletonStatsCard />
+              </div>
             </div>
           </div>
         </div>
@@ -1093,7 +1033,7 @@ export default function CampaignDetailsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#734D20] border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
+          <div className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
           <p className="text-gray-600 text-xs">Loading campaign details...</p>
         </div>
       </div>
@@ -1134,182 +1074,226 @@ export default function CampaignDetailsPage() {
           backdrop-filter: blur(10px);
           background: rgba(255, 255, 255, 0.9);
         }
+
+        /* Professional Scroll Synchronization Styles */
+        .scroll-sync-container {
+          position: relative;
+        }
+        
+        .column-left {
+          ${scrollSync.rightTaller ? `
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+            max-height: calc(100vh - 4rem);
+          ` : ''}
+        }
+        
+        .column-right {
+          ${scrollSync.leftTaller ? `
+            position: sticky;
+            top: 5rem;
+            height: fit-content;
+            max-height: calc(100vh - 4rem);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #00000000;
+          ` : ''}
+        }
+        
+        .column-right::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .column-right::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        
+        .column-right::-webkit-scrollbar-thumb {
+          background-color: rgba(156, 163, 175, 0.5);
+          border-radius: 3px;
+        }
+        
+        .column-right::-webkit-scrollbar-thumb:hover {
+          background-color: rgba(156, 163, 175, 0.7);
+        }
+
+        @media (max-width: 1024px) {
+          .column-left,
+          .column-right {
+            position: static !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: visible !important;
+          }
+        }
       `}</style>
       
       <div className="w-full min-h-screen">
-        <div className="container mx-auto ">
-          <div className="flex flex-col gap-6 sm:gap-8 lg:gap-10">
+        <div className="container mx-auto">
+          <div className="flex flex-col gap-6">
 
-            {/* Back Button */}
+            {/* Back Button with Campaign Title */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate('/campaigns')}
-                className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-all duration-200 hover:scale-110 shadow-lg hover:shadow-xl"
+                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-secondary hover:bg-secondary hover:text-white transition-all duration-200 hover:scale-110 shadow-xl"
               >
-                <FiArrowLeft className="w-5 h-5" />
+                <MdArrowBackIosNew className="w-4 h-4" />
               </button>
-              <Badge variant="active" className="shadow-sm">
-                <FiTarget className="w-3 h-3 mr-2" />
-                Campaign Details {isDraft && <span className="ml-1 text-xs">(Draft)</span>}
-              </Badge>
+                  <p className='text-xl font-bold flex gap-2 items-center'>
+                  Campaign Details
+                  <span>-</span>
+                  <span className='font-semibold text-sm text-gray-500'>
+                  {campaign.title}
+                  </span>
+                  </p>
             </div>
 
-            {/* Campaign Hero Card */}
-            <CampaignHeroCard 
-              campaign={campaign}
-              stats={stats}
-              isDraft={isDraft}
-              getCampaignStatus={getCampaignStatus}
-              formatDate={formatDate}
-            />
-
-            {/* Campaign Users Avatars */}
-            {hasActiveInfluencers && (
-              <div className="flex w-fit items-center gap-2 bg-yellow-100 border border-yellow-200 px-2 py-1 rounded-lg">
-                <AvatarCircles 
-                  numPeople={actionedMembers.length}
-                  avatarUrls={influencerAvatars}
+            {/* Professional Scroll Synchronized Grid Layout */}
+            <div className="scroll-sync-container grid grid-cols-1 lg:grid-cols-3 gap-8">
+              
+              {/* Left Side (70%) - Takes 2/3 width */}
+              <div ref={leftColumnRef} className="column-left lg:col-span-2 space-y-8">
+                
+                {/* Campaign Hero Card (image without title) */}
+                <CampaignHeroCard 
+                  campaign={campaign}
+                  stats={stats}
+                  isDraft={isDraft}
+                  getCampaignStatus={getCampaignStatus}
+                  formatDate={formatDate}
                 />
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-700">participants</span>
-                </div>
-              </div>
-            )}
 
-            {/* Action Buttons */}
-            <CampaignActionButtons
-              campaign={campaign}
-              isDraft={isDraft}
-              canEditCampaign={canEditCampaign}
-              canActivateCampaign={canActivateCampaign}
-              canDeleteCampaign={canDeleteCampaign}
-              canAddMembers={canAddMembers}
-              getCampaignStatus={getCampaignStatus}
-              stats={stats}
-              isProcessing={isProcessing}
-              loading={loading}
-              onAddMembers={handleAddMembers}
-              onEditCampaign={handleEditCampaign}
-              onActivateCampaign={() => setActivateCampaignModal(true)}
-              onCloseCampaign={() => setCloseCampaignModal(true)}
-              onDeleteCampaign={() => setDeleteCampaignModal(true)}
-            />
+                {/* Action Buttons - Moved below the image */}
+                <CampaignActionButtons
+                  campaign={campaign}
+                  isDraft={isDraft}
+                  canEditCampaign={canEditCampaign}
+                  canActivateCampaign={canActivateCampaign}
+                  canDeleteCampaign={canDeleteCampaign}
+                  canAddMembers={canAddMembers}
+                  getCampaignStatus={getCampaignStatus}
+                  stats={stats}
+                  isProcessing={isProcessing}
+                  loading={loading}
+                  onAddMembers={handleAddMembers}
+                  onEditCampaign={handleEditCampaign}
+                  onActivateCampaign={() => setActivateCampaignModal(true)}
+                  onCloseCampaign={() => setCloseCampaignModal(true)}
+                  onDeleteCampaign={() => setDeleteCampaignModal(true)}
+                />
 
-            {/* Campaign Description */}
-            {campaign.description && (
-              <CampaignDescription description={campaign.description} />
-            )}
-
-            {/* Campaign Objective */}
-            {campaign.objective && (
-              <CampaignObjective objective={campaign.objective} />
-            )}
-
-            {/* Campaign Overview */}
-            <CampaignOverview campaign={campaign} stats={stats} />
-
-            {/* Campaign Tasks Accordion - FIXED with better task source detection */}
-            <div className='border border-gray-100 rounded-xl overflow-hidden'>
-              <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
-                <div>
-                  <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
-                    Campaign Tasks 
-                    {tasksLoading && <span className="text-sm font-normal text-gray-500 ml-2">(Loading...)</span>}
-                  </h3>
-                </div>
-              </div>
-
-              {/* Enhanced Tasks Display */}
-              {tasksLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                  <span className="text-gray-600 text-sm">Loading tasks...</span>
-                </div>
-              ) : (
-                <TasksAccordion tasks={allTasks} />
-              )}
-
-              {/* Debug information in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="m-4 p-3 bg-gray-50 rounded-lg border text-xs">
-                  <details>
-                    <summary className="cursor-pointer text-gray-600 font-medium">Debug Info</summary>
-                    <div className="mt-2 space-y-1 text-gray-500">
-                      <div>isDraft: {isDraft ? 'true' : 'false'}</div>
-                      <div>campaignTasks length: {campaignTasks?.length || 0}</div>
-                      <div>campaign.tasks length: {campaign?.tasks?.length || 0}</div>
-                      <div>actionedMembers length: {actionedMembers?.length || 0}</div>
-                      <div>allTasks length: {allTasks?.length || 0}</div>
-                      <div>tasksLoading: {tasksLoading ? 'true' : 'false'}</div>
-                      <div>Task source: {isDraft ? 'Draft mode' : 'Active mode'}</div>
-                      <div>Using: {
-                        isDraft 
-                          ? (campaign?.tasks?.length > 0 ? 'campaign.tasks' : campaignTasks?.length > 0 ? 'campaignTasks' : 'none')
-                          : (() => {
-                              const memberTasksCount = actionedMembers.reduce((count, member) => count + (member.tasks?.length || 0), 0);
-                              return memberTasksCount > 0 ? 'member tasks' : campaignTasks?.length > 0 ? 'campaignTasks' : campaign?.tasks?.length > 0 ? 'campaign.tasks' : 'none';
-                            })()
-                      }</div>
-                      {!isDraft && (
-                        <div>Member tasks breakdown: {actionedMembers.map((member, i) => `Member ${i+1}: ${member.tasks?.length || 0} tasks`).join(', ')}</div>
-                      )}
+                {/* Campaign Participants - Full width on right side */}
+                {hasActiveInfluencers && (
+                  <div className="w-full bg-yellow-50 border border-primary-scale-200 p-4 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <AvatarCircles 
+                        numPeople={actionedMembers.length}
+                        avatarUrls={influencerAvatars}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-900">{actionedMembers.length} participants</span>
+                        <span className="text-xs text-gray-600">Active in this campaign</span>
+                      </div>
                     </div>
-                  </details>
+                  </div>
+                )}
+
+                {/* Campaign Description */}
+                {campaign.description && (
+                  <CampaignDescription description={campaign.description} />
+                )}
+
+                {/* Campaign Tasks Accordion */}
+                <div className='border border-gray-100 rounded-xl overflow-hidden'>
+                  <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
+                    <div>
+                      <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
+                        Campaign Tasks 
+                        {tasksLoading && <span className="text-sm font-normal text-gray-500 ml-2">(Loading...)</span>}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Enhanced Tasks Display */}
+                  {tasksLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                      <span className="text-gray-600 text-sm">Loading tasks...</span>
+                    </div>
+                  ) : (
+                    <TasksAccordion tasks={allTasks} />
+                  )}
                 </div>
-              )}
+
+              </div>
+
+              {/* Right Side (30%) - Takes 1/3 width with Professional Scroll Sync */}
+              <div ref={rightColumnRef} className="column-right lg:col-span-1 space-y-8 h-fit">
+                
+                {/* Campaign Objective */}
+                {campaign.objective && (
+                  <CampaignObjective objective={campaign.objective} />
+                )}
+
+                {/* Campaign Overview (contains stats) */}
+                <CampaignOverview campaign={campaign} stats={stats} />
+
+                {/* Campaign Members Section */}
+                {hasActiveInfluencers && (
+                  <MembersSection
+                    actionedMembers={actionedMembers}
+                    stats={stats}
+                    isProcessing={isProcessing}
+                    canAddMembers={canAddMembers}
+                    campaign={campaign}
+                    countries={countries}
+                    getCountryName={getCountryName}
+                    getCampaignInfluencerInfo={getCampaignInfluencerInfo}
+                    multiSelectMode={multiSelectMode}
+                    setMultiSelectMode={setMultiSelectMode}
+                    selectedApplications={selectedApplications}
+                    setSelectedApplications={setSelectedApplications}
+                    isApplicationMode={true}
+                    onAddMembers={handleAddMembers}
+                    onMemberClick={(member) => {
+                      setSelectedMember(member);
+                      setUserProfileModal(true);
+                    }}
+                    onAcceptClick={(member) => {
+                      const influencerInfo = getCampaignInfluencerInfo();
+                      
+                      if (!influencerInfo.canAcceptMore) {
+                        toast.error(`Campaign has reached its limit of ${influencerInfo.maxInfluencers} influencer${influencerInfo.maxInfluencers !== 1 ? 's' : ''}`);
+                        return;
+                      }
+                      
+                      handleBatchProcessApplications({
+                        campaign_id: campaign.campaign_id,
+                        accepted_applications: [member.user_id], 
+                        rejected_applications: []
+                      });
+                    }}
+                    onRejectClick={(member) => {
+                      handleBatchProcessApplications({
+                        campaign_id: campaign.campaign_id,
+                        accepted_applications: [],
+                        rejected_applications: [member.user_id] 
+                      });
+                    }}
+                    onViewTasks={(member) => {
+                      setSelectedMember(member);
+                      setUserProfileModal(true);
+                    }}
+                    onBatchProcessApplications={handleBatchProcessApplications}
+                  />
+                )}
+
+              </div>
+
             </div>
 
-            {/* Campaign Members Section with Accept/Reject Buttons */}
-            {hasActiveInfluencers && (
-              <MembersSection
-                actionedMembers={actionedMembers}
-                stats={stats}
-                isProcessing={isProcessing}
-                canAddMembers={canAddMembers}
-                campaign={campaign}
-                countries={countries}
-                getCountryName={getCountryName}
-                getCampaignInfluencerInfo={getCampaignInfluencerInfo}
-                multiSelectMode={multiSelectMode}
-                setMultiSelectMode={setMultiSelectMode}
-                selectedApplications={selectedApplications}
-                setSelectedApplications={setSelectedApplications}
-                isApplicationMode={true}
-                onAddMembers={handleAddMembers}
-                onMemberClick={(member) => {
-                  setSelectedMember(member);
-                  setUserProfileModal(true);
-                }}
-                onAcceptClick={(member) => {
-                  const influencerInfo = getCampaignInfluencerInfo();
-                  
-                  if (!influencerInfo.canAcceptMore) {
-                    toast.error(`Campaign has reached its limit of ${influencerInfo.maxInfluencers} influencer${influencerInfo.maxInfluencers !== 1 ? 's' : ''}`);
-                    return;
-                  }
-                  
-                  console.log('✅ Accepting application for member:', member);
-                  handleBatchProcessApplications({
-                    campaign_id: campaign.campaign_id,
-                    accepted_applications: [member.user_id], 
-                    rejected_applications: []
-                  });
-                }}
-                onRejectClick={(member) => {
-                  console.log('❌ Rejecting application for member:', member);
-                  handleBatchProcessApplications({
-                    campaign_id: campaign.campaign_id,
-                    accepted_applications: [],
-                    rejected_applications: [member.user_id] 
-                  });
-                }}
-                onViewTasks={(member) => {
-                  setSelectedMember(member);
-                  setUserProfileModal(true);
-                }}
-                onBatchProcessApplications={handleBatchProcessApplications}
-              />
-            )}
           </div>
         </div>
 
@@ -1357,7 +1341,6 @@ export default function CampaignDetailsPage() {
                 setAllSentInvites(response.data);
               }
             } catch (error) {
-              console.error('Error resending invite:', error);
               toast.error('Failed to resend invite');
             } finally {
               setIsProcessing(false);
@@ -1377,7 +1360,6 @@ export default function CampaignDetailsPage() {
               toast.success('Invite cancelled successfully!');
               setCancelInviteModal(false);
             } catch (error) {
-              console.error('Error cancelling invite:', error);
               toast.error('Failed to cancel invite');
             } finally {
               setIsProcessing(false);
@@ -1391,7 +1373,6 @@ export default function CampaignDetailsPage() {
               toast.success('Campaign closed successfully!');
               setCloseCampaignModal(false);
             } catch (error) {
-              console.error('Error closing campaign:', error);
               toast.error('Failed to close campaign');
             } finally {
               setIsProcessing(false);
@@ -1405,7 +1386,6 @@ export default function CampaignDetailsPage() {
               setDeleteCampaignModal(false);
               navigate('/campaigns');
             } catch (error) {
-              console.error('Error deleting campaign:', error);
               toast.error('Failed to delete campaign');
             } finally {
               setIsProcessing(false);

@@ -193,7 +193,7 @@ const TaskDialog = ({
               !newTask.task_type ||
               (isRepetitive && !newTask.repeats_after)
             }
-            className="flex-1 px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs"
+            className="flex-1 px-4 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs"
           >
             {editingTaskIndex !== null ? "Update Task" : "Add Task"}
           </button>

@@ -53,9 +53,9 @@ const GridListItem = ({ children, className, value, isSelected, onSelect, ...pro
     <button
       type="button"
       className={cn(
-        "relative items-center justify-center px-5 py-2 text-xs font-medium rounded-lg transition-all duration-200 outline-none focus:outline-none focus:ring-2 focus:ring-yellow-400",
+        "relative items-center justify-center px-5 py-2 text-xs font-medium rounded-lg transition-all duration-200 outline-none focus:outline-none focus:ring-2 focus:ring-primary-scale-400",
         isSelected 
-          ? "bg-yellow-400 text-black shadow-md" 
+          ? "bg-primary-scale-400 text-black shadow-md" 
           : "bg-gray-200 text-gray-500 hover:bg-gray-300",
         className
       )}
@@ -125,7 +125,7 @@ const SocialPlatformCardSkeleton = () => (
 );
 
 const EligibilityResultsSkeleton = () => (
-  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200 shadow-sm">
+  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-primary-scale-200 shadow-sm">
     <div className="p-4 lg:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ const MultiSelectDropdown = ({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-colors text-xs flex items-center justify-between"
+          className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs flex items-center justify-between"
         >
           <div className="flex items-center gap-2">
             {Icon && <Icon className="w-4 h-4 text-gray-500" />}
@@ -225,7 +225,7 @@ const MultiSelectDropdown = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search..."
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-yellow-400"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:border-primary-scale-400"
               />
             </div>
             
@@ -256,7 +256,7 @@ const MultiSelectDropdown = ({
                 >
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                     selectedValues.includes(option.id) 
-                      ? 'bg-yellow-400 border-yellow-400' 
+                      ? 'bg-primary-scale-400 border-primary-scale-400' 
                       : 'border-gray-300'
                   }`}>
                     {selectedValues.includes(option.id) && (
@@ -314,13 +314,13 @@ const SocialPlatformCard = memo(({
     <div
       className={`relative flex flex-col gap-4 rounded-lg border cursor-pointer transition-all shadow-sm p-4 ${
         isSelected 
-          ? 'border-yellow-400 bg-yellow-50' 
+          ? 'border-primary-scale-400 bg-yellow-50' 
           : 'border-gray-200 hover:border-gray-300 bg-white'
       }`}
       onClick={handleToggle}
     >
       {isSelected && (
-        <div className="absolute top-2 right-2 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+        <div className="absolute top-2 right-2 w-4 h-4 bg-primary-scale-400 rounded-full flex items-center justify-center">
           <FiCheck className="w-2 h-2 text-white" />
         </div>
       )}
@@ -328,7 +328,7 @@ const SocialPlatformCard = memo(({
       <div className="flex justify-between items-start gap-2">
         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
           isSelected 
-            ? 'border-yellow-400 bg-yellow-400' 
+            ? 'border-primary-scale-400 bg-primary-scale-400' 
             : 'border-gray-300 bg-white'
         }`}>
           {isSelected && (
@@ -352,7 +352,7 @@ const SocialPlatformCard = memo(({
               onError={handleImageError}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+            <div className="w-full h-full bg-gradient-to-br from-primary-scale-400 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
               {platform.sm_name?.[0]?.toUpperCase() || 'S'}
             </div>
           )}
@@ -360,7 +360,7 @@ const SocialPlatformCard = memo(({
       </div>
 
       <div className={`text-sm font-medium ${
-        isSelected ? 'text-yellow-700' : 'text-gray-700'
+        isSelected ? 'text-primary-scale-700' : 'text-gray-700'
       }`}>
         {platform.sm_name}
       </div>
@@ -375,7 +375,7 @@ const SocialPlatformCard = memo(({
           disabled={!isSelected}
           className={`w-full px-3 py-2 text-sm border rounded-lg transition-all ${
             isSelected 
-              ? 'border-yellow-200 bg-white focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200' 
+              ? 'border-primary-scale-200 bg-white focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-200' 
               : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
           }`}
           placeholder="50"
@@ -789,7 +789,7 @@ const FilterCampaigns = ({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <button
               onClick={onBackToCampaigns}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-black bg-yellow-400 rounded-lg hover:bg-yellow-500 transition-all font-medium w-fit"
+              className="flex items-center gap-2 px-3 py-2 text-xs text-black bg-primary-scale-400 rounded-lg hover:bg-primary-scale-500 transition-all font-medium w-fit"
             >
               <FiArrowLeft className="w-3 h-3" />
               Back to Campaigns
@@ -802,7 +802,7 @@ const FilterCampaigns = ({
                   type="checkbox"
                   checked={autoRefreshEnabled}
                   onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
-                  className="w-4 h-4 text-yellow-400 focus:ring-yellow-400 border-gray-300 rounded"
+                  className="w-4 h-4 text-primary-scale-400 focus:ring-primary-scale-400 border-gray-300 rounded"
                 />
                 <span className="text-xs text-gray-600">Auto-refresh</span>
               </label>
@@ -819,7 +819,7 @@ const FilterCampaigns = ({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-yellow-200 shadow-sm"
+              className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-primary-scale-200 shadow-sm"
             >
               <div className="p-4 lg:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -842,7 +842,7 @@ const FilterCampaigns = ({
                     <button
                       onClick={handleRefreshEligibility}
                       disabled={loading}
-                      className="flex items-center gap-2 px-3 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-all text-xs font-medium disabled:opacity-50"
+                      className="flex items-center gap-2 px-3 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 transition-all text-xs font-medium disabled:opacity-50"
                     >
                       {loading ? (
                         <>
@@ -938,7 +938,7 @@ const FilterCampaigns = ({
               <div className="flex items-center gap-3 my-4">
                 <div>
                   <h2 className="text-sm font-bold text-black">Influencer Category</h2>
-                  <p className="text-xs text-gray-600">Select the [#F9D769] metric for influencer categorization</p>
+                  <p className="text-xs text-gray-600">Select the primary metric for influencer categorization</p>
                 </div>
               </div>
               
@@ -1082,7 +1082,7 @@ const FilterCampaigns = ({
                 <button
                   onClick={handleCheckEligibility}
                   disabled={loading || !campaignId}
-                  className="bg-yellow-400 text-black py-3 px-6 rounded-lg font-bold text-xs hover:bg-yellow-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto shadow-sm"
+                  className="bg-primary-scale-400 text-black py-3 px-6 rounded-lg font-bold text-xs hover:bg-primary-scale-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto shadow-sm"
                 >
                   {loading ? (
                     <>

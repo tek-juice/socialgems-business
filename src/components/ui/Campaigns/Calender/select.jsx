@@ -63,13 +63,13 @@ const SelectTrigger = React.forwardRef(({ className, children, placeholder, ...p
       type="button"
       onClick={() => setIsOpen(!isOpen)}
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#734D20] placeholder:text-[#734D20]/50 focus:border-[#F9D769] focus:outline-none focus:ring-2 focus:ring-[#F9D769]/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all",
-        isOpen && "border-[#F9D769] ring-2 ring-[#F9D769]/20",
+        "flex h-10 w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-secondary placeholder:text-secondary/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+        isOpen && "border-primary ring-2 ring-primary/20",
         className
       )}
       {...props}
     >
-      <span className={cn("truncate", !selectedLabel && "text-[#734D20]/50")}>
+      <span className={cn("truncate", !selectedLabel && "text-secondary/50")}>
         {selectedLabel || placeholder || "Select option..."}
       </span>
       <motion.div
@@ -86,7 +86,7 @@ SelectTrigger.displayName = "SelectTrigger";
 const SelectValue = ({ placeholder }) => {
   const { selectedLabel } = React.useContext(SelectContext);
   return (
-    <span className={cn("truncate", !selectedLabel && "text-[#734D20]/50")}>
+    <span className={cn("truncate", !selectedLabel && "text-secondary/50")}>
       {selectedLabel || placeholder || "Select option..."}
     </span>
   );
@@ -127,15 +127,15 @@ const SelectItem = React.forwardRef(({ className, children, value, ...props }, r
       ref={ref}
       onClick={() => handleValueChange(value, children)}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none transition-colors hover:bg-[#F9D769]/10 hover:text-[#734D20] focus:bg-[#F9D769]/20 focus:text-[#734D20]",
-        isSelected && "bg-[#F9D769]/20 text-[#734D20] font-medium",
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm py-2 pl-8 pr-2 text-sm outline-none transition-colors hover:bg-primary/10 hover:text-secondary focus:bg-primary/20 focus:text-secondary",
+        isSelected && "bg-primary/20 text-secondary font-medium",
         className
       )}
       {...props}
     >
       {isSelected && (
         <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-          <Check className="h-4 w-4 text-[#F9D769]" />
+          <Check className="h-4 w-4 text-primary" />
         </span>
       )}
       <span className="truncate">{children}</span>
@@ -147,7 +147,7 @@ SelectItem.displayName = "SelectItem";
 const SelectLabel = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-[#734D20]", className)}
+    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold text-secondary", className)}
     {...props}
   />
 ));

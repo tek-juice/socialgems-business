@@ -47,13 +47,13 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
         return {
           icon: FiClock,
           iconColor: 'text-orange-600',
-          iconBg: 'bg-[#F9D769]',
+          iconBg: 'bg-primary',
           title: 'Business Verification',
           subtitle: 'Your business verification is under review by our team',
           timeText: `Submitted ${userData?.business_profile ? new Date(userData.business_profile.created_on).toLocaleDateString() : 'recently'}`,
           buttonText: 'View Status',
           bgGradient: 'from-orange-50/80 to-yellow-50/80',
-          borderColor: 'border-[#F9D769]/60'
+          borderColor: 'border-primary/60'
         };
       case 'rejected':
         return {
@@ -70,14 +70,14 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
       default:
         return {
           icon: FiAlertCircle,
-          iconColor: 'text-[#734D20]',
-          iconBg: 'bg-[#F9D769]',
+          iconColor: 'text-secondary',
+          iconBg: 'bg-primary',
           title: 'Business Verification Required',
           subtitle: 'Complete your business verification to create campaigns and manage your wallet',
           timeText: 'Verify now to unlock all platform features',
           buttonText: 'Start Verification',
-          bgGradient: 'from-[#F9D769]/10 to-[#E8C547]/10',
-          borderColor: 'border-[#F9D769]/80'
+          bgGradient: 'from-primary/10 to-[#E8C547]/10',
+          borderColor: 'border-primary/80'
         };
     }
   };
@@ -99,7 +99,7 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
       className="w-full"
     >
       <div className="w-full max-w-[90vw] mx-auto px-4 py-3">
-        <div className={`relative bg-[#734D20] border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}>
+        <div className={`relative bg-secondary border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}>
           {/* Close button at top-right - fixed clickable area */}
           <button
             type="button"
@@ -136,10 +136,10 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
                 onClick={onNavigateToSettings}
                 className={cn(
                   "rounded-lg flex items-center justify-center h-10 px-5 gap-2",
-                  "bg-gradient-to-r from-[#F9D769] to-[#E8C547]",
-                  "text-[#734D20] hover:from-[#E8C547] hover:to-[#F9D769]",
-                  "text-sm font-semibold shadow-lg shadow-[#F9D769]/20",
-                  "transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-[#F9D769]/30"
+                  "bg-gradient-to-r from-primary to-[#E8C547]",
+                  "text-secondary hover:from-[#E8C547] hover:to-primary",
+                  "text-sm font-semibold shadow-lg shadow-primary/20",
+                  "transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
                 )}
               >
                 <span>{cardContent.buttonText}</span>
@@ -419,7 +419,7 @@ const MainLayout = ({ userType = 'client' }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 backdrop-blur-sm z-30 bg-[#734D20]/50"
+            className="fixed inset-0 backdrop-blur-sm z-30 bg-secondary/50"
             onClick={() => toggleSidebar(false, true)}
             aria-hidden="true"
           />
@@ -445,7 +445,7 @@ const MainLayout = ({ userType = 'client' }) => {
               onClick={() => toggleSidebar(!sidebarOpen, true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg hover:bg-[#F9D769]/20 transition-colors"
+              className="p-2 rounded-lg hover:bg-primary/20 transition-colors"
               aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
             >
               <motion.div
@@ -453,9 +453,9 @@ const MainLayout = ({ userType = 'client' }) => {
                 transition={{ duration: 0.3 }}
               >
                 {sidebarOpen ? (
-                  <FiX size={20} className="text-[#734D20]" />
+                  <FiX size={20} className="text-secondary" />
                 ) : (
-                  <FiMenu size={20} className="text-[#734D20]" />
+                  <FiMenu size={20} className="text-secondary" />
                 )}
               </motion.div>
             </motion.button>
@@ -471,7 +471,7 @@ const MainLayout = ({ userType = 'client' }) => {
                 onClick={() => toggleSidebar(true, true)}
                 whileHover={{ scale: 1.05, x: 5 }}
                 whileTap={{ scale: 0.95 }}
-                className="ml-6 p-2 rounded-lg hover:bg-[#F9D769]/20 transition-all duration-200 text-[#734D20] group"
+                className="ml-6 p-2 rounded-lg hover:bg-primary/20 transition-all duration-200 text-secondary group"
                 aria-label="Expand sidebar"
               >
                 <div className="flex items-center gap-2">
@@ -494,19 +494,19 @@ const MainLayout = ({ userType = 'client' }) => {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: 0.2 }}
               >
-                <div className="flex items-center text-[#734D20]/80">
+                <div className="flex items-center text-secondary/80">
                   <motion.div 
                     className="flex items-center mr-6"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <FiCalendar className="h-4 w-4 mr-2 text-[#F9D769]" />
+                    <FiCalendar className="h-4 w-4 mr-2 text-primary" />
                     <span className="text-sm font-semibold">{formattedDate}</span>
                   </motion.div>
                   <motion.div 
                     className="flex items-center"
                     whileHover={{ scale: 1.05 }}
                   >
-                    <FiClock className="h-4 w-4 mr-2 text-[#F9D769]" />
+                    <FiClock className="h-4 w-4 mr-2 text-primary" />
                     <span className="text-sm font-semibold">{formattedTime}</span>
                   </motion.div>
                 </div>
@@ -523,7 +523,7 @@ const MainLayout = ({ userType = 'client' }) => {
               onClick={() => setShowUserMenu(!showUserMenu)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="user-button flex items-center space-x-2 p-1 pr-3 rounded-lg hover:bg-[#F9D769]/20 focus:outline-none focus:ring-2 focus:ring-[#F9D769]"
+              className="user-button flex items-center space-x-2 p-1 pr-3 rounded-lg hover:bg-primary/20 focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label="User menu"
               aria-haspopup="true"
               aria-expanded={showUserMenu}
@@ -532,7 +532,7 @@ const MainLayout = ({ userType = 'client' }) => {
               {/* User avatar */}
               <div className="relative w-8 h-8 flex-shrink-0">
                 {loading ? (
-                  <div className="w-full h-full rounded-full bg-[#F9D769]/20 animate-pulse"></div>
+                  <div className="w-full h-full rounded-full bg-primary/20 animate-pulse"></div>
                 ) : userData?.profile_pic ? (
                   <motion.img
                     src={userData.profile_pic}
@@ -542,7 +542,7 @@ const MainLayout = ({ userType = 'client' }) => {
                   />
                 ) : (
                   <motion.div 
-                    className="w-full h-full rounded-full bg-gradient-to-br from-[#F9D769] to-[#E8C547] flex items-center justify-center text-[#734D20] shadow-lg"
+                    className="w-full h-full rounded-full bg-gradient-to-br from-primary to-[#E8C547] flex items-center justify-center text-secondary shadow-lg"
                     whileHover={{ scale: 1.1 }}
                   >
                     <FiUser size={16} />
@@ -562,15 +562,15 @@ const MainLayout = ({ userType = 'client' }) => {
               <div className="hidden md:flex flex-col items-start overflow-hidden">
                 {loading ? (
                   <>
-                    <div className="h-4 w-20 bg-[#F9D769]/20 rounded animate-pulse mb-1"></div>
-                    <div className="h-3 w-24 bg-[#F9D769]/20 rounded animate-pulse"></div>
+                    <div className="h-4 w-20 bg-primary/20 rounded animate-pulse mb-1"></div>
+                    <div className="h-3 w-24 bg-primary/20 rounded animate-pulse"></div>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-semibold text-[#734D20] truncate max-w-[120px]">
+                    <p className="text-sm font-semibold text-secondary truncate max-w-[120px]">
                       {displayName}
                     </p>
-                    <p className="text-xs text-[#734D20]/60 truncate max-w-[140px]">
+                    <p className="text-xs text-secondary/60 truncate max-w-[140px]">
                       {userEmail}
                     </p>
                   </>
@@ -586,7 +586,7 @@ const MainLayout = ({ userType = 'client' }) => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
-                  className="user-menu absolute right-0 mt-2.5 w-64 bg-white border border-t-transparent border-[#F9D769] backdrop-blur-lg rounded-b-xl overflow-hidden z-[60]"
+                  className="user-menu absolute right-0 mt-2.5 w-64 bg-white border border-t-transparent border-primary backdrop-blur-lg rounded-b-xl overflow-hidden z-[60]"
                   style={{ backdropFilter: 'blur(30px)' }}
                   role="menu"
                   aria-orientation="vertical"
@@ -595,7 +595,7 @@ const MainLayout = ({ userType = 'client' }) => {
                   {/* Glass effect overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
                   
-                  <div className="relative z-10 p-4 border-b border-white/20 bg-gradient-to-r from-[#F9D769]/10 to-[#E8C547]/10 flex items-center">
+                  <div className="relative z-10 p-4 border-b border-white/20 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 flex items-center">
                     {/* User avatar in menu */}
                     <motion.div 
                       className="relative mr-3 w-12 h-12 flex-shrink-0"
@@ -608,7 +608,7 @@ const MainLayout = ({ userType = 'client' }) => {
                           className="w-full h-full rounded-full object-cover shadow-lg"
                         />
                       ) : (
-                        <div className="w-full h-full rounded-full bg-gradient-to-br from-[#F9D769] to-[#E8C547] flex items-center justify-center text-[#734D20] shadow-lg">
+                        <div className="w-full h-full rounded-full bg-gradient-to-br from-primary to-[#E8C547] flex items-center justify-center text-secondary shadow-lg">
                           <FiUser size={20} />
                         </div>
                       )}
@@ -616,10 +616,10 @@ const MainLayout = ({ userType = 'client' }) => {
                     
                     {/* User details */}
                     <div className="overflow-hidden">
-                      <p className="text-sm font-medium text-[#734D20] truncate max-w-[160px]">
+                      <p className="text-sm font-medium text-secondary truncate max-w-[160px]">
                         {fullName}
                       </p>
-                      <p className="text-xs text-[#734D20]/60 truncate max-w-[180px]">
+                      <p className="text-xs text-secondary/60 truncate max-w-[180px]">
                         {userEmail}
                       </p>
                       <p className="text-xs text-green-500 mt-1 flex items-center">
@@ -637,9 +637,9 @@ const MainLayout = ({ userType = 'client' }) => {
                         setShowUserMenu(false);
                       }}
                       whileHover={{ x: 5, backgroundColor: 'rgba(249, 215, 105, 0.1)' }}
-                      className="flex w-full items-center px-4 py-2 text-sm text-[#734D20] hover:bg-[#F9D769]/10 transition-colors"
+                      className="flex w-full items-center px-4 py-2 text-sm text-secondary hover:bg-primary/10 transition-colors"
                     >
-                      <FiSettings className="mr-2 text-[#734D20]/60" size={16} />
+                      <FiSettings className="mr-2 text-secondary/60" size={16} />
                       Account Settings
                     </motion.button>
                     <motion.button

@@ -89,9 +89,8 @@ export default function MembersSection({
     if (!campaign?.campaign_id) return;
     
     try {
-      console.log('🔍 Fetching approved users for campaign:', campaign.campaign_id);
       const response = await get(`campaigns/approved-influencers/${campaign.campaign_id}`);
-      console.log('✅ Approved users response:', response);
+
       
       if (response?.status === 200 && response?.data) {
         // Transform the approved users data and fetch missing profile data
@@ -190,7 +189,6 @@ export default function MembersSection({
       const combined = [...enhancedAccepted, ...approvedData];
       setCombinedMembers(combined);
       
-      console.log('🔄 Combined members:', combined);
     } catch (error) {
       console.error('❌ Error combining members:', error);
     } finally {
@@ -283,7 +281,6 @@ export default function MembersSection({
 
   // Individual application handlers
   const handleAcceptApplication = async (member) => {
-    console.log('✅ Accepting application for member:', member);
     if (onAcceptClick) {
       onAcceptClick(member);
       
@@ -297,7 +294,6 @@ export default function MembersSection({
   };
 
   const handleRejectApplication = async (member) => {
-    console.log('❌ Rejecting application for member:', member);
     if (onRejectClick) {
       onRejectClick(member);
       
@@ -315,12 +311,6 @@ export default function MembersSection({
     if (!campaign?.campaign_id) return;
     
     try {
-      console.log('📤 Batch processing applications:', { 
-        campaign_id: campaign.campaign_id, 
-        accepted_applications: acceptedIds, 
-        rejected_applications: rejectedIds 
-      });
-
       await onBatchProcessApplications({
         campaign_id: campaign.campaign_id,
         accepted_applications: acceptedIds,
@@ -339,18 +329,41 @@ export default function MembersSection({
   };
 
   const handleBatchAccept = () => {
-    console.log('✅ Batch accepting applications:', selectedMembers);
     handleBatchProcess(selectedMembers, []);
   };
 
   const handleBatchReject = () => {
-    console.log('❌ Batch rejecting applications:', selectedMembers);
     handleBatchProcess([], selectedMembers);
   };
 
   // Get counts for display
   const acceptedCount = combinedMembers.filter(m => m.userType === 'accepted').length;
   const approvedCount = combinedMembers.filter(m => m.userType === 'approved').length;
+
+  // Skeleton loading component
+  const SkeletonCard = () => (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="p-4 space-y-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+          <div className="space-y-2 flex-1">
+            <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="flex space-x-2 pt-2">
+          <div className="h-8 bg-gray-200 rounded-md w-1/3 animate-pulse"></div>
+          <div className="h-8 bg-gray-200 rounded-md w-1/3 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -360,9 +373,6 @@ export default function MembersSection({
             <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
               Campaign Members
             </h3>
-            <p className="text-xs text-gray-600 mt-1">
-              Review applications and manage campaign members ({acceptedCount} accepted, {approvedCount} approved)
-            </p>
           </div>
         </div>
         
@@ -446,130 +456,14 @@ export default function MembersSection({
         </div>
       )}
 
-      {/* Filter Section - Updated with User Type Filter */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <FiFilter className="text-gray-600 w-4 h-4" />
-          <span className="text-xs font-medium text-gray-700">Filters:</span>
-        </div>
-
-        <div className="flex gap-2 flex-wrap rounded-lg">
-          {/* User Type Filter */}
-        <FilterDropdownMenu
-          options={[
-            {
-              label: `All Members (${combinedMembers.length})`,
-              onClick: () => setColumnFilters(prev => ({ ...prev, userType: 'all' })),
-              checked: !columnFilters.userType || columnFilters.userType === 'all'
-            },
-            {
-              label: `Accepted Users (${acceptedCount})`,
-              onClick: () => setColumnFilters(prev => ({ ...prev, userType: 'accepted' })),
-              checked: columnFilters.userType === 'accepted'
-            },
-            {
-              label: `Approved Users (${approvedCount})`,
-              onClick: () => setColumnFilters(prev => ({ ...prev, userType: 'approved' })),
-              checked: columnFilters.userType === 'approved'
-            }
-          ]}
-          className="text-white border-[#F9D769]/50 hover:bg-[#F9D769]/20 font-medium"
-        >
-          <span className="hidden sm:inline">Member Type</span>
-          <span className="sm:hidden">Type</span>
-        </FilterDropdownMenu>
-        
-        <FilterDropdownMenu
-          options={[
-            {
-              label: 'All Applications',
-              onClick: () => setColumnFilters(prev => ({ ...prev, applicationStatus: 'all' })),
-              checked: !columnFilters.applicationStatus || columnFilters.applicationStatus === 'all'
-            },
-            {
-              label: 'Submitted',
-              onClick: () => setColumnFilters(prev => ({ ...prev, applicationStatus: 'submitted' })),
-              checked: columnFilters.applicationStatus === 'submitted'
-            },
-            {
-              label: 'Accepted',
-              onClick: () => setColumnFilters(prev => ({ ...prev, applicationStatus: 'accepted' })),
-              checked: columnFilters.applicationStatus === 'accepted'
-            },
-            {
-              label: 'Approved',
-              onClick: () => setColumnFilters(prev => ({ ...prev, applicationStatus: 'approved' })),
-              checked: columnFilters.applicationStatus === 'approved'
-            }
-          ]}
-          className="text-white border-[#F9D769]/50 hover:bg-[#F9D769]/20"
-        >
-          <span className="hidden sm:inline">Application Status</span>
-          <span className="sm:hidden">Application</span>
-        </FilterDropdownMenu>
-        
-        <FilterDropdownMenu
-          options={[
-            {
-              label: 'All Action Status',
-              onClick: () => setColumnFilters(prev => ({ ...prev, actionStatus: 'all' })),
-              checked: !columnFilters.actionStatus || columnFilters.actionStatus === 'all'
-            },
-            {
-              label: 'Completed',
-              onClick: () => setColumnFilters(prev => ({ ...prev, actionStatus: 'completed' })),
-              checked: columnFilters.actionStatus === 'completed'
-            },
-            {
-              label: 'Started',
-              onClick: () => setColumnFilters(prev => ({ ...prev, actionStatus: 'started' })),
-              checked: columnFilters.actionStatus === 'started'
-            },
-            {
-              label: 'Not Started',
-              onClick: () => setColumnFilters(prev => ({ ...prev, actionStatus: 'not_started' })),
-              checked: columnFilters.actionStatus === 'not_started'
-            }
-          ]}
-          className="text-white border-[#F9D769]/50 hover:bg-[#F9D769]/20"
-        >
-          <span className="hidden sm:inline">Action Status</span>
-          <span className="sm:hidden">Action</span>
-        </FilterDropdownMenu>
-
-        <FilterDropdownMenu
-          options={[
-            {
-              label: 'All Payment Status',
-              onClick: () => setColumnFilters(prev => ({ ...prev, paymentStatus: 'all' })),
-              checked: !columnFilters.paymentStatus || columnFilters.paymentStatus === 'all'
-            },
-            {
-              label: 'Not Paid',
-              onClick: () => setColumnFilters(prev => ({ ...prev, paymentStatus: 'not_paid' })),
-              checked: columnFilters.paymentStatus === 'not_paid'
-            },
-            {
-              label: 'Paid',
-              onClick: () => setColumnFilters(prev => ({ ...prev, paymentStatus: 'paid' })),
-              checked: columnFilters.paymentStatus === 'paid'
-            }
-          ]}
-          className="text-white border-[#F9D769]/50 hover:bg-[#F9D769]/20"
-        >
-          <span className="hidden sm:inline">Payment Status</span>
-          <span className="sm:hidden">Payment</span>
-        </FilterDropdownMenu>
-        </div>
-      </div>
-
       {/* Member Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {loading ? (
-          <div className="col-span-full flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span className="text-sm text-gray-600">Loading campaign members...</span>
-          </div>
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
         ) : currentItems.length ? (
           <AnimatePresence mode="wait">
             {currentItems.map((member, index) => {

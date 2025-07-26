@@ -192,7 +192,7 @@ const RichTextEditor = ({ value, onChange, placeholder, minWords = 200 }) => {
         <button
           type="button"
           onClick={insertTemplate}
-          className="flex items-center gap-2 px-3 py-1.5 bg-yellow-400 text-black rounded text-xs font-medium hover:bg-yellow-500 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 bg-primary-scale-400 text-black rounded text-xs font-medium hover:bg-primary-scale-500 transition-colors"
         >
           <FiType className="w-3 h-3" />
           Insert Template
@@ -201,7 +201,7 @@ const RichTextEditor = ({ value, onChange, placeholder, minWords = 200 }) => {
 
       <div
         className={`relative border-2 rounded-lg transition-colors ${
-          isFocused ? "border-yellow-400" : "border-gray-300"
+          isFocused ? "border-primary-scale-400" : "border-gray-300"
         }`}
       >
         <div

@@ -88,10 +88,10 @@ const NumberInput = ({
         onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-100 transition-all text-xs bg-gray-50 focus:bg-white ${
+        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
           error 
             ? 'border-red-500 focus:border-red-500' 
-            : 'border-gray-300 focus:border-yellow-400'
+            : 'border-gray-300 focus:border-primary-scale-400'
         } ${isShaking ? 'animate-shake' : ''} ${className}`}
         placeholder={placeholder}
       />

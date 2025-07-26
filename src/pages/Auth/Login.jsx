@@ -106,8 +106,8 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
       />
       <div className="relative bg-white rounded-lg p-6 w-full max-w-md shadow-2xl">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 bg-[#F9D769] rounded-lg flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6 text-[#734D20]" />
+          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-6 h-6 text-secondary" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {step === 1 ? "Reset Password" : "Enter Reset Code"}
@@ -128,7 +128,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 text-xs"
+                className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 text-xs"
                 placeholder="Enter your email"
                 disabled={loading}
                 required
@@ -146,7 +146,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-4 py-3 bg-[#F9D769] text-[#734D20] rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-primary text-secondary rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
               >
                 {loading ? 'Sending...' : 'Send Code'}
               </button>
@@ -159,7 +159,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
                 type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 text-xs text-center tracking-widest"
+                className="w-full px-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 text-xs text-center tracking-widest"
                 placeholder="Enter 4-digit code"
                 maxLength="4"
                 disabled={loading}
@@ -172,7 +172,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 text-xs"
+                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 text-xs"
                 placeholder="New Password"
                 disabled={loading}
                 required
@@ -191,7 +191,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 text-xs"
+                className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 text-xs"
                 placeholder="Confirm New Password"
                 disabled={loading}
                 required
@@ -216,7 +216,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-4 py-3 bg-[#F9D769] text-[#734D20] rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
+                className="flex-1 px-4 py-3 bg-primary text-secondary rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
               >
                 {loading ? 'Resetting...' : 'Reset Password'}
               </button>
@@ -293,8 +293,8 @@ const Login = () => {
       <div className="w-full h-full md:w-auto md:h-auto md:max-w-sm bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-8 flex flex-col items-center text-black">
         
         {/* Logo/Icon */}
-        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#F9D769] mb-6 shadow-sm">
-          <LogIn className="w-6 h-6 text-[#734D20]" />
+        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary mb-6 shadow-sm">
+          <LogIn className="w-6 h-6 text-secondary" />
         </div>
         
         {/* Header */}
@@ -315,7 +315,7 @@ const Login = () => {
               placeholder="Email"
               type="email"
               value={email}
-              className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs transition-all"
+              className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
@@ -330,7 +330,7 @@ const Login = () => {
               placeholder="Password"
               type={showPassword ? "text" : "password"}
               value={password}
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs transition-all"
+              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
@@ -347,7 +347,7 @@ const Login = () => {
           <div className="w-full flex justify-end mb-2">
             <button 
               type="button"
-              className="text-xs text-[#734D20] font-medium hover:underline transition-colors"
+              className="text-xs text-secondary font-medium hover:underline transition-colors"
               onClick={() => setShowForgotPassword(true)}
             >
               Forgot password?
@@ -357,7 +357,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#F9D769] text-[#734D20] font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+            className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
@@ -368,7 +368,7 @@ const Login = () => {
           <span className="text-xs text-gray-600">Don't have an account? </span>
           <button
             onClick={() => navigate('/signup')}
-            className="text-xs text-[#734D20] font-medium hover:underline transition-colors"
+            className="text-xs text-secondary font-medium hover:underline transition-colors"
           >
             Sign up
           </button>

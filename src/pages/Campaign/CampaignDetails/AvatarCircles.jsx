@@ -9,7 +9,7 @@ export const AvatarCircles = ({ numPeople, className, avatarUrls }) => {
       {displayUrls.map((url, index) => (
         <img
           key={index}
-          className="h-10 w-10 rounded-full border-2 border-yellow-100"
+          className="h-10 w-10 rounded-full border-2 border-primary-scale-100"
           src={url}
           width={40}
           height={40}
@@ -17,7 +17,7 @@ export const AvatarCircles = ({ numPeople, className, avatarUrls }) => {
         />
       ))}
       {remainingCount > 0 && (
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#734D20] text-center text-xs font-medium text-white">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-secondary text-center text-xs font-medium text-white">
           +{remainingCount}
         </div>
       )}

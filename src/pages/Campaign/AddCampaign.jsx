@@ -160,10 +160,10 @@ const BudgetInput = ({
         value={displayValue}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-100 transition-all text-xs bg-gray-50 focus:bg-white ${
+        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
           error 
             ? 'border-red-500 focus:border-red-500' 
-            : 'border-gray-300 focus:border-yellow-400'
+            : 'border-gray-300 focus:border-primary-scale-400'
         } ${isShaking ? 'animate-shake' : ''} ${className}`}
         placeholder={`${MIN_BUDGET_PER_INFLUENCER}`}
       />
@@ -261,10 +261,10 @@ const InfluencersInput = ({
         value={displayValue}
         onChange={handleChange}
         onBlur={handleBlur}
-        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-100 transition-all text-xs bg-gray-50 focus:bg-white ${
+        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
           error 
             ? 'border-red-500 focus:border-red-500' 
-            : 'border-gray-300 focus:border-yellow-400'
+            : 'border-gray-300 focus:border-primary-scale-400'
         } ${isShaking ? 'animate-shake' : ''} ${className}`}
         placeholder="1"
       />
@@ -330,7 +330,7 @@ const InsufficientFundsModal = ({ isOpen, onClose, onAddFunds, requiredAmount, w
             </button>
             <button
               onClick={onAddFunds}
-              className="flex-1 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors text-xs"
+              className="flex-1 px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 transition-colors text-xs"
             >
               Add Funds
             </button>
@@ -1539,8 +1539,8 @@ const CreateCampaign = () => {
       case 0:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-yellow-400 rounded-2xl text-center my-8 flex gap-10">
-              <div className="bg-yellow-900 w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex gap-10">
+              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
                 <FiFileText className="w-8 h-8 text-white" />
               </div>
               <div className="flex flex-col items-start">
@@ -1607,7 +1607,7 @@ const CreateCampaign = () => {
                               title: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-colors text-xs bg-gray-50 focus:bg-white"
+                          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs bg-gray-50 focus:bg-white"
                           placeholder="Create an engaging campaign title"
                         />
                       </div>
@@ -1625,7 +1625,7 @@ const CreateCampaign = () => {
                                 objective: e.target.value,
                               }))
                             }
-                            className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100 transition-colors text-xs bg-gray-50 focus:bg-white appearance-none"
+                            className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs bg-gray-50 focus:bg-white appearance-none"
                             disabled={loadingObjectives}
                           >
                             <option value="">Select an objective</option>
@@ -1751,7 +1751,7 @@ const CreateCampaign = () => {
                             setNewTask({ task: "", description: "", requires_url: true, site_id: "", task_type: "", repeats_after: "" });
                             setOpenTaskDialog(true);
                           }}
-                          className="bg-yellow-400 text-black px-4 py-2 rounded-lg text-xs font-medium hover:bg-yellow-500 transition-colors flex items-center gap-2 shadow-sm"
+                          className="bg-primary-scale-400 text-black px-4 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors flex items-center gap-2 shadow-sm"
                         >
                           <FiPlus className="w-3 h-3" />
                           Add Task
@@ -1804,7 +1804,7 @@ const CreateCampaign = () => {
                               <div className="flex items-center gap-2 ml-4">
                                 <button
                                   onClick={() => handleEditTask(index)}
-                                  className="text-gray-400 hover:text-yellow-600 transition-colors"
+                                  className="text-gray-400 hover:text-primary-scale-600 transition-colors"
                                 >
                                   <FiEdit className="w-4 h-4" />
                                 </button>
@@ -1830,8 +1830,8 @@ const CreateCampaign = () => {
       case 1:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-yellow-400 rounded-2xl text-center my-8 flex flex-wrap sm:justify-start justify-center  gap-5">
-              <div className="bg-yellow-800 w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex flex-wrap sm:justify-start justify-center  gap-5">
+              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
                 <FiUsers className="w-8 h-8 text-white" />
               </div>
               <div className="flex flex-col items-start">
@@ -1867,8 +1867,8 @@ const CreateCampaign = () => {
       case 2:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-yellow-400 rounded-2xl text-center my-8 flex gap-10">
-              <div className="bg-yellow-800 w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
+            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex gap-10">
+              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
                 <FiDollarSign className="w-8 h-8 text-white" />
               </div>
               <div className="flex flex-col items-start">
@@ -2016,7 +2016,7 @@ const CreateCampaign = () => {
                             </p>
                             <button
                               onClick={handleAddFunds}
-                              className="bg-yellow-400 text-black px-3 py-2 rounded-lg text-xs font-medium hover:bg-yellow-500 transition-colors w-full"
+                              className="bg-primary-scale-400 text-black px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors w-full"
                             >
                               Add Funds
                             </button>
@@ -2041,7 +2041,7 @@ const CreateCampaign = () => {
               <button
                 onClick={handleCreateCampaign}
                 disabled={loading || walletBalance < safeToNumber(eligibilityData?.totalBudget)}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
               >
                 {loading ? (
                   <>
@@ -2084,7 +2084,7 @@ const CreateCampaign = () => {
               </p>
               <button
                 onClick={() => navigate("/campaigns")}
-                className="bg-yellow-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition-colors text-xs"
+                className="bg-primary-scale-400 text-black px-8 py-3 rounded-lg font-semibold hover:bg-primary-scale-500 transition-colors text-xs"
               >
                 View All Campaigns
               </button>
@@ -2145,7 +2145,7 @@ const CreateCampaign = () => {
             <button
               onClick={nextStep}
               disabled={!canProceed || loading}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105 text-xs"
+              className="flex items-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105 text-xs"
             >
               {loading ? (
                 <>

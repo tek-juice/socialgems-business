@@ -138,7 +138,7 @@ export const UserProfileModal = ({
   const getLevelColor = (level) => {
     switch (level?.toLowerCase()) {
       case "gold":
-        return "text-yellow-800";
+        return "text-secondary";
       case "silver":
         return "text-gray-800";
       case "bronze":
@@ -217,7 +217,7 @@ export const UserProfileModal = ({
                       `${member.first_name} ${member.last_name}`}
                   </h2>
                   {influencerDetails?.verified && (
-                    <RiVerifiedBadgeFill className="w-4 h-4 text-yellow-800" />
+                    <RiVerifiedBadgeFill className="w-4 h-4 text-secondary" />
                   )}
                 </div>
 
@@ -239,7 +239,7 @@ export const UserProfileModal = ({
                       {influencerDetails.categories.map((category, index) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium uppercase"
+                          className="px-2 py-1 bg-primary-scale-100 text-secondary rounded-full text-xs font-medium uppercase"
                         >
                           {category}
                         </span>
@@ -253,10 +253,10 @@ export const UserProfileModal = ({
 
             {/* Application Status for Pending Applications */}
             {/* {member.application_status === 'submitted' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-xl">
+              <div className="mb-4 p-3 bg-yellow-50 border border-primary-scale-200 rounded-xl">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-yellow-800">⏳ Application Pending Review</span>
-                  <span className="text-xs text-yellow-600">Amount: ${member.payable_amount}</span>
+                  <span className="text-xs font-medium text-secondary">⏳ Application Pending Review</span>
+                  <span className="text-xs text-primary-scale-600">Amount: ${member.payable_amount}</span>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -285,7 +285,7 @@ export const UserProfileModal = ({
           {/* Loading State */}
           {loading && (
             <div className="mx-6 py-8 text-center">
-              <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
+              <div className="w-8 h-8 border-2 border-primary-scale-500 border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
               <p className="text-sm text-gray-600">
                 Loading profile details...
               </p>
@@ -309,21 +309,21 @@ export const UserProfileModal = ({
 
           {/* Stats Grid - Only show if we have influencer details */}
           {influencerDetails && !loading && (
-            <div className="mx-6 py-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <div className="mx-6 py-4 bg-yellow-50 rounded-lg border border-primary-scale-200">
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <LuGem className="w-4 h-4 text-yellow-600" />
+                    <LuGem className="w-4 h-4 text-primary-scale-600" />
                     <span className="text-sm font-bold text-gray-900">
                       {influencerDetails?.gemPoints || 0}
                     </span>
                   </div>
                   <p className="text-xs text-gray-600">Gem points</p>
                 </div>
-                <div className="border-x border-dotted border-yellow-600">
+                <div className="border-x border-dotted border-primary-scale-600">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
-                      <MdCampaign className="w-4 h-4 text-yellow-600" />
+                      <MdCampaign className="w-4 h-4 text-primary-scale-600" />
                       <span className="text-lg font-bold text-gray-900">
                         {influencerDetails?.campaigns || 0}
                       </span>
@@ -333,7 +333,7 @@ export const UserProfileModal = ({
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <FiStar className="w-4 h-4 text-yellow-600" />
+                    <FiStar className="w-4 h-4 text-primary-scale-600" />
                     <span className="text-lg font-bold text-gray-900">
                       {influencerDetails?.sgRating || 0}
                     </span>
@@ -392,7 +392,7 @@ export const UserProfileModal = ({
                 {bioNeedsReadMore && (
                   <button
                     onClick={() => setShowFullBio(!showFullBio)}
-                    className="text-yellow-600 hover:text-yellow-700 ml-2 font-medium text-sm"
+                    className="text-primary-scale-600 hover:text-primary-scale-700 ml-2 font-medium text-sm"
                   >
                     {showFullBio ? "Read less" : "Read more"}
                   </button>
@@ -430,7 +430,7 @@ export const UserProfileModal = ({
             !loading && (
               <div className="mx-6 py-4 border-t border-gray-100">
                 <div className="flex items-center gap-2 mb-4">
-                  <FiStar className="w-4 h-4 text-yellow-500" />
+                  <FiStar className="w-4 h-4 text-primary-scale-500" />
                   <h3 className="text-sm font-semibold text-gray-900">
                     Reviews
                   </h3>
@@ -464,7 +464,7 @@ export const UserProfileModal = ({
                                         key={i}
                                         className={`w-3 h-3 ${
                                           i < review.rating
-                                            ? "text-yellow-500 fill-current"
+                                            ? "text-primary-scale-500 fill-current"
                                             : "text-gray-300"
                                         }`}
                                       />

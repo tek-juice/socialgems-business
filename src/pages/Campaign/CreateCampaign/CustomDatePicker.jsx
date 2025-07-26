@@ -172,8 +172,8 @@ const CustomDatePicker = ({
           value={value ? formatDisplayDate(value) : ''}
           onClick={() => setIsOpen(true)}
           placeholder={placeholder}
-          className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-yellow-100 transition-colors text-xs bg-gray-50 focus:bg-white cursor-pointer ${
-            error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-yellow-400'
+          className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs bg-gray-50 focus:bg-white cursor-pointer ${
+            error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-primary-scale-400'
           }`}
           readOnly
         />
@@ -185,7 +185,7 @@ const CustomDatePicker = ({
       )}
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-yellow-500 rounded-lg shadow-xs z-50 max-w-[300px]">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-scale-500 rounded-lg shadow-xs z-50 max-w-[300px]">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <button
@@ -233,7 +233,7 @@ const CustomDatePicker = ({
                     disabled={isDisabled}
                     className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
                       isSelected
-                        ? 'bg-yellow-400 text-black font-semibold'
+                        ? 'bg-primary-scale-400 text-black font-semibold'
                         : isDisabled
                         ? 'text-gray-300 cursor-not-allowed'
                         : 'text-gray-700 hover:bg-gray-100'
@@ -256,28 +256,28 @@ const CustomDatePicker = ({
                   <button
                     type="button"
                     onClick={() => handlePeriodSelect('2weeks')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-yellow-400 rounded transition-colors"
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
                   >
                     2 Weeks
                   </button>
                   <button
                     type="button"
                     onClick={() => handlePeriodSelect('1month')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-yellow-400 rounded transition-colors"
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
                   >
                     1 Month
                   </button>
                   <button
                     type="button"
                     onClick={() => handlePeriodSelect('2months')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-yellow-400 rounded transition-colors"
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
                   >
                     2 Months
                   </button>
                   <button
                     type="button"
                     onClick={() => handlePeriodSelect('3months')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-yellow-400 rounded transition-colors"
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
                   >
                     3 Months
                   </button>

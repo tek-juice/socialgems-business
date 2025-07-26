@@ -20,9 +20,9 @@ const StepperComponent = ({ steps, activeStep }) => {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
                   index < activeStep
-                    ? "bg-[#F9D769] text-[#734D20] border-2 border-[#F9D769]"
+                    ? "bg-primary text-secondary border-2 border-primary"
                     : index === activeStep
-                    ? "bg-[#734D20] text-white border-2 border-[#734D20]"
+                    ? "bg-secondary text-white border-2 border-secondary"
                     : "bg-gray-200 text-gray-500 border-2 border-gray-200"
                 }`}
               >
@@ -58,7 +58,7 @@ const StepperComponent = ({ steps, activeStep }) => {
               <div className="absolute top-5 left-5 hidden md:block">
                 <div
                   className={`h-0.5 w-20 lg:w-32 transition-all duration-300 ${
-                    index < activeStep ? "bg-[#F9D769]" : "bg-gray-200"
+                    index < activeStep ? "bg-primary" : "bg-gray-200"
                   }`}
                 ></div>
               </div>
@@ -106,7 +106,7 @@ const Signup = () => {
       subtitle: "Choose your focus",
       icon: Building,
       description: "Select industries your brand operates in",
-      color: "from-[#F9D769] to-[#F9D769]-scale-600",
+      color: "from-primary to-primary-scale-600",
     },
     {
       id: 1,
@@ -114,7 +114,7 @@ const Signup = () => {
       subtitle: "Personal information",
       icon: UserPlus,
       description: "Create your brand account",
-      color: "from-[#734D20] to-[#734D20]-scale-600",
+      color: "from-secondary to-secondary-scale-600",
     },
     {
       id: 2,
@@ -122,7 +122,7 @@ const Signup = () => {
       subtitle: "Email verification",
       icon: Mail,
       description: "Confirm your email address",
-      color: "from-[#F9D769] to-[#F9D769]-scale-600",
+      color: "from-primary to-primary-scale-600",
     },
     {
       id: 3,
@@ -130,7 +130,7 @@ const Signup = () => {
       subtitle: "Set password",
       icon: Lock,
       description: "Protect your account",
-      color: "from-[#734D20] to-[#734D20]-scale-600",
+      color: "from-secondary to-secondary-scale-600",
     },
   ];
 
@@ -400,8 +400,8 @@ const Signup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-[#F9D769] rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Building className="w-6 h-6 text-[#734D20]" />
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Building className="w-6 h-6 text-secondary" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Choose Your Industries</h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
@@ -418,18 +418,18 @@ const Signup = () => {
                     onClick={() => handleIndustryToggle(industry.id)}
                     className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
                       selectedIndustries.includes(industry.id)
-                        ? 'border-[#F9D769] bg-[#F9D769]/10'
+                        ? 'border-primary bg-primary/10'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <span className="text-xs text-gray-700 font-medium">{industry.name}</span>
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       selectedIndustries.includes(industry.id)
-                        ? 'border-[#F9D769] bg-[#F9D769]'
+                        ? 'border-primary bg-primary'
                         : 'border-gray-300'
                     }`}>
                       {selectedIndustries.includes(industry.id) ? (
-                        <Check className="w-3 h-3 text-[#734D20]" />
+                        <Check className="w-3 h-3 text-secondary" />
                       ) : (
                         <Plus className="w-3 h-3 text-gray-300" />
                       )}
@@ -449,7 +449,7 @@ const Signup = () => {
               <button
                 onClick={handleStepOne}
                 disabled={selectedIndustries.length === 0}
-                className="flex-1 bg-[#F9D769] text-[#734D20] font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
+                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
               >
                 Continue
               </button>
@@ -461,8 +461,8 @@ const Signup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-[#F9D769] rounded-lg flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-6 h-6 text-[#734D20]" />
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <UserPlus className="w-6 h-6 text-secondary" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Create Your Account</h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
@@ -478,7 +478,7 @@ const Signup = () => {
                     placeholder="First Name"
                     type="text"
                     value={signupData.first_name}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                     onChange={(e) => setSignupData(prev => ({ ...prev, first_name: e.target.value }))}
                     disabled={loading}
                   />
@@ -489,7 +489,7 @@ const Signup = () => {
                     placeholder="Last Name"
                     type="text"
                     value={signupData.last_name}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                     onChange={(e) => setSignupData(prev => ({ ...prev, last_name: e.target.value }))}
                     disabled={loading}
                   />
@@ -502,7 +502,7 @@ const Signup = () => {
                   placeholder="Email"
                   type="email"
                   value={signupData.email}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                   onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
                   disabled={loading}
                 />
@@ -514,7 +514,7 @@ const Signup = () => {
                   placeholder="Phone Number"
                   type="tel"
                   value={signupData.phone_number}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                   onChange={(e) => setSignupData(prev => ({ ...prev, phone_number: e.target.value }))}
                   disabled={loading}
                 />
@@ -531,7 +531,7 @@ const Signup = () => {
               <button
                 onClick={nextStep}
                 disabled={loading}
-                className="flex-1 bg-[#F9D769] text-[#734D20] font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
+                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
@@ -543,8 +543,8 @@ const Signup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-[#F9D769] rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-6 h-6 text-[#734D20]" />
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-6 h-6 text-secondary" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Verify Your Email</h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
@@ -583,7 +583,7 @@ const Signup = () => {
               <button
                 onClick={resendOTP}
                 disabled={loading}
-                className="text-xs text-[#734D20] hover:text-[#734D20]-scale-600 font-medium hover:underline disabled:opacity-50 transition-colors"
+                className="text-xs text-secondary hover:text-secondary-scale-600 font-medium hover:underline disabled:opacity-50 transition-colors"
               >
                 Resend
               </button>
@@ -592,7 +592,7 @@ const Signup = () => {
             <button
               onClick={nextStep}
               disabled={loading || otpData.otp.length !== 4}
-              className="w-full bg-[#F9D769] text-[#734D20] font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
+              className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
             >
               {loading ? 'Verifying...' : 'Verify Email'}
             </button>
@@ -603,8 +603,8 @@ const Signup = () => {
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-[#F9D769] rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-6 h-6 text-[#734D20]" />
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-6 h-6 text-secondary" />
               </div>
               <h2 className="text-xl font-semibold mb-2">Secure Your Account</h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
@@ -619,7 +619,7 @@ const Signup = () => {
                   placeholder="Password"
                   type={showPassword ? "text" : "password"}
                   value={passwordData.password}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                   onChange={(e) => setPasswordData(prev => ({ ...prev, password: e.target.value }))}
                   disabled={loading}
                 />
@@ -638,7 +638,7 @@ const Signup = () => {
                   placeholder="Confirm Password"
                   type={showConfirmPassword ? "text" : "password"}
                   value={passwordData.confirm_password}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#F9D769] focus:border-[#F9D769] bg-gray-50 focus:bg-white text-black text-xs"
+                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
                   disabled={loading}
                 />
@@ -655,7 +655,7 @@ const Signup = () => {
             <button
               onClick={nextStep}
               disabled={loading || !passwordData.password || !passwordData.confirm_password}
-              className="w-full bg-[#F9D769] text-[#734D20] font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
+              className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
             >
               {loading ? 'Completing Setup...' : 'Complete Setup'}
             </button>
@@ -686,7 +686,7 @@ const Signup = () => {
                   <div
                     key={index}
                     className={`w-2 h-2 rounded-full transition-all ${
-                      index <= currentStep ? 'bg-[#F9D769]' : 'bg-gray-300'
+                      index <= currentStep ? 'bg-primary' : 'bg-gray-300'
                     }`}
                   />
                 ))}
@@ -706,7 +706,7 @@ const Signup = () => {
             <span className="text-xs text-gray-600">Already have an account? </span>
             <button
               onClick={() => navigate('/login')}
-              className="text-xs text-[#734D20] hover:text-[#734D20]-scale-600 font-medium hover:underline transition-colors"
+              className="text-xs text-secondary hover:text-secondary-scale-600 font-medium hover:underline transition-colors"
             >
               Sign in
             </button>

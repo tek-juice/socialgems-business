@@ -16,7 +16,7 @@ const FloatingActionMenu = ({ options, className }) => {
     <div className={cn("fixed bottom-5 right-5 z-50", className)}>
       <Button
         onClick={toggleMenu}
-        className="w-12 h-12 rounded-full bg-gradient-to-br from-[#F9D769] to-[#E8C547] hover:from-[#E8C547] hover:to-[#F9D769] shadow-[0_0_20px_rgba(249,215,105,0.4)] text-[#734D20]"
+        className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-[#E8C547] hover:from-[#E8C547] hover:to-primary shadow-[0_0_20px_rgba(249,215,105,0.4)] text-secondary"
       >
         <motion.div
           animate={{ rotate: isOpen ? 45 : 0 }}
@@ -64,7 +64,7 @@ const FloatingActionMenu = ({ options, className }) => {
                       setIsOpen(false);
                     }}
                     size="sm"
-                    className="flex items-center gap-2 bg-white/95 shadow-[0_0_20px_rgba(0,0,0,0.1)] border border-white/20 rounded-lgs backdrop-blur-[100px] text-[#734D20] min-w-[120px]"
+                    className="flex items-center gap-2 bg-white/95 shadow-[0_0_20px_rgba(0,0,0,0.1)] border border-white/20 rounded-lgs backdrop-blur-[100px] text-secondary min-w-[120px]"
                   >
                     {option.Icon}
                     <span>{option.label}</span>

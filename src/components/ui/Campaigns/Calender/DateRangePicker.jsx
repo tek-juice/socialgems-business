@@ -84,21 +84,21 @@ const DateRangePicker = ({
           disabled 
             ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50" 
             : isOpen 
-              ? "border-[#F9D769] ring-2 ring-[#F9D769]/20 shadow-sm" 
-              : "border-gray-300 hover:border-[#F9D769]/50",
-          dateRange?.from && dateRange?.to ? "text-[#734D20]" : "text-gray-500"
+              ? "border-primary ring-2 ring-primary/20 shadow-sm" 
+              : "border-gray-300 hover:border-primary/50",
+          dateRange?.from && dateRange?.to ? "text-secondary" : "text-gray-500"
         )}
       >
         <div className="flex items-center gap-3">
           <FiCalendar className={cn(
             "w-4 h-4",
-            disabled ? "text-gray-400" : "text-[#734D20]/70"
+            disabled ? "text-gray-400" : "text-secondary/70"
           )} />
           <span className="font-medium">
             {formatDateRange(dateRange)}
           </span>
           {dateRange?.from && dateRange?.to && (
-            <span className="text-xs bg-[#F9D769]/20 text-[#734D20] px-2 py-1 rounded-full font-medium">
+            <span className="text-xs bg-primary/20 text-secondary px-2 py-1 rounded-full font-medium">
               {getDaysDifference(dateRange)} days
             </span>
           )}
@@ -142,11 +142,11 @@ const DateRangePicker = ({
             >
               <Card className="border-0 shadow-2xl bg-white min-w-[600px]">
                 <CardHeader className="pb-3 border-b border-gray-100">
-                  <CardTitle className="text-lg font-bold text-[#734D20] flex items-center gap-2">
-                    <FiCalendar className="w-5 h-5 text-[#F9D769]" />
+                  <CardTitle className="text-lg font-bold text-secondary flex items-center gap-2">
+                    <FiCalendar className="w-5 h-5 text-primary" />
                     Select Campaign Duration
                   </CardTitle>
-                  <CardDescription className="text-sm text-[#734D20]/70">
+                  <CardDescription className="text-sm text-secondary/70">
                     Choose start and end dates for your campaign
                   </CardDescription>
                 </CardHeader>
@@ -162,8 +162,8 @@ const DateRangePicker = ({
                   
                   {/* Quick Select Options */}
                   <div className="mt-6 pt-4 border-t border-gray-100">
-                    <div className="text-sm font-semibold text-[#734D20] mb-3 flex items-center gap-2">
-                      <FiClock className="w-4 h-4 text-[#F9D769]" />
+                    <div className="text-sm font-semibold text-secondary mb-3 flex items-center gap-2">
+                      <FiClock className="w-4 h-4 text-primary" />
                       Quick Select:
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -173,7 +173,7 @@ const DateRangePicker = ({
                           variant="outline"
                           size="sm"
                           onClick={() => handleSelect(getQuickSelectDate(option.days))}
-                          className="text-sm h-10 px-4 justify-start gap-2 hover:bg-[#F9D769]/10 hover:border-[#F9D769]"
+                          className="text-sm h-10 px-4 justify-start gap-2 hover:bg-primary/10 hover:border-primary"
                         >
                           <option.icon className="w-3 h-3" />
                           {option.label}
@@ -192,7 +192,7 @@ const DateRangePicker = ({
                     >
                       Cancel
                     </Button>
-                    <div className="text-sm text-[#734D20]/60 font-medium">
+                    <div className="text-sm text-secondary/60 font-medium">
                       {dateRange?.from && dateRange?.to 
                         ? `${getDaysDifference(dateRange)} days selected`
                         : "Select start and end dates"
