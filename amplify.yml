@@ -3,6 +3,8 @@ frontend:
   phases:
     preBuild:
       commands:
+        - nvm install 23.1.0
+        - nvm use 23.1.0
         - npm ci
     build:
       commands:
