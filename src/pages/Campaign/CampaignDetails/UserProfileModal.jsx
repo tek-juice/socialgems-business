@@ -20,7 +20,8 @@ import { MdCampaign } from "react-icons/md";
 import { Badge, Button } from "./UIComponents";
 import { TasksAccordion } from "./TasksAccordion";
 import { formatDate } from "./utils";
-import { get } from "../../../utils/service";
+import { get, post } from "../../../utils/service";
+import { toast } from "sonner";
 
 export const UserProfileModal = ({
   isOpen,
@@ -32,20 +33,25 @@ export const UserProfileModal = ({
   industries,
   countries,
   getInfluencerDetails,
+  campaignId, // Add this prop to pass campaign_id
 }) => {
   const [showFullBio, setShowFullBio] = useState(false);
   const [influencerDetails, setInfluencerDetails] = useState(null);
   const [socialSites, setSocialSites] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Review form states
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // Fetch social sites data
   useEffect(() => {
     const fetchSocialSites = async () => {
       try {
-        console.log("🔍 Fetching social sites...");
         const response = await get("users/socialSites");
-        console.log("📱 Social sites response:", response);
         if (response?.status === 200 && response?.data) {
           setSocialSites(response.data);
         }
@@ -63,31 +69,23 @@ export const UserProfileModal = ({
       if (isOpen && member?.user_id) {
         setLoading(true);
         setError(null);
-        console.log(
-          "🔍 Modal opened, fetching influencer details for:",
-          member.user_id
-        );
 
         try {
           // Direct API call if getInfluencerDetails is not available
           let details = null;
 
           if (getInfluencerDetails) {
-            console.log("📞 Using passed getInfluencerDetails function");
             details = await getInfluencerDetails(member.user_id);
           } else {
-            console.log("📞 Making direct API call to influencerDetails");
             const response = await get(
               `users/influencerDetails/${member.user_id}`
             );
-            console.log("✅ Direct API response:", response);
 
             if (response?.status === 200 && response?.data) {
               details = response.data;
             }
           }
 
-          console.log("📊 Influencer details received:", details);
           setInfluencerDetails(details);
         } catch (error) {
           console.error("❌ Error fetching influencer details:", error);
@@ -107,8 +105,57 @@ export const UserProfileModal = ({
       setInfluencerDetails(null);
       setShowFullBio(false);
       setError(null);
+      setShowReviewForm(false);
+      setReviewRating(0);
+      setReviewText("");
     }
   }, [isOpen]);
+
+  // Handle review submission
+  const handleSubmitReview = async () => {
+    if (!reviewRating || !reviewText.trim()) {
+      toast.error("Please provide both rating and review text");
+      return;
+    }
+
+    if (!campaignId || !member?.user_id) {
+      toast.error("Missing campaign or user information");
+      return;
+    }
+
+    setSubmittingReview(true);
+    
+    try {
+      const reviewData = {
+        campaign_id: campaignId,
+        user_id: member.user_id,
+        rating: reviewRating,
+        review: reviewText.trim()
+      };
+
+      const response = await post("campaigns/addReview", reviewData);
+      
+      if (response?.status === 200) {
+        toast.success("Review submitted successfully!");
+        setShowReviewForm(false);
+        setReviewRating(0);
+        setReviewText("");
+        
+        // Optionally refresh influencer details to show new review
+        if (getInfluencerDetails) {
+          const updatedDetails = await getInfluencerDetails(member.user_id);
+          setInfluencerDetails(updatedDetails);
+        }
+      } else {
+        toast.error("Failed to submit review");
+      }
+    } catch (error) {
+      console.error("❌ Error submitting review:", error);
+      toast.error("Failed to submit review. Please try again.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   if (!isOpen || !member) return null;
 
@@ -170,13 +217,8 @@ export const UserProfileModal = ({
 
   const activeSocialStats = getActiveSocialStats();
 
-  console.log("🎯 Rendering modal with:", {
-    member: member,
-    influencerDetails: influencerDetails,
-    loading: loading,
-    error: error,
-    activeSocialStats: activeSocialStats,
-  });
+  // Check if we have reviews
+  const hasReviews = influencerDetails?.reviews && influencerDetails.reviews.length > 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -248,38 +290,6 @@ export const UserProfileModal = ({
                   )}
               </div>
             </div>
-
-            
-
-            {/* Application Status for Pending Applications */}
-            {/* {member.application_status === 'submitted' && (
-              <div className="mb-4 p-3 bg-yellow-50 border border-primary-scale-200 rounded-xl">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-secondary">⏳ Application Pending Review</span>
-                  <span className="text-xs text-primary-scale-600">Amount: ${member.payable_amount}</span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => onAcceptClick && onAcceptClick(member)}
-                    className="flex-1 text-xs"
-                  >
-                    <FiCheck className="w-3 h-3 mr-1" />
-                    Accept
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => onRejectClick && onRejectClick(member)}
-                    className="flex-1 text-xs"
-                  >
-                    <FiXCircle className="w-3 h-3 mr-1" />
-                    Reject
-                  </Button>
-                </div>
-              </div>
-            )} */}
           </div>
 
           {/* Loading State */}
@@ -424,17 +434,94 @@ export const UserProfileModal = ({
               </div>
             )}
 
-          {/* Reviews */}
-          {influencerDetails?.reviews &&
-            influencerDetails.reviews.length > 0 &&
-            !loading && (
-              <div className="mx-6 py-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 mb-4">
+          {/* Reviews Section - Show if there are reviews OR if we can write a review */}
+          {(hasReviews || campaignId) && !loading && (
+            <div className="mx-6 py-4 border-t border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
                   <FiStar className="w-4 h-4 text-primary-scale-500" />
                   <h3 className="text-sm font-semibold text-gray-900">
-                    Reviews
+                    {hasReviews ? "Reviews" : "Write Review"}
                   </h3>
                 </div>
+                {campaignId && (
+                  <button
+                    onClick={() => setShowReviewForm(!showReviewForm)}
+                    className="text-xs font-medium text-primary-scale-600 hover:text-primary-scale-700"
+                  >
+                    {showReviewForm ? "Cancel" : "Write Review"}
+                  </button>
+                )}
+              </div>
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Write a Review</h4>
+                  
+                  {/* Rating Stars */}
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-600 mb-2">Rating</p>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={() => setReviewRating(star)}
+                          className="p-1"
+                        >
+                          <FiStar
+                            className={`w-5 h-5 ${
+                              star <= reviewRating
+                                ? "text-primary-scale-500 fill-current"
+                                : "text-gray-300"
+                            }`}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review Text */}
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-600 mb-2">Review</p>
+                    <textarea
+                      value={reviewText}
+                      onChange={(e) => setReviewText(e.target.value)}
+                      placeholder="Share your experience working with this influencer..."
+                      className="w-full p-3 border border-gray-300 rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary-scale-500 focus:border-transparent"
+                      rows={3}
+                      maxLength={500}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {reviewText.length}/500 characters
+                    </p>
+                  </div>
+
+                  {/* Submit Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSubmitReview}
+                      disabled={submittingReview || !reviewRating || !reviewText.trim()}
+                      className="flex-1 px-4 py-2 bg-primary-scale-500 text-white rounded-lg text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-scale-600 transition-colors"
+                    >
+                      {submittingReview ? "Submitting..." : "Submit Review"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowReviewForm(false);
+                        setReviewRating(0);
+                        setReviewText("");
+                      }}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-xs font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Show existing reviews if they exist */}
+              {hasReviews && (
                 <div className="space-y-4">
                   {influencerDetails.reviews
                     .slice(0, 3)
@@ -528,8 +615,18 @@ export const UserProfileModal = ({
                       </div>
                     ))}
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Show message when no reviews exist but review form is available */}
+              {!hasReviews && !showReviewForm && campaignId && (
+                <div className="text-center py-6">
+                  <FiStar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 mb-3">No reviews yet</p>
+                  <p className="text-xs text-gray-400">Be the first to review this influencer's work!</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tasks Section */}
           {member.tasks && member.tasks.length > 0 && (

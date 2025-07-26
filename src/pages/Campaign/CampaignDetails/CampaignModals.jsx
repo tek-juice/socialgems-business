@@ -38,12 +38,18 @@ export default function CampaignModals({
   selectedMember,
   selectedInvite,
   campaign,
+  campaignId, // Add this prop
   stats,
   isProcessing,
   industries,
   countries,
   
-  // Handlers
+  // New handlers for UserProfileModal
+  getInfluencerDetails,
+  onAcceptClick,
+  onRejectFromModal,
+  
+  // Existing handlers
   onPayoutAction,
   onResendInvite,
   onCancelInvite,
@@ -64,13 +70,16 @@ export default function CampaignModals({
           setUserProfileModal(false);
           setApprovePaymentModal(true);
         }}
-        onRejectClick={(member) => {
+        onRejectClick={onRejectFromModal || ((member) => {
           setSelectedMember(member);
           setUserProfileModal(false);
           setRejectPaymentModal(true);
-        }}
+        })}
+        onAcceptClick={onAcceptClick}
         industries={industries}
         countries={countries}
+        getInfluencerDetails={getInfluencerDetails}
+        campaignId={campaignId || campaign?.campaign_id} // Pass the campaign ID
       />
 
       {/* Payment Modals */}

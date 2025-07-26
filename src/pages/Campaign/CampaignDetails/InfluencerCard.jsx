@@ -165,51 +165,6 @@ export const InfluencerCard = ({
         </div>
       </div>
       
-      {/* <div className="mt-3 pt-3 border-t border-gray-100">
-      
-        {member.pay_status === 'not_paid' && 
-         member.action_status === 'completed' && 
-         member.application_status === 'accepted' && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="success"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPayClick(member);
-              }}
-              className="shadow-sm px-4"
-            >
-              <FiCheck className="w-3 h-3 sm:mr-1" />
-              <span className="hidden text-xs font-semibold sm:inline">Pay</span>
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRejectClick(member);
-              }}
-              className="shadow-sm px-4"
-            >
-              <FiXCircle className="w-3 h-3 sm:mr-1" />
-              <span className="hidden sm:inline">Reject</span>
-            </Button>
-          </div>
-        )}
-
-        {member.application_status === 'accepted' && member.action_status !== 'completed' && (
-          <div className="text-xs text-green-600 font-medium mt-2">
-            ✓ Application accepted - Waiting for task completion
-          </div>
-        )}
-
-        {(member.application_status === 'submitted' || member.application_status === 'pending') && !showApplicationActions && (
-          <div className="text-xs text-primary-scale-600 font-medium mt-2">
-            ⏳ Application submitted - Pending review
-          </div>
-        )}
-      </div> */}
     </motion.div>
   );
 };

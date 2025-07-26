@@ -79,7 +79,6 @@ export default function MembersSection({
       }
       return null;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
       return null;
     }
   };
@@ -90,7 +89,6 @@ export default function MembersSection({
     
     try {
       const response = await get(`campaigns/approved-influencers/${campaign.campaign_id}`);
-
       
       if (response?.status === 200 && response?.data) {
         // Transform the approved users data and fetch missing profile data
@@ -137,7 +135,6 @@ export default function MembersSection({
         return [];
       }
     } catch (error) {
-      console.error('❌ Error fetching approved users:', error);
       setApprovedUsers([]);
       toast.error('Failed to fetch approved users');
       return [];
@@ -277,6 +274,21 @@ export default function MembersSection({
   const toggleBatchActions = () => {
     setShowBatchActions(!showBatchActions);
     setSelectedMembers([]);
+  };
+
+  // Enhanced member click handler that passes campaign context
+  const handleMemberClick = (member) => {
+    // Enhance member data with campaign context for review functionality
+    const enhancedMember = {
+      ...member,
+      campaign_id: campaign?.campaign_id, // Ensure campaign_id is available for reviews
+      campaign_title: campaign?.title // Add campaign title for context
+    };
+    
+    // Call the parent's onMemberClick with enhanced member data
+    if (onMemberClick) {
+      onMemberClick(enhancedMember);
+    }
   };
 
   // Individual application handlers
@@ -476,7 +488,7 @@ export default function MembersSection({
                 <InfluencerCard
                   key={member.user_id}
                   member={member}
-                  onClick={onMemberClick}
+                  onClick={handleMemberClick} // Use enhanced handler
                   onPayClick={onPayClick}
                   onRejectClick={onRejectClick}
                   onViewTasks={onViewTasks}

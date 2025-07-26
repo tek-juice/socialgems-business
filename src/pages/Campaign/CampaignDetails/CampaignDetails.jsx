@@ -1315,6 +1315,7 @@ export default function CampaignDetailsPage() {
           selectedMember={selectedMember}
           selectedInvite={selectedInvite}
           campaign={campaign}
+          campaignId={campaign?.campaign_id} // Add this line - pass campaign_id
           stats={stats}
           isProcessing={isProcessing}
           industries={industries}
