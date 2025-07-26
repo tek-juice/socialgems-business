@@ -114,13 +114,13 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-2">
-                  <p className="text-base font-semibold text-white bg-gray-300 w-fit">
+                  <p className="text-base font-semibold text-white w-fit">
                     {cardContent.title}
                   </p>
-                  <p className="text-sm text-white bg-gray-300 w-fit leading-relaxed">
+                  <p className="text-sm text-white w-fit leading-relaxed">
                     {cardContent.subtitle}
                   </p>
-                  <p className="text-xs text-white bg-gray-300 w-fit flex items-center gap-1">
+                  <p className="text-xs text-white w-fit flex items-center gap-1">
                     <div className="h-1 w-1 bg-gray-400 rounded-full" />
                     {cardContent.timeText}
                   </p>
