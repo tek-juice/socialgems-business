@@ -30,7 +30,10 @@ import {
   FiAlertCircle as AlertCircleIcon,
   FiXCircle as XCircleIcon,
   FiClock as ClockIcon,
+  FiCamera as CameraIcon,
 } from 'react-icons/fi';
+
+import { RiVerifiedBadgeFill } from "react-icons/ri";
 
 // Social media icons from react-icons/fi
 import {
@@ -196,84 +199,18 @@ function useCharacterLimit({ maxLength, initialValue = "" }) {
 }
 
 // Skeleton Loading Components
-const SkeletonCard = ({ height = "h-96", className = "" }) => (
-  <div className={`${height} rounded-3xl border border-gray-200 bg-white shadow-xl shadow-black/5 animate-pulse overflow-hidden ${className}`}>
-    <div className="relative h-full">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200"></div>
-      <div className="absolute bottom-0 left-0 right-0 p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 bg-gray-300 rounded w-48"></div>
-          <div className="h-6 bg-gray-300 rounded-full w-20"></div>
-        </div>
-        <div className="space-y-2">
-          <div className="h-5 bg-gray-300 rounded w-32"></div>
-          <div className="h-4 bg-gray-300 rounded w-64"></div>
-          <div className="h-4 bg-gray-300 rounded w-48"></div>
-        </div>
-        <div className="flex gap-6">
-          <div className="h-4 bg-gray-300 rounded w-24"></div>
-          <div className="h-4 bg-gray-300 rounded w-20"></div>
-        </div>
-        <div className="h-10 bg-gray-300 rounded w-full"></div>
-      </div>
-    </div>
-  </div>
-);
-
-const SkeletonQuickStats = () => (
-  <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 space-y-6 animate-pulse">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 bg-gray-300 rounded-lg"></div>
-      <div>
-        <div className="h-5 bg-gray-300 rounded w-28 mb-2"></div>
-        <div className="h-4 bg-gray-300 rounded w-32"></div>
-      </div>
-    </div>
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="p-4 bg-gray-50 rounded-lg">
-          <div className="h-4 bg-gray-300 rounded w-20 mb-2"></div>
-          <div className="h-6 bg-gray-300 rounded w-16"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const SkeletonVerificationCard = () => (
-  <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6 animate-pulse">
-    <div className="flex items-center gap-3 mb-6">
-      <div className="w-10 h-10 bg-gray-300 rounded-lg"></div>
-      <div>
-        <div className="h-5 bg-gray-300 rounded w-40 mb-2"></div>
-        <div className="h-4 bg-gray-300 rounded w-48"></div>
-      </div>
-    </div>
-    <div className="space-y-4">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <div className="w-5 h-5 bg-gray-300 rounded"></div>
-            <div>
-              <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
-              <div className="h-3 bg-gray-300 rounded w-32"></div>
-            </div>
-          </div>
-          <div className="h-6 bg-gray-300 rounded w-20"></div>
-        </div>
-      ))}
-    </div>
-  </div>
+const SkeletonLoader = ({ className = "" }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`}></div>
 );
 
 // UI Components
 const Button = ({ className, variant = "default", size = "default", children, disabled, ...props }) => {
   const variants = {
-    default: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary shadow-sm shadow-black/5",
-    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 shadow-sm shadow-black/5",
+    default: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary",
+    outline: "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
     ghost: "text-gray-700 hover:bg-gray-100",
-    destructive: "bg-red-500 text-white hover:bg-red-600 shadow-sm shadow-black/5",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 shadow-sm shadow-black/5"
+    destructive: "bg-red-500 text-white hover:bg-red-600",
+    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200"
   };
 
   const sizes = {
@@ -286,7 +223,7 @@ const Button = ({ className, variant = "default", size = "default", children, di
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-xs font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
         sizes[size],
         className
@@ -304,7 +241,7 @@ const Input = ({ className, type, ...props }) => {
     <input
       type={type}
       className={cn(
-        "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 transition-colors placeholder:text-gray-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -316,7 +253,7 @@ const Textarea = ({ className, ...props }) => {
   return (
     <textarea
       className={cn(
-        "flex min-h-[80px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm shadow-black/5 transition-shadow placeholder:text-gray-500 focus-visible:border-primary focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-[80px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 transition-colors placeholder:text-gray-500 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -327,7 +264,7 @@ const Textarea = ({ className, ...props }) => {
 const Label = ({ className, ...props }) => (
   <label
     className={cn(
-      "text-sm font-medium leading-4 text-gray-900 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "text-xs font-medium text-gray-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className
     )}
     {...props}
@@ -348,7 +285,7 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap",
+        "inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-medium whitespace-nowrap",
         variants[variant],
         className
       )}
@@ -356,107 +293,6 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
     >
       {children}
     </div>
-  );
-};
-
-// Profile Card Component
-const ProfileOverviewCard = ({ userData, onEditProfile, loading }) => {
-  const [hovered, setHovered] = useState(false);
-  const shouldReduceMotion = useReducedMotion();
-
-  const containerVariants = {
-    rest: { scale: 1, y: 0 },
-    hover: !shouldReduceMotion ? { 
-      scale: 1.02, 
-      y: -4,
-      transition: { 
-        type: "spring", 
-        stiffness: 400, 
-        damping: 28,
-        mass: 0.6,
-      }
-    } : {},
-  };
-
-  if (loading) {
-    return <SkeletonCard />;
-  }
-
-  return (
-    <motion.div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      initial="rest"
-      whileHover="hover"
-      variants={containerVariants}
-      className="relative h-96 rounded-3xl border border-gray-200 text-card-foreground overflow-hidden shadow-xl shadow-black/5 cursor-pointer group backdrop-blur-sm"
-    >
-      {/* Full Cover Image */}
-      <motion.img
-        src={userData?.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.first_name || userData?.firstName || 'User')}&background=F9D769&color=734D20&size=400&rounded=true`}
-        alt={`${userData?.first_name || userData?.firstName || 'User'} ${userData?.last_name || userData?.lastName || ''}`}
-        className="absolute inset-0 w-full h-full object-cover"
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      />
-
-      {/* Smooth Blur Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 via-background/20 via-background/10 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-background/90 via-background/60 via-background/30 via-background/15 via-background/8 to-transparent backdrop-blur-[1px]" />
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background/85 via-background/40 to-transparent backdrop-blur-sm" />
-
-      {/* Content */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="absolute bottom-0 left-0 right-0 p-6 space-y-4"
-      >
-        {/* Name and Verification */}
-        <div className="flex items-center gap-2">
-          <h2 className="text-2xl font-bold text-foreground">
-            {userData?.first_name || userData?.firstName || 'User'} {userData?.last_name || userData?.lastName || ''}
-          </h2>
-          <div className="flex items-center gap-2">
-            <Badge variant="gold">{userData?.level_name || 'Member'}</Badge>
-            {userData?.email_verified === "yes" && (
-              <div className="flex items-center justify-center w-4 h-4 rounded-full bg-green-500 text-white">
-                <CheckIcon className="w-2.5 h-2.5" />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Username and Bio */}
-        <div className="space-y-2">
-          <p className="text-secondary font-medium">@{userData?.username || 'username'}</p>
-          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2">
-            {userData?.bio || 'No bio available'}
-          </p>
-        </div>
-
-        {/* Stats */}
-        <div className="flex items-center gap-6 pt-2">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <WalletIcon className="w-4 h-4" />
-            <span className="font-semibold text-foreground">{userData?.wallet?.balance || '0'}</span>
-            <span className="text-sm">GEMS</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <CrownIcon className="w-4 h-4" />
-            <span className="font-semibold text-foreground">Level {userData?.level_id || '1'}</span>
-          </div>
-        </div>
-
-        {/* Edit Profile Button */}
-        <Button
-          onClick={onEditProfile}
-          className="w-full bg-foreground text-background hover:bg-foreground/90"
-        >
-          <EditIcon className="w-4 h-4 mr-2" />
-          Edit Profile
-        </Button>
-      </motion.div>
-    </motion.div>
   );
 };
 
@@ -556,7 +392,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
         exit={{ opacity: 0, scale: 0.95 }}
         className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       >
-        <div className="bg-white rounded-xl border border-gray-200 shadow-xl overflow-hidden">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Profile Banner styled like cover image */}
           <div className="h-32">
             <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-r from-primary/20 to-[#E8C547]/20 rounded-t-xl">
@@ -612,7 +448,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
           <div className="px-6 pb-6 pt-6">
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Edit Profile</h2>
-              <p className="text-sm text-gray-600">Update your profile information and settings</p>
+              <p className="text-xs text-gray-600">Update your profile information and settings</p>
             </div>
 
             <form className="space-y-6" onSubmit={handleSubmit}>
@@ -755,79 +591,6 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
   );
 };
 
-// Quick Stats Card Component
-const QuickStatsCard = ({ userData, loading }) => {
-  if (loading) {
-    return <SkeletonQuickStats />;
-  }
-
-  return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 space-y-6"
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
-          <UserIcon className="w-5 h-5 text-secondary" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Quick Stats</h3>
-          <p className="text-sm text-gray-600">Account overview</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="p-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Account Type</p>
-              <p className="text-lg font-bold text-secondary capitalize">{userData?.user_type || 'User'}</p>
-            </div>
-            <BriefcaseIcon className="w-8 h-8 text-secondary" />
-          </div>
-        </div>
-
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Member Since</p>
-              <p className="text-lg font-bold text-gray-900">
-                {userData?.created_on 
-                  ? new Date(userData.created_on).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                  : 'Unknown'
-                }
-              </p>
-            </div>
-            <MailIcon className="w-8 h-8 text-gray-600" />
-          </div>
-        </div>
-
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Referral Code</p>
-              <div className="flex items-center gap-2">
-                <p className="text-lg font-bold text-secondary">{userData?.referral_code || 'N/A'}</p>
-                {userData?.referral_code && (
-                  <button 
-                    className="text-gray-500 hover:text-secondary transition-colors"
-                    onClick={() => {
-                      navigator.clipboard.writeText(userData.referral_code);
-                      toast.success('Referral code copied!');
-                    }}
-                  >
-                    <CopyIcon className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 // PIN Setup Modal
 const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
   const [pin, setPin] = useState('');
@@ -886,7 +649,7 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Set Wallet PIN</h3>
-              <p className="text-sm text-gray-600">Secure your wallet with a 5-digit PIN</p>
+              <p className="text-xs text-gray-600">Secure your wallet with a 5-digit PIN</p>
             </div>
           </div>
 
@@ -945,11 +708,22 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
   );
 };
 
-// Business Verification Component with proper status handling
-function BusinessVerification({ userData }) {
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+// Main Settings Page Component
+export default function SettingsPage() {
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState(null);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [showBusinessForm, setShowBusinessForm] = useState(false);
+  const [businessLoading, setBusinessLoading] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+
+  const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
     business_address: '',
     business_phone: '',
@@ -960,497 +734,6 @@ function BusinessVerification({ userData }) {
     registration_number: '',
     business_description: ''
   });
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const response = await post('users/verifyBusiness', formData);
-      if (response?.status === 200) {
-        toast.success('Business verification submitted successfully!');
-        setShowForm(false);
-      }
-    } catch (error) {
-      console.error('Error submitting business verification:', error);
-      toast.error('Failed to submit business verification');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Get business verification status from the API response
-  const getBusinessStatus = () => {
-    if (!userData?.business_profile) {
-      return {
-        status: 'none',
-        icon: AlertCircleIcon,
-        title: 'Verification Required',
-        description: 'Complete business verification to unlock campaign features',
-        bgColor: 'bg-yellow-50',
-        borderColor: 'border-primary-scale-200',
-        textColor: 'text-secondary',
-        iconColor: 'text-primary-scale-600'
-      };
-    }
-
-    const verificationStatus = userData.business_profile.verification_status;
-    
-    switch (verificationStatus) {
-      case 'approved':
-        return {
-          status: 'approved',
-          icon: CheckCircleIcon,
-          title: 'Business Verified',
-          description: 'Your business account has been successfully verified',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          textColor: 'text-green-900',
-          iconColor: 'text-green-600'
-        };
-      case 'pending':
-        return {
-          status: 'pending',
-          icon: ClockIcon,
-          title: 'Verification Pending',
-          description: 'Your business verification is under review',
-          bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
-          textColor: 'text-orange-900',
-          iconColor: 'text-orange-600'
-        };
-      case 'rejected':
-        return {
-          status: 'rejected',
-          icon: XCircleIcon,
-          title: 'Verification Rejected',
-          description: 'Your business verification was rejected. Please resubmit with correct information.',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-900',
-          iconColor: 'text-red-600'
-        };
-      default:
-        return {
-          status: 'none',
-          icon: AlertCircleIcon,
-          title: 'Verification Required',
-          description: 'Complete business verification to unlock campaign features',
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-primary-scale-200',
-          textColor: 'text-secondary',
-          iconColor: 'text-primary-scale-600'
-        };
-    }
-  };
-
-  const businessStatus = getBusinessStatus();
-
-  return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
-          <BriefcaseIcon className="w-5 h-5 text-secondary" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Business Verification</h3>
-          <p className="text-sm text-gray-600">Verify your business to create campaigns</p>
-        </div>
-      </div>
-
-      <div className={`p-4 ${businessStatus.bgColor} rounded-lg border ${businessStatus.borderColor} mb-6`}>
-        <div className="flex items-center gap-3">
-          <businessStatus.icon className={`w-5 h-5 ${businessStatus.iconColor}`} />
-          <div>
-            <p className={`font-medium ${businessStatus.textColor}`}>{businessStatus.title}</p>
-            <p className={`text-sm ${businessStatus.iconColor}`}>{businessStatus.description}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Show business details if verified or pending */}
-      {/* {userData?.business_profile && (businessStatus.status === 'approved' || businessStatus.status === 'pending') && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-medium text-gray-900 mb-3">Business Details</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-gray-600">Name:</span>
-              <span className="ml-2 font-medium">{userData.business_profile.name}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Email:</span>
-              <span className="ml-2 font-medium">{userData.business_profile.email}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Phone:</span>
-              <span className="ml-2 font-medium">{userData.business_profile.phone}</span>
-            </div>
-            <div>
-              <span className="text-gray-600">Website:</span>
-              <span className="ml-2 font-medium">{userData.business_profile.website || 'N/A'}</span>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      {/* Show form or start button based on status */}
-      {(businessStatus.status === 'none' || businessStatus.status === 'rejected') && (
-        <div className="space-y-4">
-          {!showForm ? (
-            <Button onClick={() => setShowForm(true)} className="w-full">
-              {businessStatus.status === 'rejected' ? 'Resubmit Verification' : 'Start Business Verification'}
-            </Button>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-gray-50 rounded-lg">
-              <h4 className="font-medium text-gray-900">Business Information</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="business-name">Business Name</Label>
-                  <Input 
-                    id="business-name" 
-                    placeholder="Your Business Name"
-                    value={formData.business_name}
-                    onChange={(e) => handleInputChange('business_name', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="business-email">Business Email</Label>
-                  <Input 
-                    id="business-email" 
-                    type="email" 
-                    placeholder="business@company.com"
-                    value={formData.business_email}
-                    onChange={(e) => handleInputChange('business_email', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="business-website">Website (Optional)</Label>
-                  <Input 
-                    id="business-website" 
-                    placeholder="https://yourwebsite.com"
-                    value={formData.business_website}
-                    onChange={(e) => handleInputChange('business_website', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="business-phone">Business Phone</Label>
-                  <Input 
-                    id="business-phone" 
-                    placeholder="+256-772-123456"
-                    value={formData.business_phone}
-                    onChange={(e) => handleInputChange('business_phone', e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="business-address">Business Address</Label>
-                <Textarea 
-                  id="business-address" 
-                  placeholder="Full business address"
-                  value={formData.business_address}
-                  onChange={(e) => handleInputChange('business_address', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="business-description">Business Description</Label>
-                <Textarea 
-                  id="business-description" 
-                  placeholder="Describe your business and services"
-                  value={formData.business_description}
-                  onChange={(e) => handleInputChange('business_description', e.target.value)}
-                  required
-                />
-              </div>
-              <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={loading}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? 'Submitting...' : 'Submit for Review'}
-                </Button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// Verification Status Component
-function VerificationStatus({ userData, onVerifyEmail, onVerifyPhone }) {
-  const [emailOtpSent, setEmailOtpSent] = useState(false);
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtp, setPhoneOtp] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSendEmailOtp = async () => {
-    setLoading(true);
-    try {
-      await post('users/sendEmailOTP', { email: userData.email });
-      setEmailOtpSent(true);
-      toast.success('Email OTP sent successfully!');
-    } catch (error) {
-      toast.error('Failed to send email OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendPhoneOtp = async () => {
-    setLoading(true);
-    try {
-      await post('users/sendPhoneOTP', { phone: userData.phone });
-      setPhoneOtpSent(true);
-      toast.success('Phone OTP sent successfully!');
-    } catch (error) {
-      toast.error('Failed to send phone OTP');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyEmail = async () => {
-    setLoading(true);
-    try {
-      await post('users/verifyEmail', { email: userData.email, otp: emailOtp });
-      toast.success('Email verified successfully!');
-      onVerifyEmail();
-    } catch (error) {
-      toast.error('Failed to verify email');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyPhone = async () => {
-    setLoading(true);
-    try {
-      await post('users/verifyPhone', { phone: userData.phone, otp: phoneOtp });
-      toast.success('Phone verified successfully!');
-      onVerifyPhone();
-    } catch (error) {
-      toast.error('Failed to verify phone');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading && !userData) {
-    return <SkeletonVerificationCard />;
-  }
-
-  return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
-          <ShieldIcon className="w-5 h-5 text-secondary" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Account Verification</h3>
-          <p className="text-sm text-gray-600">Secure and verify your account details</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {/* Email Verification */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <MailIcon className="w-5 h-5 text-gray-600" />
-            <div>
-              <p className="font-medium text-gray-900">Email Address</p>
-              <p className="text-sm text-gray-600">{userData?.email}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {userData?.email_verified === "yes" ? (
-              <>
-                <CheckIcon className="w-4 h-4 text-green-600" />
-                <Badge variant="success">Verified</Badge>
-              </>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {!emailOtpSent ? (
-                  <Button size="sm" onClick={handleSendEmailOtp} disabled={loading}>
-                    Send OTP
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter OTP"
-                      value={emailOtp}
-                      onChange={(e) => setEmailOtp(e.target.value)}
-                      className="w-20 h-8 text-sm"
-                    />
-                    <Button size="sm" onClick={handleVerifyEmail} disabled={loading || !emailOtp}>
-                      Verify
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Phone Verification */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-          <div className="flex items-center gap-3">
-            <PhoneIcon className="w-5 h-5 text-gray-600" />
-            <div>
-              <p className="font-medium text-gray-900">Phone Number</p>
-              <p className="text-sm text-gray-600">{userData?.phone}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {userData?.phone_verified === "yes" ? (
-              <>
-                <CheckIcon className="w-4 h-4 text-green-600" />
-                <Badge variant="success">Verified</Badge>
-              </>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {!phoneOtpSent ? (
-                  <Button size="sm" onClick={handleSendPhoneOtp} disabled={loading}>
-                    Send OTP
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter OTP"
-                      value={phoneOtp}
-                      onChange={(e) => setPhoneOtp(e.target.value)}
-                      className="w-20 h-8 text-sm"
-                    />
-                    <Button size="sm" onClick={handleVerifyPhone} disabled={loading || !phoneOtp}>
-                      Verify
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Account Level */}
-        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
-          <div className="flex items-center gap-3">
-            <CrownIcon className="w-5 h-5 text-secondary" />
-            <div>
-              <p className="font-medium text-gray-900">Account Level</p>
-              <p className="text-sm text-gray-600">Level {userData?.level_id || 1} - Enhanced features unlocked</p>
-            </div>
-          </div>
-          <Badge variant="gold">{userData?.level_name || 'Member'}</Badge>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// Security Settings Component with wallet PIN functionality
-function SecuritySettings({ userData, onRefresh }) {
-  const [showPinModal, setShowPinModal] = useState(false);
-
-  const handleSetPin = () => {
-    setShowPinModal(true);
-  };
-
-  const handlePinSuccess = () => {
-    onRefresh(); // Refresh user data to update PIN status
-  };
-
-  return (
-    <>
-      <motion.div
-        whileHover={{ y: -5 }}
-        className="bg-white rounded-xl border border-gray-200 shadow-lg p-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
-            <SettingsIcon className="w-5 h-5 text-secondary" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Security & Privacy</h3>
-            <p className="text-sm text-gray-600">Manage your account security settings</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              {userData?.has_pin ? (
-                <LockIcon className="w-5 h-5 text-green-600" />
-              ) : (
-                <UnlockIcon className="w-5 h-5 text-red-600" />
-              )}
-              <div>
-                <p className="font-medium text-gray-900">Wallet PIN</p>
-                <p className="text-sm text-gray-600">Secure your wallet transactions</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {userData?.has_pin ? (
-                <>
-                  <CheckIcon className="w-4 h-4 text-green-600" />
-                  <Badge variant="success">Enabled</Badge>
-                </>
-              ) : (
-                <Button size="sm" onClick={handleSetPin}>
-                  <LockIcon className="w-4 h-4 mr-2" />
-                  Enable PIN
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <WalletIcon className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="font-medium text-gray-900">Wallet Balance</p>
-                <p className="text-sm text-gray-600">{userData?.wallet?.balance || '0'} GEMS available</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="info">{userData?.wallet?.balance || '0'} GEMS</Badge>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      <PinSetupModal 
-        isOpen={showPinModal}
-        onClose={() => setShowPinModal(false)}
-        onSuccess={handlePinSuccess}
-      />
-    </>
-  );
-}
-
-// Main Settings Page Component
-export default function SettingsPage() {
-  const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState(null);
-  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
 
   // Fetch user profile data
   const fetchUserProfile = async () => {
@@ -1507,29 +790,178 @@ export default function SettingsPage() {
     setUserData(prev => ({ ...prev, phone_verified: 'yes' }));
   };
 
+  const handlePinSuccess = () => {
+    fetchUserProfile(); // Refresh user data to update PIN status
+  };
+
+  // Business verification handlers
+  const handleBusinessInputChange = (field, value) => {
+    setBusinessFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleBusinessSubmit = async (e) => {
+    e.preventDefault();
+    setBusinessLoading(true);
+    
+    try {
+      const response = await post('users/verifyBusiness', businessFormData);
+      if (response?.status === 200) {
+        toast.success('Business verification submitted successfully!');
+        setShowBusinessForm(false);
+        await fetchUserProfile();
+      }
+    } catch (error) {
+      console.error('Error submitting business verification:', error);
+      toast.error('Failed to submit business verification');
+    } finally {
+      setBusinessLoading(false);
+    }
+  };
+
+  // Email verification handlers
+  const handleSendEmailOtp = async () => {
+    setVerificationLoading(true);
+    try {
+      await post('users/sendEmailOTP', { email: userData.email });
+      setEmailOtpSent(true);
+      toast.success('Email OTP sent successfully!');
+    } catch (error) {
+      toast.error('Failed to send email OTP');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleSendPhoneOtp = async () => {
+    setVerificationLoading(true);
+    try {
+      await post('users/sendPhoneOTP', { phone: userData.phone });
+      setPhoneOtpSent(true);
+      toast.success('Phone OTP sent successfully!');
+    } catch (error) {
+      toast.error('Failed to send phone OTP');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    setVerificationLoading(true);
+    try {
+      await post('users/verifyEmail', { email: userData.email, otp: emailOtp });
+      toast.success('Email verified successfully!');
+      handleVerifyEmail();
+      setEmailOtpSent(false);
+      setEmailOtp('');
+    } catch (error) {
+      toast.error('Failed to verify email');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    setVerificationLoading(true);
+    try {
+      await post('users/verifyPhone', { phone: userData.phone, otp: phoneOtp });
+      toast.success('Phone verified successfully!');
+      handleVerifyPhone();
+      setPhoneOtpSent(false);
+      setPhoneOtp('');
+    } catch (error) {
+      toast.error('Failed to verify phone');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  // Get business verification status
+  const getBusinessStatus = () => {
+    if (!userData?.business_profile) {
+      return {
+        status: 'none',
+        icon: AlertCircleIcon,
+        title: 'Verification Required',
+        description: 'Complete business verification to unlock campaign features',
+        color: 'text-yellow-600',
+        bgColor: 'bg-yellow-50'
+      };
+    }
+
+    const verificationStatus = userData.business_profile.verification_status;
+    
+    switch (verificationStatus) {
+      case 'approved':
+        return {
+          status: 'approved',
+          icon: CheckCircleIcon,
+          title: 'Business Verified',
+          description: 'Your business account has been successfully verified',
+          color: 'text-green-600',
+          bgColor: 'bg-green-50'
+        };
+      case 'pending':
+        return {
+          status: 'pending',
+          icon: ClockIcon,
+          title: 'Verification Pending',
+          description: 'Your business verification is under review',
+          color: 'text-orange-600',
+          bgColor: 'bg-orange-50'
+        };
+      case 'rejected':
+        return {
+          status: 'rejected',
+          icon: XCircleIcon,
+          title: 'Verification Rejected',
+          description: 'Your business verification was rejected. Please resubmit with correct information.',
+          color: 'text-red-600',
+          bgColor: 'bg-red-50'
+        };
+      default:
+        return {
+          status: 'none',
+          icon: AlertCircleIcon,
+          title: 'Verification Required',
+          description: 'Complete business verification to unlock campaign features',
+          color: 'text-yellow-600',
+          bgColor: 'bg-yellow-50'
+        };
+    }
+  };
+
+  const businessStatus = getBusinessStatus();
+
   if (loading) {
     return (
-      <div className="w-full min-h-screen">
-        <div className="container mx-auto">
-          <div className="flex flex-col gap-10">
-            {/* Row 1: Profile Overview (left) + Quick Stats (right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <SkeletonCard />
-              </div>
-              <div className="lg:col-span-1">
-                <SkeletonQuickStats />
-              </div>
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Profile Header Skeleton */}
+        <div className="flex items-start gap-6 pb-8">
+          <SkeletonLoader className="w-24 h-24 rounded-full" />
+          <div className="flex-1 space-y-3">
+            <SkeletonLoader className="h-8 w-64" />
+            <SkeletonLoader className="h-4 w-32" />
+            <SkeletonLoader className="h-4 w-96" />
+            <div className="flex gap-4">
+              <SkeletonLoader className="h-6 w-24" />
+              <SkeletonLoader className="h-6 w-24" />
             </div>
-
-            {/* Row 2: Account Verification - Full Width */}
-            <SkeletonVerificationCard />
-
-            {/* Row 3: Business Verification */}
-            <SkeletonVerificationCard />
-
-            {/* Row 4: Security Settings */}
-            <SkeletonVerificationCard />
+          </div>
+          <SkeletonLoader className="h-10 w-32" />
+        </div>
+        
+        {/* Grid Skeletons */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <SkeletonLoader className="h-64 w-full" />
+            <SkeletonLoader className="h-48 w-full" />
+          </div>
+          <div className="space-y-6">
+            <SkeletonLoader className="h-48 w-full" />
+            <SkeletonLoader className="h-32 w-full" />
           </div>
         </div>
       </div>
@@ -1537,46 +969,378 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full min-h-screen">
-      <div className="container mx-auto">
-        <div className="flex flex-col gap-10">
-          {/* Row 1: Profile Overview (left) + Quick Stats (right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Profile Overview Card - Takes 2/3 width */}
-            <div className="lg:col-span-2">
-              <ProfileOverviewCard 
-                userData={userData} 
-                onEditProfile={() => setIsProfileEditOpen(true)}
-                loading={loading}
-              />
+    <div className="mx-auto">
+      {/* Profile Header */}
+      <div className="flex flex-wrap items-start gap-6 pb-8 mb-4 border-b border-gray-200">
+        <div className="relative">
+          <img
+            src={userData?.profile_pic || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData?.first_name || userData?.firstName || 'User')}&background=F9D769&color=734D20&size=96&rounded=true`}
+            alt={`${userData?.first_name || userData?.firstName || 'User'} ${userData?.last_name || userData?.lastName || ''}`}
+            className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+          />
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-primary to-[#E8C547] rounded-full flex items-center justify-center">
+            <CameraIcon className="w-3 h-3 text-secondary" />
+          </div>
+        </div>
+        
+        <div className="flex-1">
+          <div className="flex items-center gap-1 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {userData?.first_name || userData?.firstName || 'User'} {userData?.last_name || userData?.lastName || ''}
+            </h1>
+            {/* <Badge variant="gold">{userData?.level_name || 'Member'}</Badge> */}
+            {userData?.email_verified === "yes" && (
+              <RiVerifiedBadgeFill className="w-5 h-5 text-green-500" />
+            )}
+          </div>
+          
+          <p className="text-xs text-gray-600 mb-2">@{userData?.username || 'username'}</p>
+          <p className="text-xs text-gray-700 mb-4 max-w-md leading-relaxed">
+            {userData?.bio || 'No bio available'}
+          </p>
+          
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <WalletIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-xs font-semibold text-gray-900">{userData?.wallet?.balance || '0'}</span>
+              <span className="text-xs text-gray-500">GEMS</span>
             </div>
+            <div className="flex items-center gap-2">
+              <CrownIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-xs font-semibold text-gray-900">Level {userData?.level_id || '1'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <UserIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-xs text-gray-500 capitalize">{userData?.user_type || 'User'}</span>
+            </div>
+          </div>
+        </div>
+        
+        <Button onClick={() => setIsProfileEditOpen(true)} className="shrink-0 font-semibold">
+          <EditIcon className="w-4 h-4 mr-2" />
+          Edit Profile
+        </Button>
+      </div>
 
-            {/* Quick Stats Card - Takes 1/3 width */}
-            <div className="lg:col-span-1">
-              <QuickStatsCard userData={userData} loading={loading} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Account Verification */}
+          <div>
+            <div className="flex items-center gap-3 mb-6">
+              <ShieldIcon className="w-5 h-5 text-gray-700" />
+              <h2 className="text-lg font-semibold text-gray-900">Account Verification</h2>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Email Verification */}
+              <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <MailIcon className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Email Address</p>
+                    <p className="text-xs text-gray-600">{userData?.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {userData?.email_verified === "yes" ? (
+                    <>
+                      <CheckIcon className="w-4 h-4 text-green-600" />
+                      <Badge variant="success">Verified</Badge>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {!emailOtpSent ? (
+                        <Button size="sm" onClick={handleSendEmailOtp} disabled={verificationLoading}>
+                          Send OTP
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter OTP"
+                            value={emailOtp}
+                            onChange={(e) => setEmailOtp(e.target.value)}
+                            className="w-20 h-8"
+                          />
+                          <Button size="sm" onClick={handleVerifyEmailOtp} disabled={verificationLoading || !emailOtp}>
+                            Verify
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Phone Verification */}
+              <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-4">
+                  <PhoneIcon className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-xs font-medium text-gray-900">Phone Number</p>
+                    <p className="text-xs text-gray-600">{userData?.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {userData?.phone_verified === "yes" ? (
+                    <>
+                      <CheckIcon className="w-4 h-4 text-green-600" />
+                      <Badge variant="success">Verified</Badge>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {!phoneOtpSent ? (
+                        <Button size="sm" onClick={handleSendPhoneOtp} disabled={verificationLoading}>
+                          Send OTP
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter OTP"
+                            value={phoneOtp}
+                            onChange={(e) => setPhoneOtp(e.target.value)}
+                            className="w-20 h-8"
+                          />
+                          <Button size="sm" onClick={handleVerifyPhoneOtp} disabled={verificationLoading || !phoneOtp}>
+                            Verify
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Account Level */}
+              <div className="py-4 px-5 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <CrownIcon className="w-5 h-5 text-secondary" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-900">Account Level</p>
+                      <p className="text-xs text-gray-600">Level {userData?.level_id || 1} - Enhanced features unlocked</p>
+                    </div>
+                  </div>
+                  <Badge variant="gold">{userData?.level_name || 'Member'}</Badge>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Row 2: Account Verification - Full Width */}
-          <VerificationStatus 
-            userData={userData} 
-            onVerifyEmail={handleVerifyEmail}
-            onVerifyPhone={handleVerifyPhone}
-          />
-
-          {/* Row 3: Business Verification - Only show for brand users */}
+          {/* Business Verification - Only show for brand users */}
           {userData?.user_type === "brand" && (
-            <BusinessVerification userData={userData} />
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <BriefcaseIcon className="w-5 h-5 text-gray-700" />
+                <h2 className="text-lg font-semibold text-gray-900">Business Verification</h2>
+              </div>
+
+              <div className={`p-5 ${businessStatus.bgColor} rounded-lg border border-gray-200 mb-6`}>
+                <div className="flex items-center gap-3">
+                  <businessStatus.icon className={`w-5 h-5 ${businessStatus.color}`} />
+                  <div>
+                    <p className={`text-xs font-medium ${businessStatus.color}`}>{businessStatus.title}</p>
+                    <p className="text-xs text-gray-600">{businessStatus.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              {(businessStatus.status === 'none' || businessStatus.status === 'rejected') && (
+                <div>
+                  {!showBusinessForm ? (
+                    <Button onClick={() => setShowBusinessForm(true)} className='font-semibold'>
+                      {businessStatus.status === 'rejected' ? 'Resubmit Verification' : 'Start Business Verification'}
+                    </Button>
+                  ) : (
+                    <form onSubmit={handleBusinessSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="business-name">Business Name</Label>
+                          <Input 
+                            id="business-name" 
+                            placeholder="Your Business Name"
+                            value={businessFormData.business_name}
+                            onChange={(e) => handleBusinessInputChange('business_name', e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="business-email">Business Email</Label>
+                          <Input 
+                            id="business-email" 
+                            type="email" 
+                            placeholder="business@company.com"
+                            value={businessFormData.business_email}
+                            onChange={(e) => handleBusinessInputChange('business_email', e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="business-website">Website (Optional)</Label>
+                          <Input 
+                            id="business-website" 
+                            placeholder="https://yourwebsite.com"
+                            value={businessFormData.business_website}
+                            onChange={(e) => handleBusinessInputChange('business_website', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="business-phone">Business Phone</Label>
+                          <Input 
+                            id="business-phone" 
+                            placeholder="+256-772-123456"
+                            value={businessFormData.business_phone}
+                            onChange={(e) => handleBusinessInputChange('business_phone', e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="business-address">Business Address</Label>
+                        <Textarea 
+                          id="business-address" 
+                          placeholder="Full business address"
+                          value={businessFormData.business_address}
+                          onChange={(e) => handleBusinessInputChange('business_address', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="business-description">Business Description</Label>
+                        <Textarea 
+                          id="business-description" 
+                          placeholder="Describe your business and services"
+                          value={businessFormData.business_description}
+                          onChange={(e) => handleBusinessInputChange('business_description', e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="outline" onClick={() => setShowBusinessForm(false)} disabled={businessLoading}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={businessLoading}>
+                          {businessLoading ? 'Submitting...' : 'Submit for Review'}
+                        </Button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
           )}
+        </div>
 
-          {/* Row 4: Security Settings - Full Width */}
-          <SecuritySettings userData={userData} onRefresh={fetchUserProfile} />
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Account Overview */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <UserIcon className="w-5 h-5 text-gray-700" />
+              <h3 className="text-sm font-semibold text-gray-900">Account Overview</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="py-3 px-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">Account Type</p>
+                    <p className="text-sm font-bold text-secondary capitalize">{userData?.user_type || 'User'}</p>
+                  </div>
+                  <BriefcaseIcon className="w-6 h-6 text-secondary" />
+                </div>
+              </div>
 
+              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">Member Since</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {userData?.created_on 
+                        ? new Date(userData.created_on).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                        : 'Unknown'
+                      }
+                    </p>
+                  </div>
+                  <ClockIcon className="w-6 h-6 text-gray-600" />
+                </div>
+              </div>
+
+              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600">Referral Code</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-secondary">{userData?.referral_code || 'N/A'}</p>
+                      {userData?.referral_code && (
+                        <button 
+                          className="text-gray-500 hover:text-secondary transition-colors"
+                          onClick={() => {
+                            navigator.clipboard.writeText(userData.referral_code);
+                            toast.success('Referral code copied!');
+                          }}
+                        >
+                          <CopyIcon className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Security Settings */}
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <SettingsIcon className="w-5 h-5 text-gray-700" />
+              <h3 className="text-sm font-semibold text-gray-900">Security & Privacy</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {userData?.has_pin ? (
+                      <LockIcon className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <UnlockIcon className="w-4 h-4 text-red-600" />
+                    )}
+                    <div>
+                      <p className="text-xs font-medium text-gray-900">Wallet PIN</p>
+                      <p className="text-xs text-gray-600">Secure your wallet transactions</p>
+                    </div>
+                  </div>
+                  <div>
+                    {userData?.has_pin ? (
+                      <Badge variant="success">Enabled</Badge>
+                    ) : (
+                      <Button size="sm" onClick={() => setShowPinModal(true)}>
+                        Enable PIN
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="py-3 px-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <WalletIcon className="w-4 h-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-900">Wallet Balance</p>
+                      <p className="text-xs text-gray-600">{userData?.wallet?.balance || '0'} GEMS available</p>
+                    </div>
+                  </div>
+                  <Badge variant="info">{userData?.wallet?.balance || '0'} GEMS</Badge>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Profile Edit Modal */}
+      {/* Modals */}
       <ProfileEditModal 
         isOpen={isProfileEditOpen}
         onClose={() => setIsProfileEditOpen(false)}
@@ -1584,6 +1348,12 @@ export default function SettingsPage() {
         onSave={handleSaveProfile}
         loading={profileLoading}
         onRefresh={fetchUserProfile}
+      />
+
+      <PinSetupModal 
+        isOpen={showPinModal}
+        onClose={() => setShowPinModal(false)}
+        onSuccess={handlePinSuccess}
       />
     </div>
   );

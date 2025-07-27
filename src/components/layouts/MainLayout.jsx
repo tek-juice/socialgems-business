@@ -98,7 +98,7 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
       }}
       className="w-full"
     >
-      <div className="w-full max-w-[90vw] mx-auto px-4 py-3">
+      <div className="w-full max-w-7xl mx-auto px-4 py-3">
         <div className={`relative bg-secondary border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}>
           {/* Close button at top-right - fixed clickable area */}
           <button
@@ -109,10 +109,10 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
             <FiX className="h-5 w-5" />
           </button>
           
-          <div className="relative flex flex-col gap-4">
+          <div className="relative flex flex-col gap-2">
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-2">
                   <p className="text-base font-semibold text-white w-fit">
                     {cardContent.title}
@@ -129,17 +129,17 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
             </div>
             
             {/* Action buttons - now below content */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {/* Primary action button */}
               <button
                 type="button"
                 onClick={onNavigateToSettings}
                 className={cn(
-                  "rounded-lg flex items-center justify-center h-10 px-5 gap-2",
-                  "bg-gradient-to-r from-primary to-[#E8C547]",
-                  "text-secondary hover:from-[#E8C547] hover:to-primary",
-                  "text-sm font-semibold shadow-lg shadow-primary/20",
-                  "transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-primary/30"
+                  "rounded-sm flex items-center justify-center py-1.5 px-3 gap-2",
+                  "bg-primary",
+                  "text-secondary",
+                  "text-xs font-semibold",
+                  "transition-all duration-200"
                 )}
               >
                 <span>{cardContent.buttonText}</span>
