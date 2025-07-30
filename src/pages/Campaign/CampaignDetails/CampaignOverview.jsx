@@ -8,7 +8,7 @@ import {
   FiAward,
 } from 'react-icons/fi';
 
-export default function CampaignOverview({ campaign, stats }) {
+export default function CampaignOverview({ campaign, stats, sentInvitesStats }) {
   return (
     <div className="rounded-xl p-3 sm:p-6 border border-gray-200">
       <div className="space-y-6">
@@ -34,7 +34,7 @@ export default function CampaignOverview({ campaign, stats }) {
           <div className="flex justify-center items-center">
             <div>
               <p className="text-2xl text-center font-bold text-gray-900">
-                4
+                {sentInvitesStats?.totalInvites || 0}
               </p>
               <p className="text-xs text-center font-medium text-gray-600">Sent Invites</p>
             </div>

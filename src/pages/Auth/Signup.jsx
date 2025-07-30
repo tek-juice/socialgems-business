@@ -5,8 +5,76 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { post, get, patch } from '../../utils/service';
-import { UserPlus, Lock, Mail, User, Phone, Building, Plus, Check, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { UserPlus, Lock, Mail, User, Phone, Building, Plus, Check, ArrowLeft, Eye, EyeOff, Globe, ChevronDown, Search } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '../../components/ui/input-otp';
+
+import { TiBusinessCard } from "react-icons/ti";
+import { CiAt } from "react-icons/ci";
+
+// Searchable Dropdown Component
+const SearchableDropdown = ({ options, value, onChange, placeholder, disabled, displayField = "name", valueField = "id" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const filteredOptions = options.filter(option =>
+    option[displayField].toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const selectedOption = options.find(option => option[valueField] === value);
+  
+  const handleSelect = (option) => {
+    onChange(option[valueField]);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+  
+  return (
+    <div className="relative">
+      <div
+        className={`w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs cursor-pointer flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span className={selectedOption ? 'text-black' : 'text-gray-500'}>
+          {selectedOption ? `${selectedOption[displayField]} (+${selectedOption.phone_code})` : placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </div>
+      
+      {isOpen && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search countries..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((option) => (
+                <div
+                  key={option[valueField]}
+                  className="px-3 py-2 text-xs hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                  onClick={() => handleSelect(option)}
+                >
+                  {option[displayField]} (+{option.phone_code})
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-xs text-gray-500">No countries found</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Stepper Component
 const StepperComponent = ({ steps, activeStep }) => {
@@ -75,16 +143,21 @@ const Signup = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [industries, setIndustries] = useState([]);
+  const [countries, setCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedIndustries, setSelectedIndustries] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [localPhoneNumber, setLocalPhoneNumber] = useState(""); // For display only
   
   const [signupData, setSignupData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone_number: "",
-    country_id: "UG",
+    business_name: "",
+    username:"",
+    country_id: "256", // Default to Uganda's phone code
     user_type: "brand"
   });
   
@@ -134,10 +207,21 @@ const Signup = () => {
     },
   ];
 
-  // Fetch industries on component mount
+  // Fetch industries and countries on component mount
   useEffect(() => {
     fetchIndustries();
+    fetchCountries();
   }, []);
+
+  // Set default country when countries are loaded
+  useEffect(() => {
+    if (countries.length > 0 && !selectedCountry) {
+      // Find Uganda first, then fallback to first country
+      const defaultCountry = countries.find(country => country.iso2 === 'UG') || countries[0];
+      setSelectedCountry(defaultCountry);
+      setSignupData(prev => ({ ...prev, country_id: defaultCountry.phone_code }));
+    }
+  }, [countries, selectedCountry]);
 
   const fetchIndustries = async () => {
     try {
@@ -163,12 +247,51 @@ const Signup = () => {
     }
   };
 
+  const fetchCountries = async () => {
+    try {
+      const response = await get('users/countries');
+      if (response.status === 200) {
+        // Ensure Uganda is in the list
+        let countriesData = response.data || [];
+        const hasUganda = countriesData.find(country => country.iso2 === 'UG');
+        
+        if (!hasUganda) {
+          // Add Uganda if not present
+          countriesData.unshift({
+            id: 999,
+            iso2: "UG",
+            iso3: "UGA",
+            name: "Uganda",
+            phone_code: "256",
+            has_payouts: "no",
+            status: "active"
+          });
+        }
+        
+        setCountries(countriesData);
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      toast.error('Failed to load countries');
+      // Fallback countries with Uganda as default
+      setCountries([
+        { id: 999, name: "Uganda", iso2: "UG", phone_code: "256", has_payouts: "no", status: "active" },
+        { id: 1, name: "Afghanistan", iso2: "AF", phone_code: "93", has_payouts: "no", status: "active" },
+        { id: 2, name: "Kenya", iso2: "KE", phone_code: "254", has_payouts: "no", status: "active" },
+        { id: 3, name: "Tanzania", iso2: "TZ", phone_code: "255", has_payouts: "no", status: "active" },
+        { id: 4, name: "Rwanda", iso2: "RW", phone_code: "250", has_payouts: "no", status: "active" },
+      ]);
+    }
+  };
+
   const validateEmail = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const validatePhone = (phone) => {
-    return /^\d{10,15}$/.test(phone.replace(/\D/g, ''));
+    // Remove + and any non-digit characters for validation
+    const cleanPhone = phone.replace(/[^\d]/g, '');
+    return cleanPhone.length >= 10 && cleanPhone.length <= 15;
   };
 
   const handleIndustryToggle = (industryId) => {
@@ -181,15 +304,46 @@ const Signup = () => {
     });
   };
 
+  const handleCountryChange = (countryId) => {
+    const country = countries.find(c => c.id === parseInt(countryId));
+    setSelectedCountry(country);
+    setSignupData(prev => ({ ...prev, country_id: country.phone_code }));
+    
+    // Clear phone numbers when country changes
+    setLocalPhoneNumber("");
+    setSignupData(prev => ({ ...prev, phone_number: "" }));
+  };
+
+  const handlePhoneChange = (value) => {
+    // Only allow digits
+    let cleanValue = value.replace(/[^\d]/g, '');
+    
+    // Remove leading 0 if present (common in local phone formats)
+    if (cleanValue.startsWith('0')) {
+      cleanValue = cleanValue.substring(1);
+    }
+    
+    // Update the local display value
+    setLocalPhoneNumber(cleanValue);
+    
+    // Update the full international format for submission
+    if (selectedCountry && cleanValue) {
+      const fullNumber = `+${selectedCountry.phone_code}${cleanValue}`;
+      setSignupData(prev => ({ ...prev, phone_number: fullNumber }));
+    } else {
+      setSignupData(prev => ({ ...prev, phone_number: "" }));
+    }
+  };
+
   const handleStepOne = async () => {
     // Allow skipping industry selection
     setCurrentStep(1);
   };
 
   const handleStepTwo = async () => {
-    const { first_name, last_name, email, phone_number } = signupData;
+    const { first_name, last_name, email, phone_number, business_name, username } = signupData;
     
-    if (!first_name.trim() || !last_name.trim() || !email.trim() || !phone_number.trim()) {
+    if (!first_name.trim() || !last_name.trim() || !email.trim() || !phone_number.trim() || !business_name.trim() || !username.trim()) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -212,12 +366,6 @@ const Signup = () => {
       if (response.status === 200 || response.status === 201) {
         const userId = response.data?.user_id || response.data?.id;
         setOtpData(prev => ({ ...prev, user_id: userId }));
-        
-        // Send OTP
-        await post('users/sendEmailOTP', {
-          userId: userId,
-          email: email
-        });
         
         toast.success('Account created! Please check your email for OTP');
         setCurrentStep(2);
@@ -249,6 +397,7 @@ const Signup = () => {
       const response = await post('users/verifyEmail', {
         user_id: otpData.user_id,
         email: signupData.email,
+        username: signupData.username, // Added username here
         otp: otpData.otp
       });
       
@@ -300,7 +449,7 @@ const Signup = () => {
     setLoading(true);
     
     try {
-      // Get the JWT token from localStorage
+      // Get the JWT token from localStorage (from email verification)
       const token = localStorage.getItem('jwt');
       
       if (!token) {
@@ -309,35 +458,59 @@ const Signup = () => {
         return;
       }
 
-      // Set Authorization header
+      // Set Authorization header (restore original working format)
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       };
 
+      // Use original working secureAccount call
       const response = await post('users/secureAccount', passwordData, headers);
       
       if (response.status === 200) {
-        // Update industries if any were selected
-        if (selectedIndustries.length > 0) {
-          try {
-            await patch('users/updateProfile', {
-              industry_ids: selectedIndustries
-            }, headers);
-          } catch (industryError) {
-            console.warn('Failed to update industries:', industryError);
-            // Don't fail the entire process for industry update
+        // Now automatically login to get proper authentication for profile update
+        const loginResponse = await post('users/login', {
+          email: signupData.email,
+          password: passwordData.password
+        });
+        
+        if (loginResponse.status === 200) {
+          const { username, user_type: role, email: userEmail, jwt } = loginResponse.data;
+          
+          // Store login data
+          localStorage.setItem('name', username);
+          localStorage.setItem('email', userEmail);
+          localStorage.setItem('role', role);
+          localStorage.setItem('jwt', jwt);
+          localStorage.setItem('isLoggedIn', 'true');
+          
+          // Now update profile with industries using the login token
+          if (selectedIndustries.length > 0) {
+            try {
+              await patch('users/updateProfile', {
+                industry_ids: selectedIndustries,
+                username: signupData.username
+              }, {
+                headers: {
+                  'Authorization': `Bearer ${jwt}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              toast.success('Account setup completed successfully!');
+            } catch (industryError) {
+              console.warn('Failed to update industries:', industryError);
+              toast.success('Account setup completed! You can update industries later in your profile.');
+            }
+          } else {
+            toast.success('Account setup completed successfully!');
           }
+          
+          // Navigate to dashboard since user is now logged in
+          navigate('/dashboard');
+        } else {
+          toast.error('Account created but login failed. Please login manually.');
+          navigate('/login');
         }
-        
-        // Clean up temporary data but keep jwt for potential auto-login
-        localStorage.removeItem('user_id');
-        localStorage.removeItem('username');
-        localStorage.removeItem('status');
-        localStorage.removeItem('jwt'); // Remove JWT after successful setup
-        
-        toast.success('Account setup completed successfully!');
-        navigate('/login');
       } else {
         toast.error(response.message || 'Failed to secure account');
       }
@@ -471,6 +644,30 @@ const Signup = () => {
             </div>
             
             <div className="space-y-4">
+              <div className="relative flex-1">
+                <TiBusinessCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  placeholder="Business Name"
+                  type="text"
+                  value={signupData.business_name}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
+                  onChange={(e) => setSignupData(prev => ({ ...prev, business_name: e.target.value }))}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className="relative flex-1">
+                <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  placeholder="Username"
+                  type="text"
+                  value={signupData.username}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
+                  onChange={(e) => setSignupData(prev => ({ ...prev, username: e.target.value }))}
+                  disabled={loading}
+                />
+              </div>
+            
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -507,17 +704,37 @@ const Signup = () => {
                   disabled={loading}
                 />
               </div>
+
+              {/* Country Selection - Searchable Dropdown */}
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <SearchableDropdown
+                  options={countries}
+                  value={selectedCountry?.id || ''}
+                  onChange={handleCountryChange}
+                  placeholder="Select Country"
+                  disabled={loading}
+                  displayField="name"
+                  valueField="id"
+                />
+              </div>
               
+              {/* Phone Number - Shows only local number */}
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
-                  placeholder="Phone Number"
+                  placeholder={selectedCountry ? `Phone Number (without leading 0)` : "Phone Number"}
                   type="tel"
-                  value={signupData.phone_number}
+                  value={localPhoneNumber}
                   className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setSignupData(prev => ({ ...prev, phone_number: e.target.value }))}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
                   disabled={loading}
                 />
+                {selectedCountry && localPhoneNumber && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
+                    +{selectedCountry.phone_code}{localPhoneNumber}
+                  </div>
+                )}
               </div>
             </div>
             

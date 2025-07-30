@@ -11,9 +11,12 @@ import {
   FiCircle,
   FiUser,
   FiShield,
-  FiSettings
+  FiSettings,
+  FiMessageCircle
 } from 'react-icons/fi';
 import { assets } from '../../assets/assets';
+
+import { IoChatbubblesSharp } from "react-icons/io5";
 
 const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
   const [expandedItems, setExpandedItems] = useState({});
@@ -21,7 +24,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
-
 
   const navData = useMemo(() => [
     {
@@ -52,6 +54,12 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
           icon: <FiPlus />,
         }
       ],
+    },
+    {
+      title: 'Groups',
+      path: '/groups',
+      icon: <IoChatbubblesSharp />,
+      badge: null
     },
     // {
     //   title: 'Profile',
@@ -90,7 +98,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
     }
   };
 
-
   useEffect(() => {
     navData.forEach(item => {
       if (item.children) {
@@ -103,7 +110,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
       }
     });
   }, [location.pathname, navData]);
-
 
   const isParentActive = (item) => {
     if (!item.children) return false;
@@ -125,7 +131,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
     >
       {/* Glass effect overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
-
 
       <div className="relative z-10 flex items-center justify-between h-20 px-4 border-b border-white/20">
         <AnimatePresence mode="wait">
@@ -174,7 +179,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
           )}
         </AnimatePresence>
         
-
         <AnimatePresence>
           {isOpen && (
             <motion.button
@@ -192,7 +196,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
           )}
         </AnimatePresence>
       </div>
-
 
       <nav className="relative z-10 flex-1 py-6 px-3 space-y-1 overflow-y-auto">
         <AnimatePresence>
@@ -214,7 +217,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
         </AnimatePresence>
 
         {loading ? (
-
           Array(3).fill(0).map((_, index) => (
             <motion.div 
               key={`skeleton-${index}`}
@@ -320,7 +322,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                   </motion.button>
                 )}
 
-
                 {!isOpen && (
                   <div className="absolute left-full ml-2 px-2 py-1 bg-secondary text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50 pointer-events-none">
                     {item.title}
@@ -332,7 +333,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                   </div>
                 )}
               </div>
-
 
               <AnimatePresence>
                 {item.children && isOpen && expandedItems[item.title] && (
@@ -376,7 +376,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                 )}
               </AnimatePresence>
 
-
               {item.children && !isOpen && (
                 <div className="flex justify-center mt-1">
                   <div className={`w-1 h-1 rounded-full ${
@@ -388,7 +387,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
           ))
         )}
       </nav>
-
 
       <div className="relative z-10 border-t border-white/20 bg-secondary/5 backdrop-blur-sm">
         <AnimatePresence>

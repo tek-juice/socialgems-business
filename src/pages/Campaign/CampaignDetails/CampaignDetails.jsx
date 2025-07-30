@@ -313,6 +313,15 @@ export default function CampaignDetailsPage() {
     const remainingSlots = maxInfluencers - currentAccepted;
     const canAcceptMore = remainingSlots > 0;
     
+    console.log('🎯 getCampaignInfluencerInfo:', {
+      maxInfluencers,
+      currentAccepted,
+      remainingSlots,
+      canAcceptMore,
+      actionedMembers: actionedMembers.length,
+      acceptedMembers: actionedMembers.filter(m => m.application_status === 'accepted')
+    });
+    
     return {
       maxInfluencers,
       currentAccepted,
@@ -321,7 +330,20 @@ export default function CampaignDetailsPage() {
     };
   }, [campaign, actionedMembers]);
 
-  // Get campaign status - Enhanced to properly detect draft status
+  // Check if maximum influencers reached
+  const isMaxInfluencersReached = useMemo(() => {
+    const influencerInfo = getCampaignInfluencerInfo();
+    const maxReached = !influencerInfo.canAcceptMore && influencerInfo.maxInfluencers > 0;
+    
+    console.log('🚫 isMaxInfluencersReached:', {
+      maxReached,
+      influencerInfo
+    });
+    
+    return maxReached;
+  }, [getCampaignInfluencerInfo]);
+
+  // Get campaign status - CORRECTED: Removed "planned", added "open_to_applications"
   const getCampaignStatus = useCallback(() => {
     if (!campaign) return 'unknown';
     if (isDraft || campaign.status === 'draft') return 'draft';
@@ -332,7 +354,7 @@ export default function CampaignDetailsPage() {
     const startDate = new Date(campaign.start_date);
     const endDate = new Date(campaign.end_date);
     
-    if (now < startDate) return 'planned';
+    if (now < startDate) return 'open_to_applications';
     if (now >= startDate && now <= endDate) return 'active';
     if (now > endDate) return 'expired';
     
@@ -345,11 +367,11 @@ export default function CampaignDetailsPage() {
     return getCampaignStatus() === 'draft';
   }, [campaign, getCampaignStatus]);
 
-  // Keep your existing logic for other actions
+  // Keep your existing logic for other actions - CORRECTED: Removed "planned"
   const canActivateCampaign = useMemo(() => {
     if (!campaign) return false;
     const status = getCampaignStatus();
-    return status === 'planned';
+    return status === 'open_to_applications';
   }, [campaign, getCampaignStatus]);
 
   const canDeleteCampaign = useMemo(() => {
@@ -376,14 +398,53 @@ export default function CampaignDetailsPage() {
       return isForThisCampaign && isNotAccepted && isNotExpired;
     });
     
+    console.log('📧 sentInvites filtered:', {
+      campaignId: campaign.campaign_id,
+      allSentInvites: allSentInvites.length,
+      filteredSentInvites: filtered.length,
+      filtered
+    });
+    
     return filtered;
+  }, [allSentInvites, campaign?.campaign_id]);
+
+  // Calculate sent invites stats from actual data
+  const sentInvitesStats = useMemo(() => {
+    if (!campaign?.campaign_id || !allSentInvites.length) {
+      return { totalInvites: 0, pendingInvites: 0, rejectedInvites: 0 };
+    }
+    
+    const campaignInvites = allSentInvites.filter(invite => invite.campaign_id === campaign.campaign_id);
+    
+    const stats = {
+      totalInvites: campaignInvites.length,
+      pendingInvites: campaignInvites.filter(invite => invite.invite_status === 'pending').length,
+      rejectedInvites: campaignInvites.filter(invite => invite.invite_status === 'rejected').length
+    };
+    
+    console.log('📊 sentInvitesStats:', {
+      campaignId: campaign.campaign_id,
+      campaignInvites: campaignInvites.length,
+      stats,
+      campaignInvites
+    });
+    
+    return stats;
   }, [allSentInvites, campaign?.campaign_id]);
 
   // Check if campaign has any invites (sent or accepted)
   const campaignHasInvites = useMemo(() => {
     if (!campaign?.campaign_id || !allSentInvites.length) return false;
     
-    return allSentInvites.some(invite => invite.campaign_id === campaign.campaign_id);
+    const hasInvites = allSentInvites.some(invite => invite.campaign_id === campaign.campaign_id);
+    
+    console.log('✉️ campaignHasInvites:', {
+      campaignId: campaign.campaign_id,
+      hasInvites,
+      allSentInvites: allSentInvites.length
+    });
+    
+    return hasInvites;
   }, [allSentInvites, campaign?.campaign_id]);
 
   // Helper function to get influencer details - UPDATED FOR NEW RESPONSE STRUCTURE
@@ -430,8 +491,16 @@ export default function CampaignDetailsPage() {
 
   // Function to fetch campaign applications - MATCH API STRUCTURE EXACTLY
   const fetchCampaignApplications = useCallback(async (campaignId) => {
+    console.log('🔍 fetchCampaignApplications called with campaignId:', campaignId);
+    
     try {
       const response = await get(`campaigns/get-applications/${campaignId}`);
+      
+      console.log('📥 get-applications response:', {
+        status: response?.status,
+        dataLength: response?.data?.length,
+        data: response?.data
+      });
       
       if (response?.status === 200 && response?.data) {
         // Transform the API response to match your exact data structure
@@ -477,21 +546,38 @@ export default function CampaignDetailsPage() {
           };
         });
         
+        console.log('✅ fetchCampaignApplications transformed data:', {
+          originalLength: response.data.length,
+          transformedLength: transformedData.length,
+          transformedData
+        });
+        
         return transformedData;
       } else if (response?.status === 404) {
+        console.log('❌ fetchCampaignApplications: 404 - No applications found');
         return [];
       } else {
+        console.log('❌ fetchCampaignApplications: Unexpected response:', response);
         return [];
       }
     } catch (error) {
+      console.log('💥 fetchCampaignApplications error:', error);
       return [];
     }
   }, [getCountryName]);
 
   // Function to fetch actioned influencers with tasks
   const fetchActionedInfluencers = useCallback(async (campaignId) => {
+    console.log('🎭 fetchActionedInfluencers called with campaignId:', campaignId);
+    
     try {
       const response = await get(`campaigns/getActionedInfluencers/${campaignId}`);
+      
+      console.log('📥 getActionedInfluencers response:', {
+        status: response?.status,
+        dataLength: response?.data?.length,
+        data: response?.data
+      });
       
       if (response?.status === 200 && response?.data) {
         setActionedInfluencers(response.data);
@@ -520,12 +606,20 @@ export default function CampaignDetailsPage() {
           setCampaignTasks(uniqueTasks);
         }
         
+        console.log('✅ fetchActionedInfluencers success:', {
+          influencersCount: response.data.length,
+          tasksCount: uniqueTasks.length,
+          influencers: response.data
+        });
+        
         return response.data;
       } else {
+        console.log('❌ fetchActionedInfluencers: No data or error response');
         setActionedInfluencers([]);
         return [];
       }
     } catch (error) {
+      console.log('💥 fetchActionedInfluencers error:', error);
       setActionedInfluencers([]);
       return [];
     }
@@ -581,20 +675,41 @@ export default function CampaignDetailsPage() {
     return computedTasks;
   }, [campaign?.tasks, campaignTasks, actionedInfluencers, getCampaignStatus]);
 
-  // Calculate stats
+  // Calculate stats - USE ACTIONED INFLUENCERS (the accepted users) ONLY
   const stats = {
-    totalMembers: actionedMembers.length,
-    completedActions: actionedMembers.filter(m => m.action_status === 'completed').length,
-    paidMembers: actionedMembers.filter(m => m.application_status === 'accepted').length,
-    pendingPayments: actionedMembers.filter(m => m.application_status === 'submitted').length,
-    totalAmount: actionedMembers.reduce((sum, m) => sum + parseFloat(m.payable_amount || 0), 0)
+    totalMembers: actionedInfluencers.length,
+    completedActions: actionedInfluencers.filter(m => m.action_status === 'started' || m.action_status === 'completed').length,
+    paidMembers: actionedInfluencers.filter(m => m.pay_status === 'paid').length,
+    pendingPayments: actionedInfluencers.filter(m => m.pay_status === 'not_paid').length,
+    totalAmount: actionedInfluencers.reduce((sum, m) => sum + parseFloat(m.payable_amount || 0), 0)
   };
 
-  // Get user avatars
-  const hasActiveInfluencers = actionedMembers && actionedMembers.length > 0;
+  // Get user avatars - USE ACTIONED INFLUENCERS (the accepted users) ONLY
+  const hasActiveInfluencers = actionedInfluencers && actionedInfluencers.length > 0;
   const influencerAvatars = hasActiveInfluencers 
-    ? actionedMembers.map(user => user.profile_pic || user.userProfile?.profile_pic).filter(Boolean)
+    ? actionedInfluencers.map(user => user.userProfile?.profile_pic).filter(Boolean)
     : [];
+
+  // Filter pending applications - don't show them if max is reached
+  const pendingApplications = useMemo(() => {
+    const pending = actionedMembers.filter(m => 
+      m.application_status === 'submitted' || 
+      m.application_status === 'pending'
+    );
+    
+    const filteredPending = isMaxInfluencersReached ? [] : pending;
+    
+    console.log('🔄 pendingApplications calculation:', {
+      actionedMembersTotal: actionedMembers.length,
+      pendingBeforeFilter: pending.length,
+      pendingAfterFilter: filteredPending.length,
+      isMaxInfluencersReached,
+      pending,
+      filteredPending
+    });
+    
+    return filteredPending;
+  }, [actionedMembers, isMaxInfluencersReached]);
 
   // Professional scroll synchronization logic - moved after allTasks definition
   useEffect(() => {
@@ -631,7 +746,7 @@ export default function CampaignDetailsPage() {
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [campaign, actionedMembers, allTasks, hasActiveInfluencers]);
+  }, [campaign, actionedInfluencers, allTasks, hasActiveInfluencers]);
 
   // Fetch industries and countries data
   useEffect(() => {
@@ -657,28 +772,39 @@ export default function CampaignDetailsPage() {
     fetchStaticData();
   }, []);
 
-  // Fetch all sent invites
-  useEffect(() => {
-    const fetchSentInvites = async () => {
-      try {
-        setSentInvitesLoading(true);
-        
-        const response = await get('campaigns/sentInvites');
-        
-        if (response?.status === 200 && response?.data) {
-          setAllSentInvites(response.data);
-        } else {
-          setAllSentInvites([]);
-        }
-      } catch (error) {
+  // CORRECTED: Fetch all sent invites using your existing get() utility
+useEffect(() => {
+  const fetchSentInvites = async () => {
+    console.log('📞 fetchSentInvites called');
+    
+    try {
+      setSentInvitesLoading(true);
+      
+      // FIXED: Use your existing get() utility function instead of fetch()
+      const response = await get('campaigns/sentInvites');
+      
+      console.log('📧 fetchSentInvites response:', {
+        status: response?.status,
+        dataLength: response?.data?.length,
+        data: response?.data
+      });
+      
+      if (response?.status === 200 && response?.data) {
+        setAllSentInvites(response.data);
+      } else {
+        console.log('❌ fetchSentInvites: Invalid response structure');
         setAllSentInvites([]);
-      } finally {
-        setSentInvitesLoading(false);
       }
-    };
+    } catch (error) {
+      console.log('💥 fetchSentInvites error:', error);
+      setAllSentInvites([]);
+    } finally {
+      setSentInvitesLoading(false);
+    }
+  };
 
-    fetchSentInvites();
-  }, []);
+  fetchSentInvites();
+}, []);
 
   // UPDATED: Enhanced campaign and task fetching logic to use proper endpoints
   useEffect(() => {
@@ -737,6 +863,13 @@ export default function CampaignDetailsPage() {
           }
           
           if (campaignData) {
+            console.log('🎯 Campaign loaded:', {
+              campaignId: campaignData.campaign_id,
+              title: campaignData.title,
+              maxInfluencers: campaignData.number_of_influencers,
+              isDraft: isDraftCampaign
+            });
+            
             setCampaign(campaignData);
             setIsDraft(isDraftCampaign);
           }
@@ -753,31 +886,41 @@ export default function CampaignDetailsPage() {
     fetchCampaignAndTasks();
   }, [id, campaign, fetchActionedInfluencers]);
 
-  // Separate effect to fetch applications and then actioned influencers
+  // Always fetch applications, then filter in UI based on max reached
   useEffect(() => {
     const fetchApplicationsAndActionedInfluencers = async () => {
-      if (campaign?.campaign_id && allSentInvites.length > 0) {
+      if (campaign?.campaign_id) {
+        console.log('🔄 fetchApplicationsAndActionedInfluencers called for campaign:', campaign.campaign_id);
+        
+        // Always fetch actioned influencers first
+        await fetchActionedInfluencers(campaign.campaign_id);
+        
+        // ALWAYS fetch applications if campaign has invites (needed to calculate max reached)
         if (campaignHasInvites) {
+          console.log('✉️ Campaign has invites, fetching applications...');
           const applicationsData = await fetchCampaignApplications(campaign.campaign_id);
           if (applicationsData && applicationsData.length > 0) {
             setActionedMembers(applicationsData);
+            console.log('✅ Set actionedMembers:', applicationsData.length);
           } else {
             setActionedMembers([]);
-          }
-
-          // For non-draft campaigns, also fetch actioned influencers for tasks
-          if (getCampaignStatus() !== 'draft') {
-            await fetchActionedInfluencers(campaign.campaign_id);
+            console.log('❌ No applications data, set actionedMembers to empty');
           }
         } else {
+          console.log('📭 Campaign has no invites, setting actionedMembers to empty');
           setActionedMembers([]);
-          setActionedInfluencers([]);
         }
       }
     };
 
-    fetchApplicationsAndActionedInfluencers();
-  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers, getCampaignStatus]);
+    if (allSentInvites.length >= 0) { // Changed from > 0 to >= 0 to handle empty arrays
+      console.log('📧 allSentInvites loaded, triggering fetch:', {
+        invitesCount: allSentInvites.length,
+        campaignId: campaign?.campaign_id
+      });
+      fetchApplicationsAndActionedInfluencers();
+    }
+  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers]);
 
   // Handle edit campaign with proper date and task formatting
   const handleEditCampaign = useCallback(() => {
@@ -919,23 +1062,29 @@ export default function CampaignDetailsPage() {
 
   // Handle batch process applications - USING CORRECT USER_ID
   const handleBatchProcessApplications = async (data) => {
+    console.log('⚙️ handleBatchProcessApplications called with:', data);
+    
     setIsProcessing(true);
     try {
       const response = await post('campaigns/batch-process-applications', data);
       
+      console.log('📤 batch-process-applications response:', {
+        status: response?.status,
+        data: response?.data
+      });
+      
       if (response?.status === 200 || response?.status === 204) {
         toast.success('Applications processed successfully!');
         
-        // Refresh campaign applications to reflect changes
+        // Refresh both applications and actioned influencers
+        await fetchActionedInfluencers(campaign.campaign_id);
+        
         if (campaignHasInvites) {
           const applicationsData = await fetchCampaignApplications(campaign.campaign_id);
           if (applicationsData) {
             setActionedMembers(applicationsData);
           }
         }
-
-        // Refresh actioned influencers
-        await fetchActionedInfluencers(campaign.campaign_id);
         
         // Refresh sent invites as well
         const invitesResponse = await get('campaigns/sentInvites');
@@ -950,6 +1099,7 @@ export default function CampaignDetailsPage() {
         toast.error('Failed to process applications');
       }
     } catch (error) {
+      console.log('💥 handleBatchProcessApplications error:', error);
       toast.error('Failed to process applications');
     } finally {
       setIsProcessing(false);
@@ -1170,17 +1320,17 @@ export default function CampaignDetailsPage() {
                   onDeleteCampaign={() => setDeleteCampaignModal(true)}
                 />
 
-                {/* Campaign Participants - Full width on right side */}
+                {/* Campaign Participants - ONLY SHOW ACCEPTED INFLUENCERS */}
                 {hasActiveInfluencers && (
-                  <div className="w-full bg-yellow-50 border border-primary-scale-200 p-4 rounded-xl">
+                  <div className="w-full bg-green-50 border border-green-200 p-4 rounded-xl">
                     <div className="flex items-center gap-3">
                       <AvatarCircles 
-                        numPeople={actionedMembers.length}
+                        numPeople={actionedInfluencers.length}
                         avatarUrls={influencerAvatars}
                       />
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-900">{actionedMembers.length} participants</span>
-                        <span className="text-xs text-gray-600">Active in this campaign</span>
+                        <span className="text-sm font-medium text-gray-900">{actionedInfluencers.length} accepted participants</span>
+                        <span className="text-xs text-gray-600">Confirmed for this campaign</span>
                       </div>
                     </div>
                   </div>
@@ -1224,12 +1374,20 @@ export default function CampaignDetailsPage() {
                 )}
 
                 {/* Campaign Overview (contains stats) */}
-                <CampaignOverview campaign={campaign} stats={stats} />
+                {/* <CampaignOverview campaign={campaign} stats={stats} /> */}
 
-                {/* Campaign Members Section */}
-                {hasActiveInfluencers && (
+                {/* Campaign Overview (contains stats) */}
+                  <CampaignOverview 
+                    campaign={campaign} 
+                    stats={stats} 
+                    sentInvitesStats={sentInvitesStats} 
+                  />
+
+                {/* Campaign Members Section - CONDITIONALLY SHOW ONLY PENDING IF MAX NOT REACHED */}
+                {(hasActiveInfluencers || pendingApplications.length > 0) && (
                   <MembersSection
-                    actionedMembers={actionedMembers}
+                    actionedMembers={pendingApplications} // Only pending applications (empty if max reached)
+                    actionedInfluencers={actionedInfluencers} // Always show accepted influencers
                     stats={stats}
                     isProcessing={isProcessing}
                     canAddMembers={canAddMembers}
@@ -1242,6 +1400,9 @@ export default function CampaignDetailsPage() {
                     selectedApplications={selectedApplications}
                     setSelectedApplications={setSelectedApplications}
                     isApplicationMode={true}
+                    sentInvites={sentInvites} // Pass the filtered sent invites
+                    sentInvitesStats={sentInvitesStats} // Pass the calculated stats
+                    sentInvitesLoading={sentInvitesLoading}
                     onAddMembers={handleAddMembers}
                     onMemberClick={(member) => {
                       setSelectedMember(member);
@@ -1273,7 +1434,58 @@ export default function CampaignDetailsPage() {
                       setUserProfileModal(true);
                     }}
                     onBatchProcessApplications={handleBatchProcessApplications}
+                    onResendInvite={async (invite) => {
+                      setIsProcessing(true);
+                      try {
+                        await post('campaigns/resendInvite', {
+                          invite_id: invite.invite_id
+                        });
+                        
+                        toast.success('Invite resent successfully!');
+                        
+                        // Refresh sent invites
+                        const response = await get('campaigns/sentInvites');
+                        if (response?.status === 200 && response?.data) {
+                          setAllSentInvites(response.data);
+                        }
+                      } catch (error) {
+                        toast.error('Failed to resend invite');
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                    onCancelInvite={async (invite) => {
+                      setIsProcessing(true);
+                      try {
+                        await post('campaigns/cancelInvite', {
+                          invite_id: invite.invite_id
+                        });
+                        
+                        setAllSentInvites(prevInvites =>
+                          prevInvites.filter(inv => inv.invite_id !== invite.invite_id)
+                        );
+                        
+                        toast.success('Invite cancelled successfully!');
+                      } catch (error) {
+                        toast.error('Failed to cancel invite');
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }}
                   />
+                )}
+
+                {/* Show message when max influencers reached and no pending applications */}
+                {isMaxInfluencersReached && pendingApplications.length === 0 && !hasActiveInfluencers && (
+                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-blue-900 mb-2">Campaign Full</div>
+                      <div className="text-xs text-blue-700">
+                        This campaign has reached its maximum of {campaign.number_of_influencers} influencer{campaign.number_of_influencers !== 1 ? 's' : ''}. 
+                        No more applications will be shown.
+                      </div>
+                    </div>
+                  </div>
                 )}
 
               </div>

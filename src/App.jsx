@@ -13,6 +13,7 @@ import CreateCampaign from './pages/Campaign/AddCampaign';
 import WalletsPage from './pages/Wallet';
 import CampaignDetailsPage from './pages/Campaign/CampaignDetails/CampaignDetails';
 import SettingsPage from './pages/settings';
+import Groups from './pages/Groups';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -129,6 +130,7 @@ function App() {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="wallet" element={<WalletsPage />} />
               <Route path="campaigns" element={<Campaigns />} />
+              <Route path="groups" element={<Groups />} />
               <Route path="campaigns/:id" element={<CampaignDetailsPage />} />
               <Route path="campaigns/create" element={<CreateCampaign />} />
               <Route path="profile" element={<div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"><h1 className="text-2xl font-bold text-gray-800">Profile Page</h1></div>} />

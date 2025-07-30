@@ -23,6 +23,8 @@ import {
 } from 'react-icons/fi';
 import { toast } from 'sonner';
 import { get, put } from '../../utils/service';
+import { assets } from '../../assets/assets';
+import { IoChatbubblesSharp } from "react-icons/io5";
 
 // Custom utility function
 function cn(...classes) {
@@ -163,6 +165,9 @@ const MainLayout = ({ userType = 'client' }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Check if we're on the groups page
+  const isGroupsPage = location.pathname === '/groups';
 
   const {
     data: userData,
@@ -327,6 +332,11 @@ const MainLayout = ({ userType = 'client' }) => {
       onClick: () => navigate('/campaigns/create'),
     },
     {
+      label: 'Groups',
+      Icon: <IoChatbubblesSharp className='w-4 h-4'/>,
+      onClick: () => navigate('/groups'),
+    },
+    {
       label: 'Settings',
       Icon: <FiSettings className="w-4 h-4" />,
       onClick: () => navigate('/settings'),
@@ -361,7 +371,7 @@ const MainLayout = ({ userType = 'client' }) => {
       const isCurrentlyMobile = windowWidth < 768;
       setIsMobile(isCurrentlyMobile);
       
-      if (!manuallyToggled) {
+      if (!manuallyToggled && !isGroupsPage) {
         setSidebarOpen(!isCurrentlyMobile);
       }
     };
@@ -369,15 +379,15 @@ const MainLayout = ({ userType = 'client' }) => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [manuallyToggled]);
+  }, [manuallyToggled, isGroupsPage]);
 
   // Close sidebar on mobile when route changes
   useEffect(() => {
-    if (isMobile) {
+    if (isMobile && !isGroupsPage) {
       setSidebarOpen(false);
       setShowUserMenu(false);
     }
-  }, [location, isMobile]);
+  }, [location, isMobile, isGroupsPage]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -400,21 +410,25 @@ const MainLayout = ({ userType = 'client' }) => {
     hour12: true,
   });
 
-  const contentClass = sidebarOpen ? 'md:ml-64' : 'md:ml-16';
+  // Content class based on groups page or sidebar state
+  const contentClass = isGroupsPage ? '' : (sidebarOpen ? 'md:ml-64' : 'md:ml-16');
 
-  // Show floating menu when sidebar is closed or on mobile
-  const showFloatingMenu = isMobile || !sidebarOpen;
+  // Show floating menu when sidebar is closed, on mobile, or on groups page
+  const showFloatingMenu = isMobile || !sidebarOpen || isGroupsPage;
 
-  // Check if business verification card should be shown
+  // Check if business verification card should be shown - exclude certain pages
+  const excludedPages = ['/groups', '/settings'];
+  // const excludedPages = ['/groups', '/settings', '/dashboard'];
   const shouldShowVerificationCard = !loading && 
     userData?.user_type === 'brand' && 
     userData?.business_profile?.verification_status !== 'approved' &&
-    showVerificationCard;
+    showVerificationCard &&
+    !excludedPages.includes(location.pathname);
 
   return (
     <div className="min-h-screen">
       <AnimatePresence>
-        {sidebarOpen && isMobile && (
+        {sidebarOpen && isMobile && !isGroupsPage && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -426,11 +440,14 @@ const MainLayout = ({ userType = 'client' }) => {
         )}
       </AnimatePresence>
 
-      <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} userType={userType} />
+      {/* Conditionally render sidebar - not on groups page */}
+      {!isGroupsPage && (
+        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} userType={userType} />
+      )}
 
       <header
         className={`fixed top-0 right-0 z-50 bg-white/70 backdrop-blur-lg border-b border-white/20 flex items-center justify-between h-16 shadow-lg transition-all duration-300 ${
-          sidebarOpen ? 'md:left-64' : 'md:left-16'
+          isGroupsPage ? 'left-0' : (sidebarOpen ? 'md:left-64' : 'md:left-16')
         } left-0`}
         style={{ backdropFilter: 'blur(1px)' }}
       >
@@ -439,31 +456,24 @@ const MainLayout = ({ userType = 'client' }) => {
 
         {/* Left side controls */}
         <div className="relative z-10 flex items-center">
-          {/* Mobile menu toggle */}
+          {/* Mobile logo (instead of menu toggle) */}
           <div className="md:hidden pl-4">
-            <motion.button
-              onClick={() => toggleSidebar(!sidebarOpen, true)}
+            <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg hover:bg-primary/20 transition-colors"
-              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+              className="flex items-center justify-center"
             >
-              <motion.div
-                animate={{ rotate: sidebarOpen ? 180 : 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {sidebarOpen ? (
-                  <FiX size={20} className="text-secondary" />
-                ) : (
-                  <FiMenu size={20} className="text-secondary" />
-                )}
-              </motion.div>
-            </motion.button>
+              <img 
+                src={assets.MainLogo} 
+                alt="Social Gems Logo" 
+                className="h-8 w-auto object-contain max-w-full"
+              />
+            </motion.div>
           </div>
 
-          {/* Desktop expand button */}
+          {/* Desktop expand button - only show when not on groups page */}
           <AnimatePresence>
-            {!sidebarOpen && !isMobile && (
+            {!sidebarOpen && !isMobile && !isGroupsPage && (
               <motion.button
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -484,9 +494,23 @@ const MainLayout = ({ userType = 'client' }) => {
             )}
           </AnimatePresence>
 
-          {/* Date and time display */}
+          {/* Desktop logo on groups page */}
+          {isGroupsPage && !isMobile && (
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="ml-6 flex items-center justify-center"
+            >
+              <img 
+                src={assets.MainLogo} 
+                alt="Social Gems Logo" 
+                className="h-10 w-auto object-contain max-w-full"
+              />
+            </motion.div>
+          )}
+
+          {/* Date and time display - hide on groups page for clean look */}
           <AnimatePresence>
-            {(sidebarOpen || isMobile) && (
+            {(sidebarOpen || isMobile) && !isGroupsPage && (
               <motion.div 
                 className="hidden md:flex items-center ml-6"
                 initial={{ opacity: 0, y: -20 }}
@@ -671,8 +695,10 @@ const MainLayout = ({ userType = 'client' }) => {
           )}
         </AnimatePresence>
         
-        {/* Main content */}
-        <main className="p-6">
+        {/* Main content - Remove padding for groups page on mobile */}
+        <main className={cn(
+          isGroupsPage && isMobile ? "" : "p-6"
+        )}>
           <Outlet />
         </main>
       </div>

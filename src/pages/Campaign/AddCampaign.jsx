@@ -874,8 +874,8 @@ const CreateCampaign = () => {
         const uploadResponse = await upload('media/uploadFile', formData);
         console.log("Upload response:", uploadResponse);
         
-        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.thumbnail_url) {
-          campaignImageUrl = uploadResponse.data[0].thumbnail_url;
+        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.file_url) {
+          campaignImageUrl = uploadResponse.data[0].file_url;
           console.log("Image uploaded successfully:", campaignImageUrl);
         }
       }
@@ -1039,8 +1039,8 @@ const CreateCampaign = () => {
         const uploadResponse = await upload('media/uploadFile', formData);
         console.log("Upload response:", uploadResponse);
         
-        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.thumbnail_url) {
-          campaignImageUrl = uploadResponse.data[0].thumbnail_url;
+        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.file_url) {
+          campaignImageUrl = uploadResponse.data[0].file_url;
           console.log("New image uploaded successfully:", campaignImageUrl);
         }
       }
