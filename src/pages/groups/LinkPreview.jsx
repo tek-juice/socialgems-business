@@ -4,17 +4,43 @@ import { FiExternalLink } from 'react-icons/fi';
 const LinkPreview = ({ url }) => {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchPreview = async () => {
       try {
+        // Use the correct environment variable based on your framework
+        // For Next.js: process.env.NEXT_PUBLIC_LINK_PREVIEW_API_KEY
+        // For Vite: import.meta.env.VITE_LINK_PREVIEW_API_KEY
+        const apiKey = process.env.NEXT_PUBLIC_LINK_PREVIEW_API_KEY || 
+                      import.meta.env.VITE_LINK_PREVIEW_API_KEY;
+        
+        if (!apiKey) {
+          throw new Error('Link preview API key not configured');
+        }
+
+        // Validate URL
+        let parsedUrl;
+        try {
+          parsedUrl = new URL(url);
+        } catch (e) {
+          throw new Error('Invalid URL provided');
+        }
+
         // Try to fetch proper link preview data
-        const response = await fetch(`https://api.linkpreview.net/?key=${process.env.LINK_PREVIEW_API_KEY}&q=${encodeURIComponent(url)}`);
+        const response = await fetch(
+          `https://api.linkpreview.net/?key=${apiKey}&q=${encodeURIComponent(url)}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+
         const data = await response.json();
         
         if (data.image) {
           setPreview({
-            title: data.title || new URL(url).hostname,
+            title: data.title || parsedUrl.hostname,
             description: data.description || url,
             image: data.image,
             url: url
@@ -22,22 +48,33 @@ const LinkPreview = ({ url }) => {
         } else {
           // Fallback to simple domain display if no image
           setPreview({
-            title: new URL(url).hostname,
+            title: parsedUrl.hostname,
             description: url,
             image: null,
             url: url
           });
         }
       } catch (error) {
-        // If API fails, fallback to simple domain display
         console.error('Failed to fetch rich link preview:', error);
-        const domain = new URL(url).hostname;
-        setPreview({
-          title: domain,
-          description: url,
-          image: null,
-          url: url
-        });
+        setError(error.message);
+        
+        // If API fails, fallback to simple domain display
+        try {
+          const domain = new URL(url).hostname;
+          setPreview({
+            title: domain,
+            description: url,
+            image: null,
+            url: url
+          });
+        } catch (e) {
+          setPreview({
+            title: 'Link Preview',
+            description: url,
+            image: null,
+            url: url
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -51,6 +88,22 @@ const LinkPreview = ({ url }) => {
       <div className="mt-2 p-3 bg-secondary/5 rounded-xl border border-secondary/20 animate-pulse">
         <div className="h-4 bg-secondary/20 rounded mb-2"></div>
         <div className="h-3 bg-secondary/10 rounded w-2/3"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
+        <p>Couldn't load preview: {error}</p>
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline mt-1 inline-block"
+        >
+          Open link directly
+        </a>
       </div>
     );
   }
@@ -74,6 +127,7 @@ const LinkPreview = ({ url }) => {
               e.target.style.display = 'none';
               e.target.parentElement.className = 'hidden';
             }}
+            loading="lazy"
           />
         </div>
         <div className="p-3">

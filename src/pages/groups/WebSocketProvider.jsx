@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
-import CacheManager from './CacheManager';
 
 const WebSocketContext = createContext(null);
 
@@ -14,18 +13,15 @@ export const WebSocketProvider = ({ children }) => {
   const reconnectTimeoutRef = useRef(null);
   const heartbeatIntervalRef = useRef(null);
   const messageListeners = useRef(new Set());
-  const cache = useRef(new CacheManager());
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
   const lastLogTime = useRef({});
   const isConnectingRef = useRef(false);
 
-  // Throttled logging to prevent spam
   const log = useCallback((type, message, data = null) => {
     const now = Date.now();
     const key = `${type}-${message}`;
     
-    // Only log the same message once every 10 seconds for non-critical messages
     if (['debug', 'heartbeat', 'typing'].includes(type)) {
       if (lastLogTime.current[key] && now - lastLogTime.current[key] < 10000) {
         return;
@@ -53,7 +49,6 @@ export const WebSocketProvider = ({ children }) => {
     } else if (['success', 'connection', 'info'].includes(type)) {
       console.log(logMessage, data || '');
     }
-
   }, []);
 
   const getAuthToken = useCallback(() => {
@@ -67,7 +62,6 @@ export const WebSocketProvider = ({ children }) => {
       return sessionJwtToken.trim();
     }
     
-    // Other token keys as fallback
     const tokenKeys = ['token', 'authToken', 'accessToken', 'bearerToken'];
     for (const key of tokenKeys) {
       const token = localStorage.getItem(key) || sessionStorage.getItem(key);
@@ -80,13 +74,6 @@ export const WebSocketProvider = ({ children }) => {
   }, []);
 
   const getCurrentUser = useCallback(() => {
-    // Check cache first
-    const cachedUser = cache.current.getUser();
-    if (cachedUser) {
-      return cachedUser;
-    }
-    
-    // From your login system
     const name = localStorage.getItem('name');
     const email = localStorage.getItem('email');
     const role = localStorage.getItem('role');
@@ -99,7 +86,6 @@ export const WebSocketProvider = ({ children }) => {
         role: role,
         avatar: null
       };
-      cache.current.setUser(user);
       return user;
     }
     
@@ -125,7 +111,6 @@ export const WebSocketProvider = ({ children }) => {
 
   const processMessageQueue = useCallback(() => {
     if (ws && ws.readyState === WebSocket.OPEN && messageQueue.length > 0) {
-      log('info', `Processing ${messageQueue.length} queued messages`);
       messageQueue.forEach((message) => {
         try {
           ws.send(JSON.stringify(message));
@@ -138,7 +123,6 @@ export const WebSocketProvider = ({ children }) => {
   }, [ws, messageQueue, log]);
 
   const connect = useCallback(() => {
-    // Prevent multiple simultaneous connection attempts
     if (isConnectingRef.current) {
       return;
     }
@@ -176,7 +160,6 @@ export const WebSocketProvider = ({ children }) => {
       log('connection', `Connecting to ${wsHost}...`);
       const websocket = new WebSocket(wsUrl);
 
-      // Connection opened
       websocket.onopen = (event) => {
         isConnectingRef.current = false;
         log('success', 'WebSocket connected successfully!');
@@ -185,7 +168,6 @@ export const WebSocketProvider = ({ children }) => {
         setConnectionStatus('connected');
         reconnectAttempts.current = 0;
         
-        // Send user connected event
         const connectMessage = {
           type: 'USER_CONNECTED',
           userId: user.id,
@@ -195,17 +177,14 @@ export const WebSocketProvider = ({ children }) => {
         };
         websocket.send(JSON.stringify(connectMessage));
 
-        // Request online users
         const onlineUsersMessage = { 
           type: 'GET_ONLINE_USERS',
           timestamp: new Date().toISOString()
         };
         websocket.send(JSON.stringify(onlineUsersMessage));
 
-        // Process any queued messages
         processMessageQueue();
 
-        // Start heartbeat every 30 seconds
         heartbeatIntervalRef.current = setInterval(() => {
           if (websocket.readyState === WebSocket.OPEN) {
             const pingMessage = { 
@@ -218,49 +197,57 @@ export const WebSocketProvider = ({ children }) => {
         }, 30000);
       };
 
-      // Message received
       websocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           
+          // Only log message-related events for testing
+          if (['SEND_MESSAGE', 'MESSAGE_RECEIVED', 'DELETE_MESSAGE', 'MESSAGE_EDITED'].includes(data.type)) {
+            console.log('📨 [WS] Message event:', data.type, data);
+          }
+          
           switch (data.type) {
+            case 'SEND_MESSAGE':
             case 'MESSAGE_RECEIVED':
               if (data.message) {
-                cache.current.addMessage(data.message.conversationId, data.message);
                 notifyListeners(data);
               }
               break;
               
-            case 'MESSAGE_DELETED':
+            case 'DELETE_MESSAGE':
               if (data.messageId && data.conversationId) {
-                cache.current.removeMessage(data.conversationId, data.messageId);
                 notifyListeners(data);
               }
               break;
               
             case 'MESSAGE_EDITED':
               if (data.message) {
-                cache.current.updateMessage(
-                  data.message.conversationId, 
-                  data.message.messageId, 
-                  data.message
-                );
                 notifyListeners(data);
               }
               break;
               
             case 'USER_TYPING':
-              setTypingUsers(prev => ({
-                ...prev,
-                [data.conversationId]: [...new Set([...(prev[data.conversationId] || []), data.userId])]
-              }));
+            case 'TYPING':
+              setTypingUsers(prev => {
+                const conversationTyping = prev[data.conversationId] || [];
+                const newTyping = [...new Set([...conversationTyping, data.userId || data.fromUserId])];
+                return {
+                  ...prev,
+                  [data.conversationId]: newTyping
+                };
+              });
               break;
               
             case 'USER_STOPPED_TYPING':
-              setTypingUsers(prev => ({
-                ...prev,
-                [data.conversationId]: (prev[data.conversationId] || []).filter(id => id !== data.userId)
-              }));
+            case 'STOP_TYPING':
+              setTypingUsers(prev => {
+                const conversationTyping = prev[data.conversationId] || [];
+                const newTyping = conversationTyping.filter(id => id !== (data.userId || data.fromUserId));
+                return {
+                  ...prev,
+                  [data.conversationId]: newTyping
+                };
+              });
               break;
               
             case 'ONLINE_USERS':
@@ -268,33 +255,15 @@ export const WebSocketProvider = ({ children }) => {
               break;
               
             case 'READ_RECEIPT':
-              if (data.messageId && data.conversationId) {
-                cache.current.updateMessage(
-                  data.conversationId, 
-                  data.messageId, 
-                  { status: 'read' }
-                );
-                notifyListeners(data);
-              }
-              break;
-
             case 'MESSAGE_DELIVERED':
-              if (data.messageId && data.conversationId) {
-                cache.current.updateMessage(
-                  data.conversationId, 
-                  data.messageId, 
-                  { status: 'DELIVERED' }
-                );
-                notifyListeners(data);
-              }
+              notifyListeners(data);
               break;
               
             case 'PONG':
-              // Heartbeat response - no need to log
               break;
 
             case 'ERROR':
-              log('error', `Server error: ${data.message}`);
+              log('error', `Server error: ${data.message || 'Unknown error'}`);
               break;
 
             case 'AUTHENTICATION_FAILED':
@@ -303,29 +272,25 @@ export const WebSocketProvider = ({ children }) => {
               break;
 
             case 'CONNECTION_ACKNOWLEDGED':
-              log('success', 'Server acknowledged connection');
               break;
               
             default:
-              // Unknown message type - no need to spam logs
+              notifyListeners(data);
               break;
           }
         } catch (error) {
-          log('error', 'Failed to parse message:', event.data);
+          log('error', 'Failed to parse WebSocket message:', error);
         }
       };
 
-      // Connection closed - THIS IS THE KEY FIX
       websocket.onclose = (event) => {
         isConnectingRef.current = false;
         setIsConnected(false);
         setConnectionStatus('disconnected');
         clearInterval(heartbeatIntervalRef.current);
         
-        // Code 1005 is NORMAL during page refresh/navigation - don't reconnect
         if (event.code === 1005) {
-          log('info', 'Connection closed normally (page refresh)');
-          return; // EXIT HERE - no reconnection
+          return;
         }
         
         const closeReasons = {
@@ -337,22 +302,19 @@ export const WebSocketProvider = ({ children }) => {
         
         const reason = closeReasons[event.code] || `Code ${event.code}`;
         
-        // Only log if not a normal closure
         if (event.code !== 1000) {
           log('warn', `Connection closed: ${reason}`);
         }
         
-        // Reconnect logic - ONLY for unexpected closures
-        const shouldReconnect = event.code !== 1000 && // Not normal closure
-                               event.code !== 1001 && // Not going away
-                               event.code !== 1005 && // Not page refresh (IMPORTANT!)
+        const shouldReconnect = event.code !== 1000 && 
+                               event.code !== 1001 && 
+                               event.code !== 1005 && 
                                reconnectAttempts.current < maxReconnectAttempts;
         
         if (shouldReconnect) {
           reconnectAttempts.current += 1;
           const delay = Math.min(2000 * Math.pow(1.5, reconnectAttempts.current - 1), 15000);
           
-          log('info', `Reconnecting in ${Math.round(delay/1000)}s (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
           setConnectionStatus('reconnecting');
           
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -364,7 +326,6 @@ export const WebSocketProvider = ({ children }) => {
         }
       };
 
-      // Connection error
       websocket.onerror = (error) => {
         isConnectingRef.current = false;
         log('error', 'WebSocket connection error');
@@ -378,7 +339,6 @@ export const WebSocketProvider = ({ children }) => {
       log('error', 'Failed to create WebSocket connection:', error.message);
       setConnectionStatus('error');
       
-      // Schedule retry if under attempt limit
       if (reconnectAttempts.current < maxReconnectAttempts) {
         reconnectAttempts.current += 1;
         const delay = Math.min(2000 * Math.pow(1.5, reconnectAttempts.current - 1), 15000);
@@ -391,7 +351,6 @@ export const WebSocketProvider = ({ children }) => {
   }, [getAuthToken, getCurrentUser, processMessageQueue, notifyListeners, log]);
 
   const disconnect = useCallback(() => {
-    log('info', 'Manual disconnect requested');
     if (ws) {
       ws.close(1000, 'Manual disconnect');
     }
@@ -401,12 +360,17 @@ export const WebSocketProvider = ({ children }) => {
     setConnectionStatus('disconnected');
     reconnectAttempts.current = 0;
     isConnectingRef.current = false;
-  }, [ws, log]);
+  }, [ws]);
 
   const sendMessage = useCallback((message) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       try {
         ws.send(JSON.stringify(message));
+        
+        // Only log message sends for testing
+        if (['SEND_MESSAGE', 'DELETE_MESSAGE'].includes(message.type)) {
+          console.log('📤 [WS] Sent message:', message.type, message);
+        }
       } catch (error) {
         log('error', 'Failed to send message:', error);
       }
@@ -415,16 +379,13 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, [ws, log]);
 
-  // Handle page visibility and network changes (less aggressive)
   useEffect(() => {
     let reconnectTimer = null;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && !isConnected && connectionStatus !== 'connecting') {
-        // Wait a bit before reconnecting when page becomes visible
         reconnectTimer = setTimeout(() => {
           if (!isConnected && !isConnectingRef.current) {
-            log('info', 'Page visible - reconnecting');
             connect();
           }
         }, 3000);
@@ -435,7 +396,6 @@ export const WebSocketProvider = ({ children }) => {
       if (!isConnected && connectionStatus !== 'connecting') {
         setTimeout(() => {
           if (!isConnected && !isConnectingRef.current) {
-            log('info', 'Network online - reconnecting');
             connect();
           }
         }, 2000);
@@ -458,20 +418,17 @@ export const WebSocketProvider = ({ children }) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [isConnected, connectionStatus, connect, log]);
+  }, [isConnected, connectionStatus, connect]);
 
-  // Auto-connect when user and token are available - STABLE VERSION
   useEffect(() => {
     const user = getCurrentUser();
     const token = getAuthToken();
     
     if (user?.id && token && !isConnected && connectionStatus === 'disconnected' && !isConnectingRef.current) {
-      log('info', 'Auto-connecting WebSocket');
       setTimeout(() => connect(), 1000);
     }
-  }, [getCurrentUser, getAuthToken, isConnected, connectionStatus, connect, log]);
+  }, [getCurrentUser, getAuthToken, isConnected, connectionStatus, connect]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearTimeout(reconnectTimeoutRef.current);
@@ -490,7 +447,6 @@ export const WebSocketProvider = ({ children }) => {
     typingUsers,
     sendMessage,
     addMessageListener,
-    cache: cache.current,
     connect,
     disconnect
   };
@@ -513,7 +469,6 @@ export const useWebSocket = () => {
       typingUsers: {},
       sendMessage: () => {},
       addMessageListener: () => () => {},
-      cache: new CacheManager(),
       connect: () => {},
       disconnect: () => {}
     };

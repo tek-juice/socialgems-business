@@ -829,18 +829,13 @@ const Signup = () => {
       case 1:
         return (
           <div className="space-y-6">
-            <div className="flex justify-between mb-2 border-b border-b-secondary/20 pb-3">
+            <div className="flex justify-start mb-2 border-b border-b-secondary/20 pb-3">
               <button
                 onClick={prevStep}
                 className="flex items-center justify-center h-fit p-3 rounded-full border border-gray-200 bg-primary text-secondary hover:bg-secondary hover:text-white transition"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <img
-                src={assets.LogoIcon}
-                alt="Logo"
-                className="h-20 w-20 object-contain"
-              />
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
@@ -1105,6 +1100,16 @@ const Signup = () => {
     <div className="min-h-screen w-full flex flex-col bg-white md:bg-gray-50">
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-lg">
+          {/* Logo and brand name above the form */}
+          <div className=" mb-6 flex items-center justify-center gap-2">
+            <img
+              src={assets.LogoIcon}
+              alt="Logo"
+              className="h-16 w-16 object-contain"
+            />
+            <h1 className="text-md font-bold text-secondary">SOCIAL GEMS</h1>
+          </div>
+
           <div className="bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-6 md:p-8">
             <div className="md:hidden mb-6">
               <div className="flex justify-center space-x-2">

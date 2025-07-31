@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { post } from '../../utils/service';
 import { LogIn, Lock, Mail, EyeOff, Eye } from "lucide-react";
+import { assets } from "../../assets/assets";
 
 const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
   const [step, setStep] = useState(1); // 1: email, 2: otp + new password
@@ -293,9 +294,19 @@ const Login = () => {
       <div className="w-full h-full md:w-auto md:h-auto md:max-w-sm bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-8 flex flex-col items-center text-black">
         
         {/* Logo/Icon */}
-        <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary mb-6 shadow-sm">
+        {/* <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary mb-6 shadow-sm">
           <LogIn className="w-6 h-6 text-secondary" />
-        </div>
+        </div> */}
+
+        {/* Logo and brand name above the form */}
+        <div className=" mb-6 flex items-center justify-center gap-2">
+            <img
+              src={assets.LogoIcon}
+              alt="Logo"
+              className="h-16 w-16 object-contain"
+            />
+            {/* <h1 className="text-md font-bold text-secondary">SOCIAL GEMS</h1> */}
+          </div>
         
         {/* Header */}
         <h2 className="text-xl font-semibold mb-2 text-center text-gray-900">
