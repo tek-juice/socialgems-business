@@ -1,45 +1,82 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { post, get, patch } from '../../utils/service';
-import { UserPlus, Lock, Mail, User, Phone, Building, Plus, Check, ArrowLeft, Eye, EyeOff, Globe, ChevronDown, Search } from "lucide-react";
-import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '../../components/ui/input-otp';
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { post, get, patch } from "../../utils/service";
+import {
+  UserPlus,
+  Lock,
+  Mail,
+  User,
+  Phone,
+  Building,
+  Plus,
+  Check,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Globe,
+  ChevronDown,
+  Search,
+} from "lucide-react";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "../../components/ui/input-otp";
 
 import { TiBusinessCard } from "react-icons/ti";
 import { CiAt } from "react-icons/ci";
+import { assets } from "../../assets/assets";
 
 // Searchable Dropdown Component
-const SearchableDropdown = ({ options, value, onChange, placeholder, disabled, displayField = "name", valueField = "id" }) => {
+const SearchableDropdown = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  displayField = "name",
+  valueField = "id",
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const filteredOptions = options.filter(option =>
+
+  const filteredOptions = options.filter((option) =>
     option[displayField].toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-  const selectedOption = options.find(option => option[valueField] === value);
-  
+
+  const selectedOption = options.find((option) => option[valueField] === value);
+
   const handleSelect = (option) => {
     onChange(option[valueField]);
     setIsOpen(false);
     setSearchTerm("");
   };
-  
+
   return (
     <div className="relative">
       <div
-        className={`w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs cursor-pointer flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        className={`w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs cursor-pointer flex items-center justify-between ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
-        <span className={selectedOption ? 'text-black' : 'text-gray-500'}>
-          {selectedOption ? `${selectedOption[displayField]} (+${selectedOption.phone_code})` : placeholder}
+        <span className={selectedOption ? "text-black" : "text-gray-500"}>
+          {selectedOption
+            ? `${selectedOption[displayField]} (+${selectedOption.phone_code})`
+            : placeholder}
         </span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`w-4 h-4 text-gray-400 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </div>
-      
+
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
           <div className="p-2 border-b border-gray-100">
@@ -67,7 +104,9 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, disabled, d
                 </div>
               ))
             ) : (
-              <div className="px-3 py-2 text-xs text-gray-500">No countries found</div>
+              <div className="px-3 py-2 text-xs text-gray-500">
+                No countries found
+              </div>
             )}
           </div>
         </div>
@@ -76,64 +115,160 @@ const SearchableDropdown = ({ options, value, onChange, placeholder, disabled, d
   );
 };
 
-// Stepper Component
-const StepperComponent = ({ steps, activeStep }) => {
+// Username Suggestions Dropdown Component
+const UsernameSuggestionsDropdown = ({
+  businessName,
+  value,
+  onChange,
+  disabled
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || "");
+  const [isUserTyping, setIsUserTyping] = useState(false);
+
+  // Update input value when prop value changes
+  useEffect(() => {
+    setInputValue(value || "");
+  }, [value]);
+
+  const generateUsernameSuggestions = (name) => {
+    if (!name) return [];
+    
+    const cleanName = name
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const words = cleanName.split(' ');
+    const suggestions = new Set();
+
+    // Basic transformations
+    const transformations = [
+      cleanName.replace(/\s+/g, '_'),
+      cleanName.replace(/\s+/g, ''),
+      words[0],
+      words.map(w => w[0]).join(''),
+      words[0] + words.slice(1).map(w => w[0]).join(''),
+      words.join('.'),
+      words[0] + (words.length > 1 ? words[words.length-1] : ''),
+    ];
+
+    // Add common business suffixes
+    const suffixes = ['hq', 'official', 'app', 'co', 'inc', 'ltd'];
+    transformations.forEach(base => {
+      suffixes.forEach(suffix => {
+        suggestions.add(`${base}_${suffix}`);
+        suggestions.add(`${base}${suffix}`);
+      });
+    });
+
+    // Add all transformations
+    transformations.forEach(t => suggestions.add(t));
+
+    // Filter valid usernames
+    const validSuggestions = Array.from(suggestions)
+      .filter(s => /^[a-z0-9_]{3,30}$/.test(s))
+      .slice(0, 10);
+
+    return validSuggestions;
+  };
+
+  const suggestions = generateUsernameSuggestions(businessName);
+  const filteredSuggestions = suggestions.filter(suggestion =>
+    suggestion.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  const handleInputChange = (e) => {
+    // Remove spaces and convert to lowercase
+    const newValue = e.target.value.replace(/\s+/g, '').toLowerCase();
+    setInputValue(newValue);
+    onChange(newValue);
+    setIsUserTyping(true);
+    
+    // Hide dropdown when user starts typing
+    if (newValue.length > 0) {
+      setIsOpen(false);
+    }
+  };
+
+  const handleSuggestionSelect = (suggestion) => {
+    setInputValue(suggestion);
+    onChange(suggestion);
+    setIsOpen(false);
+    setIsUserTyping(false);
+  };
+
+  const handleInputFocus = () => {
+    if (!disabled && !isUserTyping) {
+      setIsOpen(true);
+    }
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding to allow for suggestion clicks
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsUserTyping(false);
+    }, 150);
+  };
+
+  const handleChevronClick = () => {
+    if (!disabled) {
+      setIsUserTyping(false);
+      setIsOpen(!isOpen);
+    }
+  };
+
   return (
-    <div className="w-full max-w-4xl mx-auto mb-8">
-      <div className="flex items-center justify-between relative">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex flex-col items-center relative">
-            {/* Step Circle */}
-            <div className="flex items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
-                  index < activeStep
-                    ? "bg-primary text-secondary border-2 border-primary"
-                    : index === activeStep
-                    ? "bg-secondary text-white border-2 border-secondary"
-                    : "bg-gray-200 text-gray-500 border-2 border-gray-200"
-                }`}
-              >
-                {index < activeStep ? (
-                  <Check className="w-5 h-5" />
-                ) : (
-                  step.id + 1
-                )}
-              </div>
+    <div className="relative">
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={handleInputFocus}
+        onBlur={handleInputBlur}
+        placeholder="Display Business As (Username)"
+        disabled={disabled}
+        className={`w-full pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs ${
+          disabled ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      />
+      
+      <ChevronDown
+        className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-transform cursor-pointer ${
+          isOpen ? "rotate-180" : ""
+        }`}
+        onClick={handleChevronClick}
+      />
 
-              {/* Step Title - Only show for active step */}
-              {index === activeStep && (
-                <div className="ml-3 hidden md:block">
-                  <div className="text-xs font-semibold text-gray-900">
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {step.subtitle}
-                  </div>
-                </div>
-              )}
+      {isOpen && !isUserTyping && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <div className="text-xs text-gray-600 font-medium">
+              Select or customize Username
             </div>
-
-            {/* Step Title for mobile - below circle */}
-            <div className="mt-2 text-center md:hidden">
-              <div className="text-xs font-medium text-gray-700">
-                {step.title}
-              </div>
-            </div>
-
-            {/* Connector Line */}
-            {index < steps.length - 1 && (
-              <div className="absolute top-5 left-5 hidden md:block">
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filteredSuggestions.length > 0 ? (
+              filteredSuggestions.map((suggestion) => (
                 <div
-                  className={`h-0.5 w-20 lg:w-32 transition-all duration-300 ${
-                    index < activeStep ? "bg-primary" : "bg-gray-200"
-                  }`}
-                ></div>
+                  key={suggestion}
+                  className="px-3 py-2 text-xs hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                  onClick={() => handleSuggestionSelect(suggestion)}
+                >
+                  {suggestion}
+                </div>
+              ))
+            ) : (
+              <div className="px-3 py-2 text-xs text-gray-500">
+                {businessName ? "No valid usernames generated" : "Enter business name first"}
               </div>
             )}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -148,27 +283,26 @@ const Signup = () => {
   const [selectedIndustries, setSelectedIndustries] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [localPhoneNumber, setLocalPhoneNumber] = useState(""); // For display only
-  
+  const [localPhoneNumber, setLocalPhoneNumber] = useState("");
+  const [verifiedUsername, setVerifiedUsername] = useState(""); // Store username from verify email response
+
   const [signupData, setSignupData] = useState({
-    first_name: "",
-    last_name: "",
     email: "",
     phone_number: "",
     business_name: "",
-    username:"",
-    country_id: "256", // Default to Uganda's phone code
-    user_type: "brand"
+    username: "",
+    country_id: "256",
+    user_type: "brand",
   });
-  
+
   const [otpData, setOtpData] = useState({
     otp: "",
-    user_id: ""
+    user_id: "",
   });
-  
+
   const [passwordData, setPasswordData] = useState({
     password: "",
-    confirm_password: ""
+    confirm_password: "",
   });
 
   // Steps definition
@@ -184,7 +318,7 @@ const Signup = () => {
     {
       id: 1,
       title: "Details",
-      subtitle: "Personal information",
+      subtitle: "Business information",
       icon: UserPlus,
       description: "Create your brand account",
       color: "from-secondary to-secondary-scale-600",
@@ -216,23 +350,25 @@ const Signup = () => {
   // Set default country when countries are loaded
   useEffect(() => {
     if (countries.length > 0 && !selectedCountry) {
-      // Find Uganda first, then fallback to first country
-      const defaultCountry = countries.find(country => country.iso2 === 'UG') || countries[0];
+      const defaultCountry =
+        countries.find((country) => country.iso2 === "UG") || countries[0];
       setSelectedCountry(defaultCountry);
-      setSignupData(prev => ({ ...prev, country_id: defaultCountry.phone_code }));
+      setSignupData((prev) => ({
+        ...prev,
+        country_id: defaultCountry.phone_code,
+      }));
     }
   }, [countries, selectedCountry]);
 
   const fetchIndustries = async () => {
     try {
-      const response = await get('users/industries');
+      const response = await get("users/industries");
       if (response.status === 200) {
         setIndustries(response.data || []);
       }
     } catch (error) {
-      console.error('Error fetching industries:', error);
-      toast.error('Failed to load industries');
-      // Fallback industries
+      console.error("Error fetching industries:", error);
+      toast.error("Failed to load industries");
       setIndustries([
         { id: 1, name: "Technology" },
         { id: 2, name: "Fashion" },
@@ -249,14 +385,14 @@ const Signup = () => {
 
   const fetchCountries = async () => {
     try {
-      const response = await get('users/countries');
+      const response = await get("users/countries");
       if (response.status === 200) {
-        // Ensure Uganda is in the list
         let countriesData = response.data || [];
-        const hasUganda = countriesData.find(country => country.iso2 === 'UG');
-        
+        const hasUganda = countriesData.find(
+          (country) => country.iso2 === "UG"
+        );
+
         if (!hasUganda) {
-          // Add Uganda if not present
           countriesData.unshift({
             id: 999,
             iso2: "UG",
@@ -264,22 +400,56 @@ const Signup = () => {
             name: "Uganda",
             phone_code: "256",
             has_payouts: "no",
-            status: "active"
+            status: "active",
           });
         }
-        
+
         setCountries(countriesData);
       }
     } catch (error) {
-      console.error('Error fetching countries:', error);
-      toast.error('Failed to load countries');
-      // Fallback countries with Uganda as default
+      console.error("Error fetching countries:", error);
+      toast.error("Failed to load countries");
       setCountries([
-        { id: 999, name: "Uganda", iso2: "UG", phone_code: "256", has_payouts: "no", status: "active" },
-        { id: 1, name: "Afghanistan", iso2: "AF", phone_code: "93", has_payouts: "no", status: "active" },
-        { id: 2, name: "Kenya", iso2: "KE", phone_code: "254", has_payouts: "no", status: "active" },
-        { id: 3, name: "Tanzania", iso2: "TZ", phone_code: "255", has_payouts: "no", status: "active" },
-        { id: 4, name: "Rwanda", iso2: "RW", phone_code: "250", has_payouts: "no", status: "active" },
+        {
+          id: 999,
+          name: "Uganda",
+          iso2: "UG",
+          phone_code: "256",
+          has_payouts: "no",
+          status: "active",
+        },
+        {
+          id: 1,
+          name: "Afghanistan",
+          iso2: "AF",
+          phone_code: "93",
+          has_payouts: "no",
+          status: "active",
+        },
+        {
+          id: 2,
+          name: "Kenya",
+          iso2: "KE",
+          phone_code: "254",
+          has_payouts: "no",
+          status: "active",
+        },
+        {
+          id: 3,
+          name: "Tanzania",
+          iso2: "TZ",
+          phone_code: "255",
+          has_payouts: "no",
+          status: "active",
+        },
+        {
+          id: 4,
+          name: "Rwanda",
+          iso2: "RW",
+          phone_code: "250",
+          has_payouts: "no",
+          status: "active",
+        },
       ]);
     }
   };
@@ -289,15 +459,14 @@ const Signup = () => {
   };
 
   const validatePhone = (phone) => {
-    // Remove + and any non-digit characters for validation
-    const cleanPhone = phone.replace(/[^\d]/g, '');
+    const cleanPhone = phone.replace(/[^\d]/g, "");
     return cleanPhone.length >= 10 && cleanPhone.length <= 15;
   };
 
   const handleIndustryToggle = (industryId) => {
-    setSelectedIndustries(prev => {
+    setSelectedIndustries((prev) => {
       if (prev.includes(industryId)) {
-        return prev.filter(id => id !== industryId);
+        return prev.filter((id) => id !== industryId);
       } else {
         return [...prev, industryId];
       }
@@ -305,80 +474,85 @@ const Signup = () => {
   };
 
   const handleCountryChange = (countryId) => {
-    const country = countries.find(c => c.id === parseInt(countryId));
+    const country = countries.find((c) => c.id === parseInt(countryId));
     setSelectedCountry(country);
-    setSignupData(prev => ({ ...prev, country_id: country.phone_code }));
-    
-    // Clear phone numbers when country changes
+    setSignupData((prev) => ({ ...prev, country_id: country.phone_code }));
+
     setLocalPhoneNumber("");
-    setSignupData(prev => ({ ...prev, phone_number: "" }));
+    setSignupData((prev) => ({ ...prev, phone_number: "" }));
   };
 
   const handlePhoneChange = (value) => {
-    // Only allow digits
-    let cleanValue = value.replace(/[^\d]/g, '');
-    
-    // Remove leading 0 if present (common in local phone formats)
-    if (cleanValue.startsWith('0')) {
+    let cleanValue = value.replace(/[^\d]/g, "");
+
+    if (cleanValue.startsWith("0")) {
       cleanValue = cleanValue.substring(1);
     }
-    
-    // Update the local display value
+
     setLocalPhoneNumber(cleanValue);
-    
-    // Update the full international format for submission
+
     if (selectedCountry && cleanValue) {
       const fullNumber = `+${selectedCountry.phone_code}${cleanValue}`;
-      setSignupData(prev => ({ ...prev, phone_number: fullNumber }));
+      setSignupData((prev) => ({ ...prev, phone_number: fullNumber }));
     } else {
-      setSignupData(prev => ({ ...prev, phone_number: "" }));
+      setSignupData((prev) => ({ ...prev, phone_number: "" }));
     }
   };
 
   const handleStepOne = async () => {
-    // Allow skipping industry selection
     setCurrentStep(1);
   };
 
   const handleStepTwo = async () => {
-    const { first_name, last_name, email, phone_number, business_name, username } = signupData;
-    
-    if (!first_name.trim() || !last_name.trim() || !email.trim() || !phone_number.trim() || !business_name.trim() || !username.trim()) {
+    const {
+      email,
+      phone_number,
+      business_name,
+      username,
+    } = signupData;
+
+    if (
+      !email.trim() ||
+      !phone_number.trim() ||
+      !business_name.trim() ||
+      !username.trim()
+    ) {
       toast.error("Please fill in all fields");
       return;
     }
-    
+
     if (!validateEmail(email)) {
       toast.error("Please enter a valid email address");
       return;
     }
-    
+
     if (!validatePhone(phone_number)) {
       toast.error("Please enter a valid phone number");
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      const response = await post('users/signup', signupData);
-      
+      const response = await post("users/signup", signupData);
+
       if (response.status === 200 || response.status === 201) {
         const userId = response.data?.user_id || response.data?.id;
-        setOtpData(prev => ({ ...prev, user_id: userId }));
         
-        toast.success('Account created! Please check your email for OTP');
+        setOtpData((prev) => ({ ...prev, user_id: userId }));
+
+        toast.success("Account created! Please check your email for OTP");
         setCurrentStep(2);
       } else {
-        toast.error(response.message || 'Signup failed. Please try again');
+        toast.error(response.message || "Signup failed. Please try again");
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
       if (error.response) {
-        const errorMessage = error.response.data?.message || 'Signup failed';
+        const errorMessage = error.response.data?.message || "Signup failed";
         toast.error(errorMessage);
       } else {
-        toast.error('An error occurred during signup. Please try again');
+        toast.error("An error occurred during signup. Please try again");
       }
     } finally {
       setLoading(false);
@@ -392,135 +566,185 @@ const Signup = () => {
     }
 
     setLoading(true);
-    
+
     try {
-      const response = await post('users/verifyEmail', {
+      const response = await post("users/verifyEmail", {
         user_id: otpData.user_id,
         email: signupData.email,
-        username: signupData.username, // Added username here
-        otp: otpData.otp
+        username: signupData.username,
+        otp: otpData.otp,
       });
-      
+
       if (response.status === 200) {
-        // Store JWT token in localStorage just like login page
-        if (response.data?.token) {
-          localStorage.setItem('jwt', response.data.token);
-          localStorage.setItem('user_id', response.data.user_id);
-          localStorage.setItem('username', response.data.username);
-          localStorage.setItem('status', response.data.status);
-        }
+        const token = response.data?.token;
+        const username = response.data?.username;
         
-        toast.success('Email verified successfully!');
+        if (token) {
+          localStorage.setItem("jwt", token);
+          localStorage.setItem("user_id", response.data.user_id);
+          localStorage.setItem("username", username);
+          localStorage.setItem("status", response.data.status);
+          
+          // Store the username from verify email response for later use
+          setVerifiedUsername(username);
+        }
+
+        toast.success("Email verified successfully!");
         setCurrentStep(3);
       } else {
-        toast.error(response.message || 'Invalid OTP. Please try again');
+        toast.error(response.message || "Invalid OTP. Please try again");
       }
     } catch (error) {
-      console.error('OTP verification error:', error);
+      console.error("OTP verification error:", error);
       if (error.response) {
-        const errorMessage = error.response.data?.message || 'Invalid OTP';
+        const errorMessage = error.response.data?.message || "Invalid OTP";
         toast.error(errorMessage);
       } else {
-        toast.error('An error occurred during verification. Please try again');
+        toast.error("An error occurred during verification. Please try again");
       }
     } finally {
       setLoading(false);
     }
   };
 
+  const changeUsername = async (jwt) => {
+    try {
+      const headers = {
+        Authorization: `Bearer ${jwt}`,
+        "Content-Type": "application/json",
+      };
+
+      const changeUsernameData = {
+        currentUsername: verifiedUsername,
+        newUsername: signupData.username,
+      };
+
+      const response = await post("users/changeUsername", changeUsernameData, headers);
+      
+      if (response.status === 200) {
+        console.log("Username changed successfully");
+        return true;
+      } else {
+        console.warn("Username change failed:", response.message);
+        return false;
+      }
+    } catch (error) {
+      console.error("Username change error:", error);
+      return false;
+    }
+  };
+
   const handleStepFour = async () => {
     const { password, confirm_password } = passwordData;
-    
+
     if (!password || !confirm_password) {
       toast.error("Please enter both password and confirmation");
       return;
     }
-    
+
     if (password !== confirm_password) {
       toast.error("Passwords do not match");
       return;
     }
-    
+
     if (password.length < 6) {
       toast.error("Password must be at least 6 characters long");
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      // Get the JWT token from localStorage (from email verification)
-      const token = localStorage.getItem('jwt');
-      
+      const token = localStorage.getItem("jwt");
+
       if (!token) {
-        toast.error('Session expired. Please restart the signup process');
+        toast.error("Session expired. Please restart the signup process");
         setCurrentStep(0);
         return;
       }
 
-      // Set Authorization header (restore original working format)
       const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       };
 
-      // Use original working secureAccount call
-      const response = await post('users/secureAccount', passwordData, headers);
-      
+      const response = await post("users/secureAccount", passwordData, headers);
+
       if (response.status === 200) {
-        // Now automatically login to get proper authentication for profile update
-        const loginResponse = await post('users/login', {
+        const loginResponse = await post("users/login", {
           email: signupData.email,
-          password: passwordData.password
+          password: passwordData.password,
         });
-        
+
         if (loginResponse.status === 200) {
-          const { username, user_type: role, email: userEmail, jwt } = loginResponse.data;
-          
-          // Store login data
-          localStorage.setItem('name', username);
-          localStorage.setItem('email', userEmail);
-          localStorage.setItem('role', role);
-          localStorage.setItem('jwt', jwt);
-          localStorage.setItem('isLoggedIn', 'true');
-          
-          // Now update profile with industries using the login token
-          if (selectedIndustries.length > 0) {
-            try {
-              await patch('users/updateProfile', {
-                industry_ids: selectedIndustries,
-                username: signupData.username
-              }, {
-                headers: {
-                  'Authorization': `Bearer ${jwt}`,
-                  'Content-Type': 'application/json'
-                }
-              });
-              toast.success('Account setup completed successfully!');
-            } catch (industryError) {
-              console.warn('Failed to update industries:', industryError);
-              toast.success('Account setup completed! You can update industries later in your profile.');
-            }
-          } else {
-            toast.success('Account setup completed successfully!');
+          const {
+            username,
+            user_type: role,
+            email: userEmail,
+            jwt,
+          } = loginResponse.data;
+
+          localStorage.setItem("name", username);
+          localStorage.setItem("email", userEmail);
+          localStorage.setItem("role", role);
+          localStorage.setItem("jwt", jwt);
+          localStorage.setItem("isLoggedIn", "true");
+
+          // Handle username change and industry updates after successful login
+          const promises = [];
+
+          // Change username if user selected a different one
+          if (signupData.username && signupData.username !== verifiedUsername) {
+            promises.push(changeUsername(jwt));
           }
-          
-          // Navigate to dashboard since user is now logged in
-          navigate('/dashboard');
+
+          // Update industries if selected
+          if (selectedIndustries.length > 0) {
+            promises.push(
+              patch(
+                "users/updateProfile",
+                {
+                  industry_ids: selectedIndustries,
+                  username: signupData.username || username,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${jwt}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              )
+            );
+          }
+
+          try {
+            await Promise.allSettled(promises);
+            toast.success("Account setup completed successfully!");
+          } catch (updateError) {
+            console.warn("Some updates failed:", updateError);
+            toast.success(
+              "Account setup completed! Some preferences can be updated in your profile."
+            );
+          }
+
+          navigate("/dashboard");
         } else {
-          toast.error('Account created but login failed. Please login manually.');
-          navigate('/login');
+          toast.error(
+            "Account created but login failed. Please login manually."
+          );
+          navigate("/login");
         }
       } else {
-        toast.error(response.message || 'Failed to secure account');
+        toast.error(response.message || "Failed to secure account");
       }
     } catch (error) {
-      console.error('Secure account error:', error);
+      console.error("Secure account error:", error);
       if (error.response) {
-        const errorMessage = error.response.data?.message || 'Failed to secure account';
+        const errorMessage =
+          error.response.data?.message || "Failed to secure account";
         toast.error(errorMessage);
       } else {
-        toast.error('An error occurred while securing your account');
+        toast.error("An error occurred while securing your account");
       }
     } finally {
       setLoading(false);
@@ -530,13 +754,13 @@ const Signup = () => {
   const resendOTP = async () => {
     setLoading(true);
     try {
-      await post('users/sendEmailOTP', {
+      await post("users/sendEmailOTP", {
         userId: otpData.user_id,
-        email: signupData.email
+        email: signupData.email,
       });
-      toast.success('OTP resent successfully!');
+      toast.success("OTP resent successfully!");
     } catch (error) {
-      toast.error('Failed to resend OTP. Please try again');
+      toast.error("Failed to resend OTP. Please try again");
     } finally {
       setLoading(false);
     }
@@ -576,12 +800,15 @@ const Signup = () => {
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Building className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Choose Your Industries</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                Choose Your Industries
+              </h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
-                Select the industries your brand operates in. You can skip this step and add them later.
+                Select the industries your brand operates in. You can skip this
+                step and add them later.
               </p>
             </div>
-            
+
             <div className="max-h-64 overflow-y-auto">
               <div className="grid gap-3">
                 {industries.map((industry) => (
@@ -591,16 +818,20 @@ const Signup = () => {
                     onClick={() => handleIndustryToggle(industry.id)}
                     className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
                       selectedIndustries.includes(industry.id)
-                        ? 'border-primary bg-primary/10'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? "border-primary bg-primary/10"
+                        : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <span className="text-xs text-gray-700 font-medium">{industry.name}</span>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedIndustries.includes(industry.id)
-                        ? 'border-primary bg-primary'
-                        : 'border-gray-300'
-                    }`}>
+                    <span className="text-xs text-gray-700 font-medium">
+                      {industry.name}
+                    </span>
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        selectedIndustries.includes(industry.id)
+                          ? "border-primary bg-primary"
+                          : "border-gray-300"
+                      }`}
+                    >
                       {selectedIndustries.includes(industry.id) ? (
                         <Check className="w-3 h-3 text-secondary" />
                       ) : (
@@ -611,7 +842,7 @@ const Signup = () => {
                 ))}
               </div>
             </div>
-            
+
             <div className="flex gap-3">
               <button
                 onClick={() => setCurrentStep(1)}
@@ -633,16 +864,31 @@ const Signup = () => {
       case 1:
         return (
           <div className="space-y-6">
+            <div className="flex justify-between mb-2 border-b border-b-secondary/20 pb-3">
+              <button
+                onClick={prevStep}
+                className="flex items-center justify-center h-fit p-3 rounded-full border border-gray-200 bg-primary text-secondary hover:bg-secondary hover:text-white transition"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <img
+                src={assets.LogoIcon}
+                alt="Logo"
+                className="h-20 w-20 object-contain"
+              />
+            </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Create Your Account</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                Create Your Account
+              </h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
-                Enter your details to get started with your brand account.
+                Enter your business details to get started with your brand account.
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <div className="relative flex-1">
                 <TiBusinessCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -651,48 +897,26 @@ const Signup = () => {
                   type="text"
                   value={signupData.business_name}
                   className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setSignupData(prev => ({ ...prev, business_name: e.target.value }))}
+                  onChange={(e) =>
+                    setSignupData((prev) => ({
+                      ...prev,
+                      business_name: e.target.value,
+                    }))
+                  }
                   disabled={loading}
                 />
               </div>
 
               <div className="relative flex-1">
-                <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  placeholder="Username"
-                  type="text"
+                <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <UsernameSuggestionsDropdown
+                  businessName={signupData.business_name}
                   value={signupData.username}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setSignupData(prev => ({ ...prev, username: e.target.value }))}
+                  onChange={(username) => setSignupData(prev => ({...prev, username}))}
                   disabled={loading}
                 />
               </div>
-            
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    placeholder="First Name"
-                    type="text"
-                    value={signupData.first_name}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                    onChange={(e) => setSignupData(prev => ({ ...prev, first_name: e.target.value }))}
-                    disabled={loading}
-                  />
-                </div>
-                <div className="relative flex-1">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    placeholder="Last Name"
-                    type="text"
-                    value={signupData.last_name}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                    onChange={(e) => setSignupData(prev => ({ ...prev, last_name: e.target.value }))}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-              
+
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -700,17 +924,21 @@ const Signup = () => {
                   type="email"
                   value={signupData.email}
                   className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) =>
+                    setSignupData((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
                   disabled={loading}
                 />
               </div>
 
-              {/* Country Selection - Searchable Dropdown */}
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
                 <SearchableDropdown
                   options={countries}
-                  value={selectedCountry?.id || ''}
+                  value={selectedCountry?.id || ""}
                   onChange={handleCountryChange}
                   placeholder="Select Country"
                   disabled={loading}
@@ -718,12 +946,15 @@ const Signup = () => {
                   valueField="id"
                 />
               </div>
-              
-              {/* Phone Number - Shows only local number */}
+
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
-                  placeholder={selectedCountry ? `Phone Number (without leading 0)` : "Phone Number"}
+                  placeholder={
+                    selectedCountry
+                      ? `Phone Number (without leading 0)`
+                      : "Phone Number"
+                  }
                   type="tel"
                   value={localPhoneNumber}
                   className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
@@ -732,25 +963,20 @@ const Signup = () => {
                 />
                 {selectedCountry && localPhoneNumber && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                    +{selectedCountry.phone_code}{localPhoneNumber}
+                    +{selectedCountry.phone_code}
+                    {localPhoneNumber}
                   </div>
                 )}
               </div>
             </div>
-            
+
             <div className="flex gap-3">
-              <button
-                onClick={prevStep}
-                className="flex items-center justify-center px-4 py-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
               <button
                 onClick={nextStep}
                 disabled={loading}
                 className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
               >
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? "Creating Account..." : "Create Account"}
               </button>
             </div>
           </div>
@@ -765,17 +991,17 @@ const Signup = () => {
               </div>
               <h2 className="text-xl font-semibold mb-2">Verify Your Email</h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
-                We've sent a 4-digit verification code to {signupData.email}. Please enter it below.
+                We've sent a 4-digit verification code to {signupData.email}.
+                Please enter it below.
               </p>
             </div>
-            
+
             <div className="flex justify-center">
-              <InputOTP 
-                maxLength={4} 
+              <InputOTP
+                maxLength={4}
                 value={otpData.otp}
                 onChange={(value) => {
-                  setOtpData(prev => ({ ...prev, otp: value }));
-                  // Auto-submit when complete (4 digits)
+                  setOtpData((prev) => ({ ...prev, otp: value }));
                   if (value.length === 4) {
                     setTimeout(() => {
                       if (!loading) {
@@ -794,9 +1020,11 @@ const Signup = () => {
                 </InputOTPGroup>
               </InputOTP>
             </div>
-            
+
             <div className="text-center">
-              <span className="text-xs text-gray-600">Didn't receive the code? </span>
+              <span className="text-xs text-gray-600">
+                Didn't receive the code?{" "}
+              </span>
               <button
                 onClick={resendOTP}
                 disabled={loading}
@@ -805,13 +1033,13 @@ const Signup = () => {
                 Resend
               </button>
             </div>
-            
+
             <button
               onClick={nextStep}
               disabled={loading || otpData.otp.length !== 4}
               className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
             >
-              {loading ? 'Verifying...' : 'Verify Email'}
+              {loading ? "Verifying..." : "Verify Email"}
             </button>
           </div>
         );
@@ -823,12 +1051,14 @@ const Signup = () => {
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Secure Your Account</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                Secure Your Account
+              </h2>
               <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
                 Create a strong password to protect your account.
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -837,7 +1067,12 @@ const Signup = () => {
                   type={showPassword ? "text" : "password"}
                   value={passwordData.password}
                   className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswordData((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }))
+                  }
                   disabled={loading}
                 />
                 <button
@@ -845,10 +1080,14 @@ const Signup = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
-              
+
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -856,7 +1095,12 @@ const Signup = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   value={passwordData.confirm_password}
                   className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirm_password: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswordData((prev) => ({
+                      ...prev,
+                      confirm_password: e.target.value,
+                    }))
+                  }
                   disabled={loading}
                 />
                 <button
@@ -864,17 +1108,25 @@ const Signup = () => {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
-            
+
             <button
               onClick={nextStep}
-              disabled={loading || !passwordData.password || !passwordData.confirm_password}
+              disabled={
+                loading ||
+                !passwordData.password ||
+                !passwordData.confirm_password
+              }
               className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
             >
-              {loading ? 'Completing Setup...' : 'Complete Setup'}
+              {loading ? "Completing Setup..." : "Complete Setup"}
             </button>
           </div>
         );
@@ -886,24 +1138,16 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-white md:bg-gray-50">
-      {/* Mobile: full screen, Desktop: centered */}
       <div className="flex-1 flex items-center justify-center p-4 md:p-8">
         <div className="w-full max-w-lg">
-          {/* Stepper - only show on desktop */}
-          {/* <div className="hidden md:block mb-8">
-            <StepperComponent steps={steps} activeStep={currentStep} />
-          </div> */}
-          
-          {/* Main Card */}
           <div className="bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-6 md:p-8">
-            {/* Mobile stepper */}
             <div className="md:hidden mb-6">
               <div className="flex justify-center space-x-2">
                 {steps.map((_, index) => (
                   <div
                     key={index}
                     className={`w-2 h-2 rounded-full transition-all ${
-                      index <= currentStep ? 'bg-primary' : 'bg-gray-300'
+                      index <= currentStep ? "bg-primary" : "bg-gray-300"
                     }`}
                   />
                 ))}
@@ -917,12 +1161,13 @@ const Signup = () => {
 
             {renderStepContent()}
           </div>
-          
-          {/* Sign in link */}
+
           <div className="text-center mt-6">
-            <span className="text-xs text-gray-600">Already have an account? </span>
+            <span className="text-xs text-gray-600">
+              Already have an account?{" "}
+            </span>
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate("/login")}
               className="text-xs text-secondary hover:text-secondary-scale-600 font-medium hover:underline transition-colors"
             >
               Sign in

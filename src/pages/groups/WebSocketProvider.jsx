@@ -1,0 +1,522 @@
+import { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
+import CacheManager from './CacheManager';
+
+const WebSocketContext = createContext(null);
+
+export const WebSocketProvider = ({ children }) => {
+  const [ws, setWs] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [typingUsers, setTypingUsers] = useState({});
+  const [messageQueue, setMessageQueue] = useState([]);
+  
+  const reconnectTimeoutRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
+  const messageListeners = useRef(new Set());
+  const cache = useRef(new CacheManager());
+  const reconnectAttempts = useRef(0);
+  const maxReconnectAttempts = 10;
+  const lastLogTime = useRef({});
+  const isConnectingRef = useRef(false);
+
+  // Throttled logging to prevent spam
+  const log = useCallback((type, message, data = null) => {
+    const now = Date.now();
+    const key = `${type}-${message}`;
+    
+    // Only log the same message once every 10 seconds for non-critical messages
+    if (['debug', 'heartbeat', 'typing'].includes(type)) {
+      if (lastLogTime.current[key] && now - lastLogTime.current[key] < 10000) {
+        return;
+      }
+      lastLogTime.current[key] = now;
+    }
+
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+    const emoji = {
+      error: '❌',
+      warn: '⚠️', 
+      success: '✅',
+      info: 'ℹ️',
+      connection: '🔌',
+      message: '💬',
+      heartbeat: '💓'
+    };
+
+    const logMessage = `${timestamp} ${emoji[type] || '📝'} [WS] ${message}`;
+    
+    if (type === 'error') {
+      console.error(logMessage, data || '');
+    } else if (type === 'warn') {
+      console.warn(logMessage, data || '');
+    } else if (['success', 'connection', 'info'].includes(type)) {
+      console.log(logMessage, data || '');
+    }
+
+  }, []);
+
+  const getAuthToken = useCallback(() => {
+    const jwtToken = localStorage.getItem('jwt');
+    if (jwtToken && jwtToken.trim()) {
+      return jwtToken.trim();
+    }
+    
+    const sessionJwtToken = sessionStorage.getItem('jwt');
+    if (sessionJwtToken && sessionJwtToken.trim()) {
+      return sessionJwtToken.trim();
+    }
+    
+    // Other token keys as fallback
+    const tokenKeys = ['token', 'authToken', 'accessToken', 'bearerToken'];
+    for (const key of tokenKeys) {
+      const token = localStorage.getItem(key) || sessionStorage.getItem(key);
+      if (token && token.trim()) {
+        return token.trim();
+      }
+    }
+    
+    return null;
+  }, []);
+
+  const getCurrentUser = useCallback(() => {
+    // Check cache first
+    const cachedUser = cache.current.getUser();
+    if (cachedUser) {
+      return cachedUser;
+    }
+    
+    // From your login system
+    const name = localStorage.getItem('name');
+    const email = localStorage.getItem('email');
+    const role = localStorage.getItem('role');
+    
+    if (name && email) {
+      const user = {
+        id: email,
+        name: name,
+        email: email,
+        role: role,
+        avatar: null
+      };
+      cache.current.setUser(user);
+      return user;
+    }
+    
+    return null;
+  }, []);
+
+  const addMessageListener = useCallback((listener) => {
+    messageListeners.current.add(listener);
+    return () => {
+      messageListeners.current.delete(listener);
+    };
+  }, []);
+
+  const notifyListeners = useCallback((message) => {
+    messageListeners.current.forEach(listener => {
+      try {
+        listener(message);
+      } catch (error) {
+        log('error', 'Listener error:', error);
+      }
+    });
+  }, [log]);
+
+  const processMessageQueue = useCallback(() => {
+    if (ws && ws.readyState === WebSocket.OPEN && messageQueue.length > 0) {
+      log('info', `Processing ${messageQueue.length} queued messages`);
+      messageQueue.forEach((message) => {
+        try {
+          ws.send(JSON.stringify(message));
+        } catch (error) {
+          log('error', 'Failed to send queued message:', error);
+        }
+      });
+      setMessageQueue([]);
+    }
+  }, [ws, messageQueue, log]);
+
+  const connect = useCallback(() => {
+    // Prevent multiple simultaneous connection attempts
+    if (isConnectingRef.current) {
+      return;
+    }
+
+    const token = getAuthToken();
+    const user = getCurrentUser();
+    
+    if (!token) {
+      log('error', 'No JWT token found - please login first');
+      setConnectionStatus('error');
+      return;
+    }
+
+    if (!user?.id) {
+      log('error', 'No user data found - please login first');
+      setConnectionStatus('error');
+      return;
+    }
+
+    if (!window.WebSocket) {
+      log('error', 'WebSocket not supported by browser');
+      setConnectionStatus('error');
+      return;
+    }
+
+    isConnectingRef.current = true;
+
+    try {
+      setConnectionStatus('connecting');
+      
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsHost = 'gems.tekjuice.xyz';
+      const wsUrl = `${wsProtocol}//${wsHost}?token=${encodeURIComponent(token)}`;
+      
+      log('connection', `Connecting to ${wsHost}...`);
+      const websocket = new WebSocket(wsUrl);
+
+      // Connection opened
+      websocket.onopen = (event) => {
+        isConnectingRef.current = false;
+        log('success', 'WebSocket connected successfully!');
+        
+        setIsConnected(true);
+        setConnectionStatus('connected');
+        reconnectAttempts.current = 0;
+        
+        // Send user connected event
+        const connectMessage = {
+          type: 'USER_CONNECTED',
+          userId: user.id,
+          userName: user.name,
+          userEmail: user.email,
+          timestamp: new Date().toISOString()
+        };
+        websocket.send(JSON.stringify(connectMessage));
+
+        // Request online users
+        const onlineUsersMessage = { 
+          type: 'GET_ONLINE_USERS',
+          timestamp: new Date().toISOString()
+        };
+        websocket.send(JSON.stringify(onlineUsersMessage));
+
+        // Process any queued messages
+        processMessageQueue();
+
+        // Start heartbeat every 30 seconds
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (websocket.readyState === WebSocket.OPEN) {
+            const pingMessage = { 
+              type: 'PING', 
+              timestamp: new Date().toISOString(),
+              userId: user.id
+            };
+            websocket.send(JSON.stringify(pingMessage));
+          }
+        }, 30000);
+      };
+
+      // Message received
+      websocket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          switch (data.type) {
+            case 'MESSAGE_RECEIVED':
+              if (data.message) {
+                cache.current.addMessage(data.message.conversationId, data.message);
+                notifyListeners(data);
+              }
+              break;
+              
+            case 'MESSAGE_DELETED':
+              if (data.messageId && data.conversationId) {
+                cache.current.removeMessage(data.conversationId, data.messageId);
+                notifyListeners(data);
+              }
+              break;
+              
+            case 'MESSAGE_EDITED':
+              if (data.message) {
+                cache.current.updateMessage(
+                  data.message.conversationId, 
+                  data.message.messageId, 
+                  data.message
+                );
+                notifyListeners(data);
+              }
+              break;
+              
+            case 'USER_TYPING':
+              setTypingUsers(prev => ({
+                ...prev,
+                [data.conversationId]: [...new Set([...(prev[data.conversationId] || []), data.userId])]
+              }));
+              break;
+              
+            case 'USER_STOPPED_TYPING':
+              setTypingUsers(prev => ({
+                ...prev,
+                [data.conversationId]: (prev[data.conversationId] || []).filter(id => id !== data.userId)
+              }));
+              break;
+              
+            case 'ONLINE_USERS':
+              setOnlineUsers(data.users || []);
+              break;
+              
+            case 'READ_RECEIPT':
+              if (data.messageId && data.conversationId) {
+                cache.current.updateMessage(
+                  data.conversationId, 
+                  data.messageId, 
+                  { status: 'read' }
+                );
+                notifyListeners(data);
+              }
+              break;
+
+            case 'MESSAGE_DELIVERED':
+              if (data.messageId && data.conversationId) {
+                cache.current.updateMessage(
+                  data.conversationId, 
+                  data.messageId, 
+                  { status: 'DELIVERED' }
+                );
+                notifyListeners(data);
+              }
+              break;
+              
+            case 'PONG':
+              // Heartbeat response - no need to log
+              break;
+
+            case 'ERROR':
+              log('error', `Server error: ${data.message}`);
+              break;
+
+            case 'AUTHENTICATION_FAILED':
+              log('error', 'Authentication failed - token invalid/expired');
+              setConnectionStatus('error');
+              break;
+
+            case 'CONNECTION_ACKNOWLEDGED':
+              log('success', 'Server acknowledged connection');
+              break;
+              
+            default:
+              // Unknown message type - no need to spam logs
+              break;
+          }
+        } catch (error) {
+          log('error', 'Failed to parse message:', event.data);
+        }
+      };
+
+      // Connection closed - THIS IS THE KEY FIX
+      websocket.onclose = (event) => {
+        isConnectingRef.current = false;
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+        clearInterval(heartbeatIntervalRef.current);
+        
+        // Code 1005 is NORMAL during page refresh/navigation - don't reconnect
+        if (event.code === 1005) {
+          log('info', 'Connection closed normally (page refresh)');
+          return; // EXIT HERE - no reconnection
+        }
+        
+        const closeReasons = {
+          1000: 'Normal closure',
+          1001: 'Going away', 
+          1006: 'Connection lost',
+          1011: 'Server error'
+        };
+        
+        const reason = closeReasons[event.code] || `Code ${event.code}`;
+        
+        // Only log if not a normal closure
+        if (event.code !== 1000) {
+          log('warn', `Connection closed: ${reason}`);
+        }
+        
+        // Reconnect logic - ONLY for unexpected closures
+        const shouldReconnect = event.code !== 1000 && // Not normal closure
+                               event.code !== 1001 && // Not going away
+                               event.code !== 1005 && // Not page refresh (IMPORTANT!)
+                               reconnectAttempts.current < maxReconnectAttempts;
+        
+        if (shouldReconnect) {
+          reconnectAttempts.current += 1;
+          const delay = Math.min(2000 * Math.pow(1.5, reconnectAttempts.current - 1), 15000);
+          
+          log('info', `Reconnecting in ${Math.round(delay/1000)}s (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+          setConnectionStatus('reconnecting');
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, delay);
+        } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+          log('error', 'Max reconnection attempts reached');
+          setConnectionStatus('error');
+        }
+      };
+
+      // Connection error
+      websocket.onerror = (error) => {
+        isConnectingRef.current = false;
+        log('error', 'WebSocket connection error');
+        setConnectionStatus('error');
+      };
+
+      setWs(websocket);
+      
+    } catch (error) {
+      isConnectingRef.current = false;
+      log('error', 'Failed to create WebSocket connection:', error.message);
+      setConnectionStatus('error');
+      
+      // Schedule retry if under attempt limit
+      if (reconnectAttempts.current < maxReconnectAttempts) {
+        reconnectAttempts.current += 1;
+        const delay = Math.min(2000 * Math.pow(1.5, reconnectAttempts.current - 1), 15000);
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect();
+        }, delay);
+      }
+    }
+  }, [getAuthToken, getCurrentUser, processMessageQueue, notifyListeners, log]);
+
+  const disconnect = useCallback(() => {
+    log('info', 'Manual disconnect requested');
+    if (ws) {
+      ws.close(1000, 'Manual disconnect');
+    }
+    clearTimeout(reconnectTimeoutRef.current);
+    clearInterval(heartbeatIntervalRef.current);
+    setIsConnected(false);
+    setConnectionStatus('disconnected');
+    reconnectAttempts.current = 0;
+    isConnectingRef.current = false;
+  }, [ws, log]);
+
+  const sendMessage = useCallback((message) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify(message));
+      } catch (error) {
+        log('error', 'Failed to send message:', error);
+      }
+    } else {
+      setMessageQueue(prev => [...prev, message]);
+    }
+  }, [ws, log]);
+
+  // Handle page visibility and network changes (less aggressive)
+  useEffect(() => {
+    let reconnectTimer = null;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isConnected && connectionStatus !== 'connecting') {
+        // Wait a bit before reconnecting when page becomes visible
+        reconnectTimer = setTimeout(() => {
+          if (!isConnected && !isConnectingRef.current) {
+            log('info', 'Page visible - reconnecting');
+            connect();
+          }
+        }, 3000);
+      }
+    };
+
+    const handleOnline = () => {
+      if (!isConnected && connectionStatus !== 'connecting') {
+        setTimeout(() => {
+          if (!isConnected && !isConnectingRef.current) {
+            log('info', 'Network online - reconnecting');
+            connect();
+          }
+        }, 2000);
+      }
+    };
+
+    const handleOffline = () => {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [isConnected, connectionStatus, connect, log]);
+
+  // Auto-connect when user and token are available - STABLE VERSION
+  useEffect(() => {
+    const user = getCurrentUser();
+    const token = getAuthToken();
+    
+    if (user?.id && token && !isConnected && connectionStatus === 'disconnected' && !isConnectingRef.current) {
+      log('info', 'Auto-connecting WebSocket');
+      setTimeout(() => connect(), 1000);
+    }
+  }, [getCurrentUser, getAuthToken, isConnected, connectionStatus, connect, log]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearTimeout(reconnectTimeoutRef.current);
+      clearInterval(heartbeatIntervalRef.current);
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, [ws]);
+
+  const value = {
+    ws,
+    isConnected,
+    connectionStatus,
+    onlineUsers,
+    typingUsers,
+    sendMessage,
+    addMessageListener,
+    cache: cache.current,
+    connect,
+    disconnect
+  };
+
+  return (
+    <WebSocketContext.Provider value={value}>
+      {children}
+    </WebSocketContext.Provider>
+  );
+};
+
+export const useWebSocket = () => {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    return {
+      ws: null,
+      isConnected: false,
+      connectionStatus: 'disconnected',
+      onlineUsers: [],
+      typingUsers: {},
+      sendMessage: () => {},
+      addMessageListener: () => () => {},
+      cache: new CacheManager(),
+      connect: () => {},
+      disconnect: () => {}
+    };
+  }
+  return context;
+};
