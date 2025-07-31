@@ -31,7 +31,13 @@ import ImageUploadComponent from "./CreateCampaign/ImageUploadComponent";
 import RichTextEditor from "./CreateCampaign/RichTextEditor";
 import TaskDialog from "./CreateCampaign/TaskDialog";
 import NumberInput from "./CreateCampaign/NumberInput";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./CreateCampaign/Card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "./CreateCampaign/Card";
 import LoadingSkeleton from "./CreateCampaign/LoadingSkeleton";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
@@ -41,16 +47,21 @@ const generateRequestId = () => {
   const randomBytes = new Uint8Array(16);
   crypto.getRandomValues(randomBytes);
   const randomHex = Array.from(randomBytes)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-  
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   const combined = (timestamp + randomHex).substring(0, 32);
   return `cp${combined}`;
 };
 
 // Utility functions
 const countWords = (text) => {
-  return text ? text.trim().split(/\s+/).filter(word => word.length > 0).length : 0;
+  return text
+    ? text
+        .trim()
+        .split(/\s+/)
+        .filter((word) => word.length > 0).length
+    : 0;
 };
 
 // Helper function to safely convert to number with fallback
@@ -68,28 +79,17 @@ const safeToFixed = (value, decimals = 2, fallback = 0) => {
 // Constants - Updated to include company fee in minimum budget
 const MIN_BUDGET_PER_INFLUENCER = 65; // $65 minimum per influencer (includes company fee)
 
-// Calculate maximum influencers based on budget
-const calculateMaxInfluencers = (budget, walletBalance) => {
-  const availableBudget = Math.min(safeToNumber(budget), safeToNumber(walletBalance));
-  if (availableBudget <= 0) return 0;
-  return Math.floor(availableBudget / MIN_BUDGET_PER_INFLUENCER);
-};
-
-// Enhanced NumberInput component for budget with wallet validation
-const BudgetInput = ({ 
-  value, 
-  onChange, 
-  walletBalance, 
-  label, 
-  helperText, 
+// Enhanced NumberInput component for budget
+const BudgetInput = ({
+  value,
+  onChange,
+  label,
+  helperText,
   className = "",
-  onInsufficientFunds
 }) => {
   const [displayValue, setDisplayValue] = useState(value.toString());
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
-
-  const maxAllowedBudget = safeToNumber(walletBalance);
 
   useEffect(() => {
     setDisplayValue(value.toString());
@@ -104,35 +104,26 @@ const BudgetInput = ({
     if (budget < MIN_BUDGET_PER_INFLUENCER) {
       return `Minimum budget is $${MIN_BUDGET_PER_INFLUENCER}`;
     }
-    if (budget > maxAllowedBudget) {
-      return `Insufficient funds. Maximum budget: $${safeToFixed(maxAllowedBudget, 2)}`;
-    }
     return null;
   };
 
   const handleChange = (e) => {
     const inputValue = e.target.value;
-    
-    if (inputValue === '' || /^\d+(\.\d{0,2})?$/.test(inputValue)) {
+
+    if (inputValue === "" || /^\d+(\.\d{0,2})?$/.test(inputValue)) {
       setDisplayValue(inputValue);
       setError("");
-      
-      if (inputValue === '') {
+
+      if (inputValue === "") {
         return;
       }
-      
+
       const numValue = parseFloat(inputValue);
       const validationError = validateBudget(numValue);
-      
+
       if (validationError) {
-        if (numValue > maxAllowedBudget) {
-          setError(validationError);
-          triggerShake();
-          onInsufficientFunds && onInsufficientFunds();
-        } else {
-          setError(validationError);
-          triggerShake();
-        }
+        setError(validationError);
+        triggerShake();
       } else {
         onChange(numValue);
       }
@@ -140,12 +131,15 @@ const BudgetInput = ({
   };
 
   const handleBlur = () => {
-    if (displayValue === '' || parseFloat(displayValue) < MIN_BUDGET_PER_INFLUENCER) {
+    if (
+      displayValue === "" ||
+      parseFloat(displayValue) < MIN_BUDGET_PER_INFLUENCER
+    ) {
       setError(`Minimum budget is $${MIN_BUDGET_PER_INFLUENCER}`);
       triggerShake();
       setDisplayValue(MIN_BUDGET_PER_INFLUENCER.toString());
       onChange(MIN_BUDGET_PER_INFLUENCER);
-      
+
       setTimeout(() => setError(""), 3000);
     }
   };
@@ -161,10 +155,10 @@ const BudgetInput = ({
         onChange={handleChange}
         onBlur={handleBlur}
         className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
-          error 
-            ? 'border-red-500 focus:border-red-500' 
-            : 'border-gray-300 focus:border-primary-scale-400'
-        } ${isShaking ? 'animate-shake' : ''} ${className}`}
+          error
+            ? "border-red-500 focus:border-red-500"
+            : "border-gray-300 focus:border-primary-scale-400"
+        } ${isShaking ? "animate-shake" : ""} ${className}`}
         placeholder={`${MIN_BUDGET_PER_INFLUENCER}`}
       />
       {error && (
@@ -177,16 +171,13 @@ const BudgetInput = ({
   );
 };
 
-// Enhanced NumberInput component for influencers with budget validation
-const InfluencersInput = ({ 
-  value, 
-  onChange, 
-  maxInfluencers,
-  walletBalance,
-  label, 
-  helperText, 
+// Enhanced NumberInput component for influencers
+const InfluencersInput = ({
+  value,
+  onChange,
+  label,
+  helperText,
   className = "",
-  onInsufficientFunds
 }) => {
   const [displayValue, setDisplayValue] = useState(value.toString());
   const [error, setError] = useState("");
@@ -205,35 +196,26 @@ const InfluencersInput = ({
     if (influencers < 1) {
       return "Minimum 1 influencer required";
     }
-    if (influencers > maxInfluencers) {
-      return `Maximum ${maxInfluencers} influencers allowed with current budget`;
-    }
     return null;
   };
 
   const handleChange = (e) => {
     const inputValue = e.target.value;
-    
-    if (inputValue === '' || /^\d+$/.test(inputValue)) {
+
+    if (inputValue === "" || /^\d+$/.test(inputValue)) {
       setDisplayValue(inputValue);
       setError("");
-      
-      if (inputValue === '') {
+
+      if (inputValue === "") {
         return;
       }
-      
+
       const numValue = parseInt(inputValue);
       const validationError = validateInfluencers(numValue);
-      
+
       if (validationError) {
-        if (numValue > maxInfluencers) {
-          setError(validationError);
-          triggerShake();
-          onInsufficientFunds && onInsufficientFunds();
-        } else {
-          setError(validationError);
-          triggerShake();
-        }
+        setError(validationError);
+        triggerShake();
       } else {
         onChange(numValue);
       }
@@ -241,12 +223,12 @@ const InfluencersInput = ({
   };
 
   const handleBlur = () => {
-    if (displayValue === '' || parseInt(displayValue) < 1) {
+    if (displayValue === "" || parseInt(displayValue) < 1) {
       setError("Minimum 1 influencer required");
       triggerShake();
       setDisplayValue("1");
       onChange(1);
-      
+
       setTimeout(() => setError(""), 3000);
     }
   };
@@ -262,10 +244,10 @@ const InfluencersInput = ({
         onChange={handleChange}
         onBlur={handleBlur}
         className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
-          error 
-            ? 'border-red-500 focus:border-red-500' 
-            : 'border-gray-300 focus:border-primary-scale-400'
-        } ${isShaking ? 'animate-shake' : ''} ${className}`}
+          error
+            ? "border-red-500 focus:border-red-500"
+            : "border-gray-300 focus:border-primary-scale-400"
+        } ${isShaking ? "animate-shake" : ""} ${className}`}
         placeholder="1"
       />
       {error && (
@@ -279,10 +261,19 @@ const InfluencersInput = ({
 };
 
 // Insufficient Funds Modal
-const InsufficientFundsModal = ({ isOpen, onClose, onAddFunds, requiredAmount, walletBalance }) => {
+const InsufficientFundsModal = ({
+  isOpen,
+  onClose,
+  onAddFunds,
+  requiredAmount,
+  walletBalance,
+}) => {
   if (!isOpen) return null;
 
-  const shortfall = Math.max(0, safeToNumber(requiredAmount) - safeToNumber(walletBalance));
+  const shortfall = Math.max(
+    0,
+    safeToNumber(requiredAmount) - safeToNumber(walletBalance)
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -303,18 +294,25 @@ const InsufficientFundsModal = ({ isOpen, onClose, onAddFunds, requiredAmount, w
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <FiAlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Insufficient Funds</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Insufficient Funds
+          </h3>
           <p className="text-xs text-gray-600 mb-4">
-            You need ${safeToFixed(shortfall, 2)} more to proceed with this campaign.
+            You need ${safeToFixed(shortfall, 2)} more to proceed with this
+            campaign.
           </p>
           <div className="bg-gray-50 rounded-lg p-3 mb-6">
             <div className="flex justify-between text-xs">
               <span>Current Balance:</span>
-              <span className="font-medium">${safeToFixed(walletBalance, 2)}</span>
+              <span className="font-medium">
+                ${safeToFixed(walletBalance, 2)}
+              </span>
             </div>
             <div className="flex justify-between text-xs">
               <span>Required Amount:</span>
-              <span className="font-medium">${safeToFixed(requiredAmount, 2)}</span>
+              <span className="font-medium">
+                ${safeToFixed(requiredAmount, 2)}
+              </span>
             </div>
             <div className="flex justify-between text-xs font-semibold text-red-600">
               <span>Shortfall:</span>
@@ -346,23 +344,34 @@ const CreateCampaign = () => {
   const { state } = useLocation();
 
   // State persistence with image handling - only for create mode
-  const [persistedCampaignData, setPersistedCampaignData] = useLocalStorage('campaign-draft', {
-    title: "",
-    objective: "",
-    description: "",
-    start_date: "",
-    end_date: "",
-    content: null,
-    contentUrl: null,
-    tasks: [],
-  });
+  const [persistedCampaignData, setPersistedCampaignData] = useLocalStorage(
+    "campaign-draft",
+    {
+      title: "",
+      objective: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+      content: null,
+      contentUrl: null,
+      tasks: [],
+    }
+  );
 
-  const [persistedBudget, setPersistedBudget] = useLocalStorage('campaign-budget', MIN_BUDGET_PER_INFLUENCER);
-  const [persistedInfluencers, setPersistedInfluencers] = useLocalStorage('campaign-influencers', 1);
+  const [persistedBudget, setPersistedBudget] = useLocalStorage(
+    "campaign-budget",
+    MIN_BUDGET_PER_INFLUENCER
+  );
+  const [persistedInfluencers, setPersistedInfluencers] = useLocalStorage(
+    "campaign-influencers",
+    1
+  );
 
   // Add mode tracking
-  const [mode, setMode] = useState(state?.mode || 'create');
-  const [editCampaignData, setEditCampaignData] = useState(state?.editCampaignData || null);
+  const [mode, setMode] = useState(state?.mode || "create");
+  const [editCampaignData, setEditCampaignData] = useState(
+    state?.editCampaignData || null
+  );
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [campaignCreatedOnce, setCampaignCreatedOnce] = useState(false);
@@ -395,17 +404,16 @@ const CreateCampaign = () => {
     requires_url: true,
     site_id: "",
     task_type: "",
-    repeats_after: ""
+    repeats_after: "",
   });
 
   // Budget and influencers are now both state variables
-  const [brandBudget, setBrandBudget] = useState(safeToNumber(persistedBudget, MIN_BUDGET_PER_INFLUENCER));
-  const [numberOfInfluencers, setNumberOfInfluencers] = useState(safeToNumber(persistedInfluencers, 1));
-
-  // Calculate maximum influencers based on budget
-  const maxInfluencers = useMemo(() => {
-    return calculateMaxInfluencers(brandBudget, walletBalance);
-  }, [brandBudget, walletBalance]);
+  const [brandBudget, setBrandBudget] = useState(
+    safeToNumber(persistedBudget, MIN_BUDGET_PER_INFLUENCER)
+  );
+  const [numberOfInfluencers, setNumberOfInfluencers] = useState(
+    safeToNumber(persistedInfluencers, 1)
+  );
 
   const [filterData, setFilterData] = useState({
     numberInfluencers: 5,
@@ -423,7 +431,7 @@ const CreateCampaign = () => {
 
   const [campaignData, setCampaignData] = useState(() => {
     // Only use persisted data in create mode
-    if (mode === 'create') {
+    if (mode === "create") {
       return persistedCampaignData;
     }
     return {
@@ -440,43 +448,29 @@ const CreateCampaign = () => {
 
   // Persist budget and influencers when they change - only in create mode
   useEffect(() => {
-    if (mode === 'create') {
+    if (mode === "create") {
       setPersistedBudget(brandBudget);
     }
   }, [brandBudget, setPersistedBudget, mode]);
 
   useEffect(() => {
-    if (mode === 'create') {
+    if (mode === "create") {
       setPersistedInfluencers(numberOfInfluencers);
     }
   }, [numberOfInfluencers, setPersistedInfluencers, mode]);
 
-  // Update budget when numberOfInfluencers changes (if budget would be too low)
-  useEffect(() => {
-    const minRequiredBudget = numberOfInfluencers * MIN_BUDGET_PER_INFLUENCER;
-    if (brandBudget < minRequiredBudget) {
-      setBrandBudget(minRequiredBudget);
-    }
-  }, [numberOfInfluencers, brandBudget]);
-
-  // Update numberOfInfluencers when it exceeds maximum allowed
-  useEffect(() => {
-    if (numberOfInfluencers > maxInfluencers && maxInfluencers > 0) {
-      setNumberOfInfluencers(maxInfluencers);
-    }
-  }, [maxInfluencers, numberOfInfluencers]);
-
   // Persist campaign data when it changes - only in create mode
   useEffect(() => {
-    if (mode === 'create') {
+    if (mode === "create") {
       try {
         // Don't persist the actual File object, just the URL
         const dataToStore = {
           ...campaignData,
           content: null, // Don't store File object
-          contentUrl: campaignData.content && campaignData.content instanceof File 
-            ? URL.createObjectURL(campaignData.content) 
-            : campaignData.contentUrl
+          contentUrl:
+            campaignData.content && campaignData.content instanceof File
+              ? URL.createObjectURL(campaignData.content)
+              : campaignData.contentUrl,
         };
         setPersistedCampaignData(dataToStore);
       } catch (error) {
@@ -485,7 +479,7 @@ const CreateCampaign = () => {
         const dataToStore = {
           ...campaignData,
           content: null,
-          contentUrl: null
+          contentUrl: null,
         };
         setPersistedCampaignData(dataToStore);
       }
@@ -495,7 +489,11 @@ const CreateCampaign = () => {
   // Cleanup blob URLs when component unmounts or when switching files
   useEffect(() => {
     return () => {
-      if (campaignData.contentUrl && typeof campaignData.contentUrl === 'string' && campaignData.contentUrl.startsWith('blob:')) {
+      if (
+        campaignData.contentUrl &&
+        typeof campaignData.contentUrl === "string" &&
+        campaignData.contentUrl.startsWith("blob:")
+      ) {
         try {
           URL.revokeObjectURL(campaignData.contentUrl);
         } catch (error) {
@@ -509,23 +507,26 @@ const CreateCampaign = () => {
   const originalDataRef = useRef(null);
 
   // Set original data when campaign is created or in edit mode
-  const setOriginalData = useCallback((data) => {
-    originalDataRef.current = {
-      title: data.title || '',
-      description: data.description || '',
-      objective: data.objective || '',
-      start_date: data.start_date || '',
-      end_date: data.end_date || '',
-      tasks: data.tasks || [],
-      budget: data.budget || brandBudget,
-      numberOfInfluencers: data.numberOfInfluencers || numberOfInfluencers,
-      contentUrl: data.campaign_image || data.contentUrl || null,
-    };
-  }, [brandBudget, numberOfInfluencers]);
+  const setOriginalData = useCallback(
+    (data) => {
+      originalDataRef.current = {
+        title: data.title || "",
+        description: data.description || "",
+        objective: data.objective || "",
+        start_date: data.start_date || "",
+        end_date: data.end_date || "",
+        tasks: data.tasks || [],
+        budget: data.budget || brandBudget,
+        numberOfInfluencers: data.numberOfInfluencers || numberOfInfluencers,
+        contentUrl: data.campaign_image || data.contentUrl || null,
+      };
+    },
+    [brandBudget, numberOfInfluencers]
+  );
 
   // Initialize original data for edit mode
   useEffect(() => {
-    if (mode === 'edit' && editCampaignData && !originalDataRef.current) {
+    if (mode === "edit" && editCampaignData && !originalDataRef.current) {
       setOriginalData({
         title: editCampaignData.title,
         description: editCampaignData.description,
@@ -543,18 +544,18 @@ const CreateCampaign = () => {
   // Track changes for both edit mode and created campaigns
   useEffect(() => {
     if (originalDataRef.current) {
-      const hasChanges = (
+      const hasChanges =
         campaignData.title !== originalDataRef.current.title ||
         campaignData.description !== originalDataRef.current.description ||
         campaignData.objective !== originalDataRef.current.objective ||
         campaignData.start_date !== originalDataRef.current.start_date ||
         campaignData.end_date !== originalDataRef.current.end_date ||
-        JSON.stringify(campaignData.tasks) !== JSON.stringify(originalDataRef.current.tasks) ||
+        JSON.stringify(campaignData.tasks) !==
+          JSON.stringify(originalDataRef.current.tasks) ||
         brandBudget !== originalDataRef.current.budget ||
         numberOfInfluencers !== originalDataRef.current.numberOfInfluencers ||
         campaignData.content !== null || // New image uploaded
-        (campaignData.contentUrl !== originalDataRef.current.contentUrl)
-      );
+        campaignData.contentUrl !== originalDataRef.current.contentUrl;
       setHasUnsavedChanges(hasChanges);
     }
   }, [campaignData, brandBudget, numberOfInfluencers]);
@@ -563,34 +564,43 @@ const CreateCampaign = () => {
     () => [
       {
         id: 0,
-        title: mode === 'edit' ? "Edit Details" : "Details",
+        title: mode === "edit" ? "Edit Details" : "Details",
         subtitle: "Campaign details",
         icon: FiFileText,
-        description: mode === 'edit' ? "Update your campaign details" : "Create your campaign and define the requirements",
+        description:
+          mode === "edit"
+            ? "Update your campaign details"
+            : "Create your campaign and define the requirements",
         color: "from-black to-gray-800",
       },
       {
         id: 1,
-        title: mode === 'addMembers' ? "Add Members" : "Influencers", 
+        title: mode === "addMembers" ? "Add Members" : "Influencers",
         subtitle: "Find your perfect creators",
         icon: FiUsers,
-        description: mode === 'addMembers' ? "Add more influencers to your existing campaign" : "Define criteria to discover the ideal influencers for your brand campaign",
+        description:
+          mode === "addMembers"
+            ? "Add more influencers to your existing campaign"
+            : "Define criteria to discover the ideal influencers for your brand campaign",
         color: "from-purple-500 to-purple-600",
       },
       {
         id: 2,
         title: "Payment",
-        subtitle: "Payment summary", 
+        subtitle: "Payment summary",
         icon: FiDollarSign,
         description: "Review payment details and launch campaign",
         color: "from-green-500 to-green-600",
       },
       {
         id: 3,
-        title: mode === 'edit' ? "Updated" : "Launch",
-        subtitle: mode === 'edit' ? "Campaign updated" : "Campaign launched",
+        title: mode === "edit" ? "Updated" : "Launch",
+        subtitle: mode === "edit" ? "Campaign updated" : "Campaign launched",
         icon: FiCheckCircle,
-        description: mode === 'edit' ? "Your campaign has been updated successfully" : "Your campaign is now live",
+        description:
+          mode === "edit"
+            ? "Your campaign has been updated successfully"
+            : "Your campaign is now live",
         color: "from-green-500 to-green-600",
       },
     ],
@@ -671,65 +681,74 @@ const CreateCampaign = () => {
 
   // Handle pre-filling data when in edit mode
   useEffect(() => {
-    if (mode === 'edit' && editCampaignData) {
-      console.log('Pre-filling edit data:', editCampaignData);
-      
+    if (mode === "edit" && editCampaignData) {
+      console.log("Pre-filling edit data:", editCampaignData);
+
       const formatTasksForForm = (tasks) => {
         if (!tasks || !Array.isArray(tasks)) return [];
-        
-        return tasks.map(task => ({
-          task: task.task || '',
-          description: task.description || '',
+
+        return tasks.map((task) => ({
+          task: task.task || "",
+          description: task.description || "",
           site_id: task.site_id || 4,
-          task_type: task.task_type || 'repetitive',
-          requires_url: task.requires_url === '1' || task.requires_url === true,
-          repeats_after: task.repeats_after || 'daily'
+          task_type: task.task_type || "repetitive",
+          requires_url: task.requires_url === "1" || task.requires_url === true,
+          repeats_after: task.repeats_after || "daily",
         }));
       };
-      
+
       setCampaignData({
         campaign_id: editCampaignData.campaign_id,
-        title: editCampaignData.title || '',
-        description: editCampaignData.description || '',
-        objective: editCampaignData.objective || '',
-        start_date: editCampaignData.start_date || '',
-        end_date: editCampaignData.end_date || '',
+        title: editCampaignData.title || "",
+        description: editCampaignData.description || "",
+        objective: editCampaignData.objective || "",
+        start_date: editCampaignData.start_date || "",
+        end_date: editCampaignData.end_date || "",
         content: null,
         contentUrl: editCampaignData.campaign_image || null,
-        tasks: formatTasksForForm(editCampaignData.tasks)
+        tasks: formatTasksForForm(editCampaignData.tasks),
       });
-      
-      setBrandBudget(safeToNumber(editCampaignData.budget, MIN_BUDGET_PER_INFLUENCER));
-      setNumberOfInfluencers(safeToNumber(editCampaignData.numberOfInfluencers, 1));
+
+      setBrandBudget(
+        safeToNumber(editCampaignData.budget, MIN_BUDGET_PER_INFLUENCER)
+      );
+      setNumberOfInfluencers(
+        safeToNumber(editCampaignData.numberOfInfluencers, 1)
+      );
       setDraftCampaignId(editCampaignData.campaign_id);
-      
-      toast.success('Campaign data loaded for editing');
+
+      toast.success("Campaign data loaded for editing");
     }
   }, [mode, editCampaignData]);
 
   // Add effect to handle add members mode
   useEffect(() => {
-    if (mode === 'addMembers' && state?.prefilledFilterData) {
+    if (mode === "addMembers" && state?.prefilledFilterData) {
       const prefilledData = state.prefilledFilterData;
-      console.log('Pre-filling filter data for add members:', prefilledData);
-      
+      console.log("Pre-filling filter data for add members:", prefilledData);
+
       setDraftCampaignId(prefilledData.campaignId);
-      setBrandBudget(safeToNumber(prefilledData.brandBudget, MIN_BUDGET_PER_INFLUENCER));
-      setNumberOfInfluencers(calculateMaxInfluencers(prefilledData.brandBudget, walletBalance));
-      
-      setFilterData(prev => ({
+      setBrandBudget(
+        safeToNumber(prefilledData.brandBudget, MIN_BUDGET_PER_INFLUENCER)
+      );
+      setNumberOfInfluencers(safeToNumber(prefilledData.numberInfluencers, 1));
+
+      setFilterData((prev) => ({
         ...prev,
         campaignId: prefilledData.campaignId,
-        brandBudget: safeToNumber(prefilledData.brandBudget, MIN_BUDGET_PER_INFLUENCER),
-        numberInfluencers: calculateMaxInfluencers(prefilledData.brandBudget, walletBalance),
+        brandBudget: safeToNumber(
+          prefilledData.brandBudget,
+          MIN_BUDGET_PER_INFLUENCER
+        ),
+        numberInfluencers: safeToNumber(prefilledData.numberInfluencers, 1),
         selectedIndustries: prefilledData.selectedIndustries,
         startDate: prefilledData.startDate,
         endDate: prefilledData.endDate,
-        socialMediaRequirements: prefilledData.socialMediaRequirements
+        socialMediaRequirements: prefilledData.socialMediaRequirements,
       }));
-      
+
       if (state?.existingCampaign) {
-        setCampaignData(prev => ({
+        setCampaignData((prev) => ({
           ...prev,
           campaign_id: state.existingCampaign.campaign_id,
           title: state.existingCampaign.title,
@@ -737,13 +756,13 @@ const CreateCampaign = () => {
           objective: state.existingCampaign.objective,
           start_date: state.existingCampaign.start_date,
           end_date: state.existingCampaign.end_date,
-          contentUrl: state.existingCampaign.image_urls
+          contentUrl: state.existingCampaign.image_urls,
         }));
       }
-      
-      toast.success('Ready to add more members to your campaign');
+
+      toast.success("Ready to add more members to your campaign");
     }
-  }, [mode, state, walletBalance]);
+  }, [mode, state]);
 
   // Date validation functions
   const getMinStartDate = () => {
@@ -755,7 +774,7 @@ const CreateCampaign = () => {
 
   const getMinEndDate = () => {
     if (!campaignData.start_date) return null;
-    const startDate = new Date(campaignData.start_date + 'T00:00:00');
+    const startDate = new Date(campaignData.start_date + "T00:00:00");
     startDate.setDate(startDate.getDate() + 3);
     return startDate;
   };
@@ -764,21 +783,22 @@ const CreateCampaign = () => {
     const errors = {};
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     if (campaignData.start_date) {
-      const startDate = new Date(campaignData.start_date + 'T00:00:00');
+      const startDate = new Date(campaignData.start_date + "T00:00:00");
       const minStartDate = new Date(today);
       minStartDate.setDate(minStartDate.getDate() + 3);
-      
+
       if (startDate < minStartDate) {
-        errors.start_date = "Campaign start date must be at least 3 days from today";
+        errors.start_date =
+          "Campaign start date must be at least 3 days from today";
       }
     }
 
     if (campaignData.end_date && campaignData.start_date) {
-      const startDate = new Date(campaignData.start_date + 'T00:00:00');
-      const endDate = new Date(campaignData.end_date + 'T00:00:00');
-      
+      const startDate = new Date(campaignData.start_date + "T00:00:00");
+      const endDate = new Date(campaignData.end_date + "T00:00:00");
+
       if (endDate <= startDate) {
         errors.end_date = "End date must be after start date";
       } else {
@@ -795,7 +815,7 @@ const CreateCampaign = () => {
 
   // Scroll to top when step changes
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [activeStep]);
 
   // Initial loading
@@ -818,12 +838,14 @@ const CreateCampaign = () => {
 
   // Handle period selection for date picker
   const handlePeriodSelect = useCallback((period) => {
-    setCampaignData(prev => ({
+    setCampaignData((prev) => ({
       ...prev,
       start_date: period.startDate,
-      end_date: period.endDate
+      end_date: period.endDate,
     }));
-    toast.success(`Campaign period set to ${period.startDate} - ${period.endDate}`);
+    toast.success(
+      `Campaign period set to ${period.startDate} - ${period.endDate}`
+    );
   }, []);
 
   // Handle wallet balance refresh
@@ -849,11 +871,6 @@ const CreateCampaign = () => {
     toast.info("Opening wallet to add funds");
   };
 
-  // Handle insufficient funds
-  const handleInsufficientFunds = () => {
-    setShowInsufficientFunds(true);
-  };
-
   const createDraftCampaignAndFilter = useCallback(async () => {
     try {
       setLoading(true);
@@ -868,13 +885,16 @@ const CreateCampaign = () => {
       if (campaignData.content) {
         console.log("Uploading image...");
         const formData = new FormData();
-        formData.append('file_type', 'STATUS_POST');
-        formData.append('content', campaignData.content);
-        
-        const uploadResponse = await upload('media/uploadFile', formData);
+        formData.append("file_type", "STATUS_POST");
+        formData.append("content", campaignData.content);
+
+        const uploadResponse = await upload("media/uploadFile", formData);
         console.log("Upload response:", uploadResponse);
-        
-        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.file_url) {
+
+        if (
+          uploadResponse?.status === 200 &&
+          uploadResponse?.data?.[0]?.file_url
+        ) {
           campaignImageUrl = uploadResponse.data[0].file_url;
           console.log("Image uploaded successfully:", campaignImageUrl);
         }
@@ -936,24 +956,21 @@ const CreateCampaign = () => {
         });
 
         const requestId = generateRequestId();
-        const eligibleResponse = await post(
-          "campaigns/filterInfluencers",
-          {
-            requestId: requestId,
-            brandBudget: brandBudget,
-            number_of_users: numberOfInfluencers,
-            campaign_id: campaignId,
-            end_date: campaignData.end_date,
-            industry_ids: [1, 2, 3],
-            min_level_id: 3,
-            min_points: 1000,
-            social_media_requirements: [{site_id: 1, min_followers: 50}],
-            start_date: campaignData.start_date,
-            iso_codes: ["UG"],
-            gender: "",
-            category_type: "",
-          }
-        );
+        const eligibleResponse = await post("campaigns/filterInfluencers", {
+          requestId: requestId,
+          brandBudget: brandBudget,
+          number_of_users: numberOfInfluencers,
+          campaign_id: campaignId,
+          end_date: campaignData.end_date,
+          industry_ids: [1, 2, 3],
+          min_level_id: 3,
+          min_points: 1000,
+          social_media_requirements: [{ site_id: 1, min_followers: 50 }],
+          start_date: campaignData.start_date,
+          iso_codes: ["UG"],
+          gender: "",
+          category_type: "",
+        });
 
         if (eligibleResponse?.status === 200) {
           const newEligibilityData = {
@@ -983,7 +1000,9 @@ const CreateCampaign = () => {
           }));
 
           toast.success(
-            `Perfect! Found ${eligibleResponse.eligibleCount || 0} matching creators`,
+            `Perfect! Found ${
+              eligibleResponse.eligibleCount || 0
+            } matching creators`,
             { id: "create-draft" }
           );
 
@@ -1033,21 +1052,24 @@ const CreateCampaign = () => {
       if (campaignData.content) {
         console.log("Uploading new image...");
         const formData = new FormData();
-        formData.append('file_type', 'STATUS_POST');
-        formData.append('content', campaignData.content);
-        
-        const uploadResponse = await upload('media/uploadFile', formData);
+        formData.append("file_type", "STATUS_POST");
+        formData.append("content", campaignData.content);
+
+        const uploadResponse = await upload("media/uploadFile", formData);
         console.log("Upload response:", uploadResponse);
-        
-        if (uploadResponse?.status === 200 && uploadResponse?.data?.[0]?.file_url) {
+
+        if (
+          uploadResponse?.status === 200 &&
+          uploadResponse?.data?.[0]?.file_url
+        ) {
           campaignImageUrl = uploadResponse.data[0].file_url;
           console.log("New image uploaded successfully:", campaignImageUrl);
         }
       }
 
       const formattedTasks = campaignData.tasks.map((task) => ({
-        task: task.task || '',
-        description: task.description || '',
+        task: task.task || "",
+        description: task.description || "",
         site_id: parseInt(task.site_id) || 4,
         task_type: task.task_type || "repetitive",
         requires_url: task.requires_url ? "1" : "",
@@ -1065,14 +1087,18 @@ const CreateCampaign = () => {
         number_of_influencers: numberOfInfluencers,
         industry_ids: editCampaignData?.industry_ids || [],
         min_level_id: editCampaignData?.min_level_id || 3,
-        social_media_requirements: editCampaignData?.social_media_requirements || [],
+        social_media_requirements:
+          editCampaignData?.social_media_requirements || [],
         ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
-        tasks: formattedTasks
+        tasks: formattedTasks,
       };
 
       console.log("Update campaign payload:", updateCampaignPayload);
 
-      const updateResponse = await patch("campaigns/edit", updateCampaignPayload);
+      const updateResponse = await patch(
+        "campaigns/edit",
+        updateCampaignPayload
+      );
 
       console.log("Update campaign response:", updateResponse);
 
@@ -1099,7 +1125,8 @@ const CreateCampaign = () => {
       }
     } catch (error) {
       console.error("Error updating campaign:", error);
-      const errorMessage = error.message || "Failed to update campaign. Please try again.";
+      const errorMessage =
+        error.message || "Failed to update campaign. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage, { id: "update-campaign" });
       return false;
@@ -1120,7 +1147,7 @@ const CreateCampaign = () => {
       setLoading(true);
       setError(null);
 
-      if (mode === 'create' && campaignData.tasks.length === 0) {
+      if (mode === "create" && campaignData.tasks.length === 0) {
         const errorMessage = "Please add at least one task for creators";
         setError(errorMessage);
         toast.error(errorMessage);
@@ -1134,14 +1161,6 @@ const CreateCampaign = () => {
         return;
       }
 
-      if (walletBalance < brandBudget) {
-        const errorMessage = `Insufficient funds. You need $${safeToFixed(brandBudget, 2)} but only have $${safeToFixed(walletBalance, 2)}`;
-        setError(errorMessage);
-        toast.error(errorMessage);
-        setShowInsufficientFunds(true);
-        return;
-      }
-
       toast.loading("Analyzing eligible creators...", {
         id: "eligibility-check",
       });
@@ -1150,7 +1169,10 @@ const CreateCampaign = () => {
         requestBody.requestId = generateRequestId();
       }
 
-      const eligibleResponse = await post("campaigns/filterInfluencers", requestBody);
+      const eligibleResponse = await post(
+        "campaigns/filterInfluencers",
+        requestBody
+      );
 
       if (eligibleResponse?.status === 200) {
         const newEligibilityData = {
@@ -1180,7 +1202,9 @@ const CreateCampaign = () => {
         }));
 
         toast.success(
-          `Perfect! Found ${eligibleResponse.eligibleCount || 0} matching creators`,
+          `Perfect! Found ${
+            eligibleResponse.eligibleCount || 0
+          } matching creators`,
           { id: "eligibility-check" }
         );
       } else {
@@ -1188,7 +1212,8 @@ const CreateCampaign = () => {
       }
     } catch (error) {
       console.error("Error checking eligibility:", error);
-      const errorMessage = error.message || "Analysis failed. Please try again.";
+      const errorMessage =
+        error.message || "Analysis failed. Please try again.";
       setError(errorMessage);
       toast.error(errorMessage, { id: "eligibility-check" });
     } finally {
@@ -1196,43 +1221,50 @@ const CreateCampaign = () => {
     }
   };
 
-  const handleFileChange = useCallback((event) => {
-    const file = event.target.files?.[0];
-    if (file && file instanceof File) {
-      const allowedTypes = [
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-      ];
-      if (!allowedTypes.includes(file.type)) {
-        toast.error("Please upload a valid image (JPEG, PNG, or WebP)");
-        return;
-      }
-
-      const maxSize = 5 * 1024 * 1024; // 5MB
-      if (file.size > maxSize) {
-        toast.error("Image must be smaller than 5MB");
-        return;
-      }
-
-      // Clean up previous URL if it exists
-      if (campaignData.contentUrl && typeof campaignData.contentUrl === 'string' && campaignData.contentUrl.startsWith('blob:')) {
-        try {
-          URL.revokeObjectURL(campaignData.contentUrl);
-        } catch (error) {
-          console.error("Error revoking previous blob URL:", error);
+  const handleFileChange = useCallback(
+    (event) => {
+      const file = event.target.files?.[0];
+      if (file && file instanceof File) {
+        const allowedTypes = [
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "image/webp",
+        ];
+        if (!allowedTypes.includes(file.type)) {
+          toast.error("Please upload a valid image (JPEG, PNG, or WebP)");
+          return;
         }
-      }
 
-      setCampaignData((prev) => ({ 
-        ...prev, 
-        content: file, 
-        contentUrl: null 
-      }));
-      toast.success("Campaign visual uploaded successfully");
-    }
-  }, [campaignData.contentUrl]);
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+          toast.error("Image must be smaller than 5MB");
+          return;
+        }
+
+        // Clean up previous URL if it exists
+        if (
+          campaignData.contentUrl &&
+          typeof campaignData.contentUrl === "string" &&
+          campaignData.contentUrl.startsWith("blob:")
+        ) {
+          try {
+            URL.revokeObjectURL(campaignData.contentUrl);
+          } catch (error) {
+            console.error("Error revoking previous blob URL:", error);
+          }
+        }
+
+        setCampaignData((prev) => ({
+          ...prev,
+          content: file,
+          contentUrl: null,
+        }));
+        toast.success("Campaign visual uploaded successfully");
+      }
+    },
+    [campaignData.contentUrl]
+  );
 
   // Handle add task
   const handleAddTask = useCallback(() => {
@@ -1267,7 +1299,8 @@ const CreateCampaign = () => {
       site_id: parseInt(newTask.site_id),
       task_type: newTask.task_type,
       requires_url: Boolean(newTask.requires_url),
-      repeats_after: newTask.task_type === "repetitive" ? newTask.repeats_after : ""
+      repeats_after:
+        newTask.task_type === "repetitive" ? newTask.repeats_after : "",
     };
 
     if (editingTaskIndex !== null) {
@@ -1287,32 +1320,35 @@ const CreateCampaign = () => {
       toast.success("Task added successfully");
     }
 
-    setNewTask({ 
-      task: "", 
-      description: "", 
+    setNewTask({
+      task: "",
+      description: "",
       requires_url: true,
       site_id: "",
       task_type: "",
-      repeats_after: ""
+      repeats_after: "",
     });
     setOpenTaskDialog(false);
   }, [newTask, editingTaskIndex]);
 
-  const handleEditTask = useCallback((index) => {
-    const task = campaignData.tasks[index];
-    
-    setNewTask({
-      task: task.task || '',
-      description: task.description || '',
-      site_id: task.site_id ? task.site_id.toString() : '',
-      task_type: task.task_type || '',
-      requires_url: Boolean(task.requires_url),
-      repeats_after: task.repeats_after || 'daily'
-    });
-    
-    setEditingTaskIndex(index);
-    setOpenTaskDialog(true);
-  }, [campaignData.tasks]);
+  const handleEditTask = useCallback(
+    (index) => {
+      const task = campaignData.tasks[index];
+
+      setNewTask({
+        task: task.task || "",
+        description: task.description || "",
+        site_id: task.site_id ? task.site_id.toString() : "",
+        task_type: task.task_type || "",
+        requires_url: Boolean(task.requires_url),
+        repeats_after: task.repeats_after || "daily",
+      });
+
+      setEditingTaskIndex(index);
+      setOpenTaskDialog(true);
+    },
+    [campaignData.tasks]
+  );
 
   const handleRemoveTask = useCallback((index) => {
     setCampaignData((prev) => ({
@@ -1337,14 +1373,20 @@ const CreateCampaign = () => {
 
       const totalCost = safeToNumber(eligibilityData?.budget);
       if (walletBalance < totalCost) {
-        const errorMessage = `Insufficient funds. You need $${safeToFixed(totalCost, 2)} but only have $${safeToFixed(walletBalance, 2)}`;
+        const errorMessage = `Insufficient funds. You need $${safeToFixed(
+          totalCost,
+          2
+        )} but only have $${safeToFixed(walletBalance, 2)}`;
         setError(errorMessage);
         toast.error(errorMessage);
         setShowInsufficientFunds(true);
         return;
       }
 
-      toast.loading(mode === 'addMembers' ? "Adding members..." : "Launching campaign...", { id: "create-campaign" });
+      toast.loading(
+        mode === "addMembers" ? "Adding members..." : "Launching campaign...",
+        { id: "create-campaign" }
+      );
 
       const invitePayload = {
         requestId: eligibilityData.requestId,
@@ -1354,7 +1396,7 @@ const CreateCampaign = () => {
       const inviteResponse = await post("campaigns/inviteUsers", invitePayload);
 
       if (inviteResponse?.status === 200) {
-        if (mode === 'create') {
+        if (mode === "create") {
           setPersistedCampaignData({
             title: "",
             objective: "",
@@ -1370,7 +1412,7 @@ const CreateCampaign = () => {
         }
 
         toast.success(
-          mode === 'addMembers' 
+          mode === "addMembers"
             ? "🎉 Members added successfully! Invites sent to creators"
             : "🎉 Campaign launched successfully! Invites sent to creators",
           {
@@ -1392,7 +1434,15 @@ const CreateCampaign = () => {
     } finally {
       setLoading(false);
     }
-  }, [draftCampaignId, eligibilityData, mode, walletBalance, setPersistedCampaignData, setPersistedBudget, setPersistedInfluencers]);
+  }, [
+    draftCampaignId,
+    eligibilityData,
+    mode,
+    walletBalance,
+    setPersistedCampaignData,
+    setPersistedBudget,
+    setPersistedInfluencers,
+  ]);
 
   const nextStep = useCallback(async () => {
     if (activeStep === 0) {
@@ -1422,40 +1472,39 @@ const CreateCampaign = () => {
         toast.error("Please fix the date validation errors");
         return;
       }
-      if (mode === 'create' && campaignData.tasks.length === 0) {
+      if (mode === "create" && campaignData.tasks.length === 0) {
         setError("Please add at least one task for creators");
         toast.error("Please add at least one task for creators");
         return;
       }
-      
+
       if (brandBudget < MIN_BUDGET_PER_INFLUENCER) {
         setError(`Minimum budget requirement is $${MIN_BUDGET_PER_INFLUENCER}`);
-        toast.error(`Minimum budget requirement is $${MIN_BUDGET_PER_INFLUENCER}`);
+        toast.error(
+          `Minimum budget requirement is $${MIN_BUDGET_PER_INFLUENCER}`
+        );
         return;
       }
 
-      if (walletBalance < brandBudget) {
-        setError(`Insufficient funds. You need $${safeToFixed(brandBudget, 2)} but only have $${safeToFixed(walletBalance, 2)}`);
-        toast.error(`Insufficient funds. Please add $${safeToFixed(brandBudget - walletBalance, 2)} to your wallet`);
-        setShowInsufficientFunds(true);
-        return;
-      }
-
-      if (mode === 'create' && !campaignData.content && !campaignData.contentUrl) {
+      if (
+        mode === "create" &&
+        !campaignData.content &&
+        !campaignData.contentUrl
+      ) {
         setError("Please upload a campaign image");
         toast.error("Please upload a campaign image");
         return;
       }
 
       // Enhanced logic for handling campaign creation/updates
-      if (mode === 'edit') {
+      if (mode === "edit") {
         if (hasUnsavedChanges) {
           const success = await updateExistingCampaign();
           if (!success) return;
         }
         setActiveStep(1);
         return;
-      } else if (mode === 'addMembers') {
+      } else if (mode === "addMembers") {
         // For add members mode, skip to step 1
         setActiveStep(1);
         return;
@@ -1479,7 +1528,10 @@ const CreateCampaign = () => {
       }
     }
 
-    if (activeStep === 1 && (!eligibilityData || safeToNumber(eligibilityData.eligibleCount) === 0)) {
+    if (
+      activeStep === 1 &&
+      (!eligibilityData || safeToNumber(eligibilityData.eligibleCount) === 0)
+    ) {
       toast.error(
         "Please analyze criteria first and ensure you have matching creators"
       );
@@ -1489,7 +1541,19 @@ const CreateCampaign = () => {
     setError(null);
     setActiveStep((prev) => prev + 1);
     toast.success("Proceeding to next step");
-  }, [activeStep, eligibilityData, campaignData, brandBudget, mode, validateDates, updateExistingCampaign, createDraftCampaignAndFilter, hasUnsavedChanges, walletBalance, campaignCreatedOnce, draftCampaignId]);
+  }, [
+    activeStep,
+    eligibilityData,
+    campaignData,
+    brandBudget,
+    mode,
+    validateDates,
+    updateExistingCampaign,
+    createDraftCampaignAndFilter,
+    hasUnsavedChanges,
+    campaignCreatedOnce,
+    draftCampaignId,
+  ]);
 
   const prevStep = useCallback(() => {
     setActiveStep((prev) => prev - 1);
@@ -1499,27 +1563,33 @@ const CreateCampaign = () => {
   const canProceed = useMemo(() => {
     switch (activeStep) {
       case 0:
-        const hasBasicInfo = campaignData.title.trim() &&
+        const hasBasicInfo =
+          campaignData.title.trim() &&
           campaignData.objective.trim() &&
           countWords(campaignData.description) >= 20 &&
           campaignData.start_date &&
           campaignData.end_date &&
           Object.keys(dateErrors).length === 0 &&
-          brandBudget >= MIN_BUDGET_PER_INFLUENCER &&
-          walletBalance >= brandBudget;
+          brandBudget >= MIN_BUDGET_PER_INFLUENCER;
 
-        if (mode === 'edit') {
+        if (mode === "edit") {
           return hasBasicInfo;
         }
-        
-        if (mode === 'addMembers') {
+
+        if (mode === "addMembers") {
           return hasBasicInfo;
         }
-        
-        return hasBasicInfo && campaignData.tasks.length > 0 && (campaignData.content !== null || campaignData.contentUrl !== null);
-        
+
+        return (
+          hasBasicInfo &&
+          campaignData.tasks.length > 0 &&
+          (campaignData.content !== null || campaignData.contentUrl !== null)
+        );
+
       case 1:
-        return eligibilityData && safeToNumber(eligibilityData.eligibleCount) > 0;
+        return (
+          eligibilityData && safeToNumber(eligibilityData.eligibleCount) > 0
+        );
       case 2:
         return (
           eligibilityData &&
@@ -1528,7 +1598,15 @@ const CreateCampaign = () => {
       default:
         return false;
     }
-  }, [activeStep, eligibilityData, campaignData, walletBalance, dateErrors, brandBudget, mode]);
+  }, [
+    activeStep,
+    eligibilityData,
+    campaignData,
+    walletBalance,
+    dateErrors,
+    brandBudget,
+    mode,
+  ]);
 
   if (isInitialLoading || loadingWallet) {
     return <LoadingSkeleton />;
@@ -1559,7 +1637,6 @@ const CreateCampaign = () => {
             <Card className="shadow-lg border-0 pt-10">
               <CardContent className="p-6">
                 <div className="space-y-8">
-
                   {/* Campaign Visual Section */}
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 mb-6">
@@ -1567,9 +1644,13 @@ const CreateCampaign = () => {
                         <FiImage className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
-                        <h2 className="text-xs font-bold text-black">Campaign Visual</h2>
+                        <h2 className="text-xs font-bold text-black">
+                          Campaign Visual
+                        </h2>
                         <p className="text-xs text-gray-600">
-                          {mode === 'edit' ? 'Update campaign image (optional)' : 'Upload an image to represent your campaign'}
+                          {mode === "edit"
+                            ? "Update campaign image (optional)"
+                            : "Upload an image to represent your campaign"}
                         </p>
                       </div>
                     </div>
@@ -1577,7 +1658,10 @@ const CreateCampaign = () => {
                     <ImageUploadComponent
                       onFileChange={handleFileChange}
                       currentFile={campaignData.content}
-                      existingImageUrl={campaignData.contentUrl || editCampaignData?.campaign_image}
+                      existingImageUrl={
+                        campaignData.contentUrl ||
+                        editCampaignData?.campaign_image
+                      }
                     />
                   </div>
 
@@ -1588,8 +1672,12 @@ const CreateCampaign = () => {
                         <FiTarget className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
-                        <h2 className="text-xs font-bold text-black">Campaign Essentials</h2>
-                        <p className="text-xs text-gray-600">Define your campaign's core information and objectives</p>
+                        <h2 className="text-xs font-bold text-black">
+                          Campaign Essentials
+                        </h2>
+                        <p className="text-xs text-gray-600">
+                          Define your campaign's core information and objectives
+                        </p>
                       </div>
                     </div>
 
@@ -1637,7 +1725,9 @@ const CreateCampaign = () => {
                           </select>
                           <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                           {loadingObjectives && (
-                            <p className="text-xs text-gray-500 mt-1">Loading objectives...</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Loading objectives...
+                            </p>
                           )}
                         </div>
                       </div>
@@ -1689,20 +1779,15 @@ const CreateCampaign = () => {
                       <BudgetInput
                         value={brandBudget}
                         onChange={setBrandBudget}
-                        walletBalance={walletBalance}
                         label="Campaign Budget (USD)"
-                        helperText={`Available: $${safeToFixed(walletBalance, 2)} (includes company fee)`}
-                        onInsufficientFunds={handleInsufficientFunds}
+                        // helperText={`Available: $${safeToFixed(walletBalance, 2)}`}
                       />
 
                       <InfluencersInput
                         value={numberOfInfluencers}
                         onChange={setNumberOfInfluencers}
-                        maxInfluencers={maxInfluencers}
-                        walletBalance={walletBalance}
                         label="Number of Influencers"
-                        helperText={`Maximum allowed: ${maxInfluencers} influencers ($${MIN_BUDGET_PER_INFLUENCER} per influencer)`}
-                        onInsufficientFunds={handleInsufficientFunds}
+                        // helperText="Number of influencers to invite"
                       />
                     </div>
                   </div>
@@ -1714,8 +1799,13 @@ const CreateCampaign = () => {
                         <FiFileText className="w-4 h-4 text-gray-600" />
                       </div>
                       <div>
-                        <h2 className="text-xs font-bold text-black">Campaign Brief</h2>
-                        <p className="text-xs text-gray-600">Provide detailed information about your campaign expectations and deliverables</p>
+                        <h2 className="text-xs font-bold text-black">
+                          Campaign Brief
+                        </h2>
+                        <p className="text-xs text-gray-600">
+                          Provide detailed information about your campaign
+                          expectations and deliverables
+                        </p>
                       </div>
                     </div>
 
@@ -1733,7 +1823,7 @@ const CreateCampaign = () => {
                   </div>
 
                   {/* Tasks Section */}
-                  {mode !== 'addMembers' && (
+                  {mode !== "addMembers" && (
                     <div className="space-y-6">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
@@ -1741,14 +1831,25 @@ const CreateCampaign = () => {
                             <FiSettings className="w-4 h-4 text-gray-600" />
                           </div>
                           <div>
-                            <h2 className="text-xs font-bold text-black">Creator Tasks</h2>
-                            <p className="text-xs text-gray-600">Define specific deliverables for creators</p>
+                            <h2 className="text-xs font-bold text-black">
+                              Creator Tasks
+                            </h2>
+                            <p className="text-xs text-gray-600">
+                              Define specific deliverables for creators
+                            </p>
                           </div>
                         </div>
                         <button
                           onClick={() => {
                             setEditingTaskIndex(null);
-                            setNewTask({ task: "", description: "", requires_url: true, site_id: "", task_type: "", repeats_after: "" });
+                            setNewTask({
+                              task: "",
+                              description: "",
+                              requires_url: true,
+                              site_id: "",
+                              task_type: "",
+                              repeats_after: "",
+                            });
                             setOpenTaskDialog(true);
                           }}
                           className="bg-primary-scale-400 text-black px-4 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors flex items-center gap-2 shadow-sm"
@@ -1759,14 +1860,15 @@ const CreateCampaign = () => {
                       </div>
 
                       <div className="space-y-3">
-                      {campaignData.tasks.length === 0 ? (
+                        {campaignData.tasks.length === 0 ? (
                           <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
                             <FiSettings className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                             <div className="text-xs font-medium mb-2">
                               No tasks added yet
                             </div>
                             <div className="text-xs">
-                              Add tasks to guide creators through your requirements
+                              Add tasks to guide creators through your
+                              requirements
                             </div>
                           </div>
                         ) : (
@@ -1989,7 +2091,8 @@ const CreateCampaign = () => {
                           </span>
                           <span
                             className={`text-xs font-bold ${
-                              walletBalance < safeToNumber(eligibilityData.budget)
+                              walletBalance <
+                              safeToNumber(eligibilityData.budget)
                                 ? "text-red-400"
                                 : "text-green-400"
                             }`}
@@ -1998,7 +2101,8 @@ const CreateCampaign = () => {
                           </span>
                         </div>
 
-                        {walletBalance < safeToNumber(eligibilityData.budget) && (
+                        {walletBalance <
+                          safeToNumber(eligibilityData.budget) && (
                           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
                             <div className="flex items-center gap-2 mb-2">
                               <FiAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -2009,7 +2113,8 @@ const CreateCampaign = () => {
                             <p className="text-xs text-red-600 mb-3">
                               Need $
                               {safeToFixed(
-                                safeToNumber(eligibilityData.budget) - walletBalance,
+                                safeToNumber(eligibilityData.budget) -
+                                  walletBalance,
                                 2
                               )}{" "}
                               more to launch.
@@ -2037,10 +2142,13 @@ const CreateCampaign = () => {
                 <FiEdit className="w-4 h-4" />
                 Edit filters
               </button>
-              
+
               <button
                 onClick={handleCreateCampaign}
-                disabled={loading || walletBalance < safeToNumber(eligibilityData?.totalBudget)}
+                disabled={
+                  loading ||
+                  walletBalance < safeToNumber(eligibilityData?.totalBudget)
+                }
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
               >
                 {loading ? (
@@ -2050,7 +2158,7 @@ const CreateCampaign = () => {
                   </>
                 ) : (
                   <>
-                    {mode === 'addMembers' ? 'Add Members' : 'Continue'}
+                    {mode === "addMembers" ? "Add Members" : "Continue"}
                     <FiArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -2067,20 +2175,22 @@ const CreateCampaign = () => {
                 <FiCheckCircle className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                {mode === 'edit' 
-                  ? 'Campaign Updated Successfully!'
-                  : mode === 'addMembers'
-                  ? 'Members Added Successfully!'
-                  : 'Campaign Launched Successfully!'
-                }
+                {mode === "edit"
+                  ? "Campaign Updated Successfully!"
+                  : mode === "addMembers"
+                  ? "Members Added Successfully!"
+                  : "Campaign Launched Successfully!"}
               </h2>
               <p className="text-xs text-gray-600 mb-6">
-                {mode === 'edit' 
-                  ? 'Your campaign details have been updated and saved.'
-                  : mode === 'addMembers'
-                  ? `${safeToNumber(eligibilityData?.eligibleCount)} new members have been added to your campaign. You'll receive notifications as they start accepting invitations.`
-                  : `Your campaign has been sent to ${safeToNumber(eligibilityData?.eligibleCount)} eligible creators. You'll receive notifications as influencers start accepting your invitations.`
-                }
+                {mode === "edit"
+                  ? "Your campaign details have been updated and saved."
+                  : mode === "addMembers"
+                  ? `${safeToNumber(
+                      eligibilityData?.eligibleCount
+                    )} new members have been added to your campaign. You'll receive notifications as they start accepting invitations.`
+                  : `Your campaign has been sent to ${safeToNumber(
+                      eligibilityData?.eligibleCount
+                    )} eligible creators. You'll receive notifications as influencers start accepting your invitations.`}
               </p>
               <button
                 onClick={() => navigate("/campaigns")}
@@ -2150,21 +2260,35 @@ const CreateCampaign = () => {
               {loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                  {mode === 'edit' ? 'Updating...' : 'Processing...'}
+                  {mode === "edit" ? "Updating..." : "Processing..."}
                 </>
               ) : (
                 <>
                   {(() => {
-                    if (mode === 'edit' && activeStep === 0 && hasUnsavedChanges) {
-                      return 'Update Campaign';
+                    if (
+                      mode === "edit" &&
+                      activeStep === 0 &&
+                      hasUnsavedChanges
+                    ) {
+                      return "Update Campaign";
                     }
-                    if (campaignCreatedOnce && draftCampaignId && activeStep === 0 && hasUnsavedChanges) {
-                      return 'Update & Continue';
+                    if (
+                      campaignCreatedOnce &&
+                      draftCampaignId &&
+                      activeStep === 0 &&
+                      hasUnsavedChanges
+                    ) {
+                      return "Update & Continue";
                     }
-                    if (campaignCreatedOnce && draftCampaignId && activeStep === 0 && !hasUnsavedChanges) {
-                      return 'Continue';
+                    if (
+                      campaignCreatedOnce &&
+                      draftCampaignId &&
+                      activeStep === 0 &&
+                      !hasUnsavedChanges
+                    ) {
+                      return "Continue";
                     }
-                    return 'Next Step';
+                    return "Next Step";
                   })()}
                   <FiArrowRight className="w-4 h-4" />
                 </>
@@ -2180,13 +2304,13 @@ const CreateCampaign = () => {
         onClose={() => {
           setOpenTaskDialog(false);
           setEditingTaskIndex(null);
-          setNewTask({ 
-            task: "", 
-            description: "", 
+          setNewTask({
+            task: "",
+            description: "",
             requires_url: true,
             site_id: "",
             task_type: "",
-            repeats_after: ""
+            repeats_after: "",
           });
         }}
         newTask={newTask}
