@@ -284,7 +284,6 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
-  const [verifiedUsername, setVerifiedUsername] = useState(""); // Store username from verify email response
 
   const [signupData, setSignupData] = useState({
     email: "",
@@ -584,9 +583,6 @@ const Signup = () => {
           localStorage.setItem("user_id", response.data.user_id);
           localStorage.setItem("username", username);
           localStorage.setItem("status", response.data.status);
-          
-          // Store the username from verify email response for later use
-          setVerifiedUsername(username);
         }
 
         toast.success("Email verified successfully!");
@@ -604,33 +600,6 @@ const Signup = () => {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const changeUsername = async (jwt) => {
-    try {
-      const headers = {
-        Authorization: `Bearer ${jwt}`,
-        "Content-Type": "application/json",
-      };
-
-      const changeUsernameData = {
-        currentUsername: verifiedUsername,
-        newUsername: signupData.username,
-      };
-
-      const response = await post("users/changeUsername", changeUsernameData, headers);
-      
-      if (response.status === 200) {
-        console.log("Username changed successfully");
-        return true;
-      } else {
-        console.warn("Username change failed:", response.message);
-        return false;
-      }
-    } catch (error) {
-      console.error("Username change error:", error);
-      return false;
     }
   };
 
@@ -668,7 +637,13 @@ const Signup = () => {
         "Content-Type": "application/json",
       };
 
-      const response = await post("users/secureAccount", passwordData, headers);
+      // Include the user's selected username in the secure account request
+      const secureAccountData = {
+        ...passwordData,
+        username: signupData.username,
+      };
+
+      const response = await post("users/secureAccount", secureAccountData, headers);
 
       if (response.status === 200) {
         const loginResponse = await post("users/login", {
@@ -690,18 +665,10 @@ const Signup = () => {
           localStorage.setItem("jwt", jwt);
           localStorage.setItem("isLoggedIn", "true");
 
-          // Handle username change and industry updates after successful login
-          const promises = [];
-
-          // Change username if user selected a different one
-          if (signupData.username && signupData.username !== verifiedUsername) {
-            promises.push(changeUsername(jwt));
-          }
-
           // Update industries if selected
           if (selectedIndustries.length > 0) {
-            promises.push(
-              patch(
+            try {
+              await patch(
                 "users/updateProfile",
                 {
                   industry_ids: selectedIndustries,
@@ -713,18 +680,16 @@ const Signup = () => {
                     "Content-Type": "application/json",
                   },
                 }
-              )
-            );
-          }
-
-          try {
-            await Promise.allSettled(promises);
+              );
+              toast.success("Account setup completed successfully!");
+            } catch (industryError) {
+              console.warn("Failed to update industries:", industryError);
+              toast.success(
+                "Account setup completed! You can update industries later in your profile."
+              );
+            }
+          } else {
             toast.success("Account setup completed successfully!");
-          } catch (updateError) {
-            console.warn("Some updates failed:", updateError);
-            toast.success(
-              "Account setup completed! Some preferences can be updated in your profile."
-            );
           }
 
           navigate("/dashboard");
