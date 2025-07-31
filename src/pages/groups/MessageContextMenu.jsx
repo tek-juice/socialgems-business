@@ -36,13 +36,7 @@ const MessageContextMenu = ({ isOpen, onClose, position, message, isOwn, onEdit,
         transform: 'translate(-50%, -10px)'
       }}
     >
-      <button
-        onClick={() => { onReply(message); onClose(); }}
-        className="w-full px-4 py-2 text-left text-sm text-secondary hover:bg-primary/5 flex items-center gap-3"
-      >
-        <MdOutlineReply className="w-4 h-4" />
-        Reply
-      </button>
+
       
       <button
         onClick={() => { onCopy(message.text); onClose(); }}

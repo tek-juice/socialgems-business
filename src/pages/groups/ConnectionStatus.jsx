@@ -24,8 +24,8 @@ const ConnectionStatus = ({ status, isConnected }) => {
 
   return (
     <div className={cn("flex items-center gap-1 text-xs", getStatusColor())}>
-      <div className={cn("w-2 h-2 rounded-full", isConnected ? "bg-green-500" : "bg-red-500")} />
-      <span>{getStatusText()}</span>
+      {/* <div className={cn("w-2 h-2 rounded-full", isConnected ? "bg-green-500" : "bg-red-500")} /> */}
+      {/* <span>{getStatusText()}</span> */}
     </div>
   );
 };

@@ -163,6 +163,7 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
         </div>
         <h2 className="text-lg font-bold text-secondary mb-1">{group.name}</h2>
         <p className="text-xs text-secondary/70">Group • {members.length} members</p>
+        <p className="text-xs text-secondary/70">Since • {createdDate}</p>
       </div>
 
       <div className="flex gap-2">
@@ -199,7 +200,7 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
       )}
 
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
             <FiCalendar className="w-4 h-4 text-secondary" />
           </div>
@@ -207,9 +208,9 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
             <p className="text-xs font-medium text-secondary">Created</p>
             <p className="text-xs text-secondary/70">{createdDate}</p>
           </div>
-        </div>
+        </div> */}
 
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
             <FiUsers className="w-4 h-4 text-secondary" />
           </div>
@@ -217,9 +218,9 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
             <p className="text-xs font-medium text-secondary">{members.length} members</p>
             <p className="text-xs text-secondary/70">Active group members</p>
           </div>
-        </div>
+        </div> */}
 
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
             {group.membership_type === 'open' ? (
               <FiGlobe className="w-4 h-4 text-secondary" />
@@ -238,10 +239,10 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
               }
             </p>
           </div>
-        </div>
+        </div> */}
       </div>
 
-      <div className="border-t border-secondary/20 pt-4">
+      <div className="pt-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-secondary">Members ({members.length})</h3>
           {isAdmin && (

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Sidebar from './Sidebar';
-import FloatingActionMenu from './floating-action-menu';
-import { 
-  FiMenu, 
-  FiX, 
-  FiUser, 
-  FiSettings, 
-  FiLogOut, 
-  FiCalendar, 
+import React, { useState, useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Sidebar from "./Sidebar";
+import FloatingActionMenu from "./floating-action-menu";
+import {
+  FiMenu,
+  FiX,
+  FiUser,
+  FiSettings,
+  FiLogOut,
+  FiCalendar,
   FiClock,
   FiChevronRight,
   FiHome,
@@ -19,11 +19,11 @@ import {
   FiPlus,
   FiAlertCircle,
   FiCheck,
-  FiArrowRight
-} from 'react-icons/fi';
-import { toast } from 'sonner';
-import { get, put } from '../../utils/service';
-import { assets } from '../../assets/assets';
+  FiArrowRight,
+} from "react-icons/fi";
+import { toast } from "sonner";
+import { get, put } from "../../utils/service";
+import { assets } from "../../assets/assets";
 import { IoChatbubblesSharp } from "react-icons/io5";
 
 // Custom utility function
@@ -32,11 +32,15 @@ function cn(...classes) {
 }
 
 // Business Verification Card Component
-const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) => {
+const BusinessVerificationCard = ({
+  userData,
+  onNavigateToSettings,
+  onClose,
+}) => {
   // Get business verification status
   const getVerificationStatus = () => {
     if (!userData?.business_profile) {
-      return 'none';
+      return "none";
     }
     return userData.business_profile.verification_status;
   };
@@ -45,41 +49,49 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
 
   const getCardContent = () => {
     switch (verificationStatus) {
-      case 'pending':
+      case "pending":
         return {
           icon: FiClock,
-          iconColor: 'text-orange-600',
-          iconBg: 'bg-primary',
-          title: 'Business Verification',
-          subtitle: 'Your business verification is under review by our team',
-          timeText: `Submitted ${userData?.business_profile ? new Date(userData.business_profile.created_on).toLocaleDateString() : 'recently'}`,
-          buttonText: 'View Status',
-          bgGradient: 'from-orange-50/80 to-yellow-50/80',
-          borderColor: 'border-primary/60'
+          iconColor: "text-orange-600",
+          iconBg: "bg-primary",
+          title: "Business Verification",
+          subtitle: "Your business verification is under review by our team",
+          timeText: `Submitted ${
+            userData?.business_profile
+              ? new Date(
+                  userData.business_profile.created_on
+                ).toLocaleDateString()
+              : "recently"
+          }`,
+          buttonText: "View Status",
+          bgGradient: "from-orange-50/80 to-yellow-50/80",
+          borderColor: "border-primary/60",
         };
-      case 'rejected':
+      case "rejected":
         return {
           icon: FiX,
-          iconColor: 'text-red-600',
-          iconBg: 'bg-red-100',
-          title: 'Business Verification',
-          subtitle: 'Your verification was rejected. Please resubmit with correct information to unlock all features',
-          timeText: 'Action required - Please resubmit',
-          buttonText: 'Resubmit Now',
-          bgGradient: 'from-red-50/80 to-pink-50/80',
-          borderColor: 'border-red-200/60'
+          iconColor: "text-red-600",
+          iconBg: "bg-red-100",
+          title: "Business Verification",
+          subtitle:
+            "Your verification was rejected. Please resubmit with correct information to unlock all features",
+          timeText: "Action required - Please resubmit",
+          buttonText: "Resubmit Now",
+          bgGradient: "from-red-50/80 to-pink-50/80",
+          borderColor: "border-red-200/60",
         };
       default:
         return {
           icon: FiAlertCircle,
-          iconColor: 'text-secondary',
-          iconBg: 'bg-primary',
-          title: 'Business Verification Required',
-          subtitle: 'Complete your business verification to create campaigns and manage your wallet',
-          timeText: 'Verify now to unlock all platform features',
-          buttonText: 'Start Verification',
-          bgGradient: 'from-primary/10 to-[#E8C547]/10',
-          borderColor: 'border-primary/80'
+          iconColor: "text-secondary",
+          iconBg: "bg-primary",
+          title: "Business Verification Required",
+          subtitle:
+            "Complete your business verification to create campaigns and manage your wallet",
+          timeText: "Verify now to unlock all platform features",
+          buttonText: "Start Verification",
+          bgGradient: "from-primary/10 to-[#E8C547]/10",
+          borderColor: "border-primary/80",
         };
     }
   };
@@ -92,16 +104,18 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
       initial={{ opacity: 0, y: -20, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.98 }}
-      transition={{ 
-        type: "spring", 
-        stiffness: 400, 
+      transition={{
+        type: "spring",
+        stiffness: 400,
         damping: 25,
-        mass: 0.5
+        mass: 0.5,
       }}
       className="w-full"
     >
       <div className="w-full max-w-7xl mx-auto px-4 py-3">
-        <div className={`relative bg-secondary border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}>
+        <div
+          className={`relative bg-secondary border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}
+        >
           {/* Close button at top-right - fixed clickable area */}
           <button
             type="button"
@@ -110,7 +124,7 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
           >
             <FiX className="h-5 w-5" />
           </button>
-          
+
           <div className="relative flex flex-col gap-2">
             {/* Content */}
             <div className="flex-1 min-w-0">
@@ -129,7 +143,7 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
                 </div>
               </div>
             </div>
-            
+
             {/* Action buttons - now below content */}
             <div className="flex items-center gap-2">
               {/* Primary action button */}
@@ -155,7 +169,7 @@ const BusinessVerificationCard = ({ userData, onNavigateToSettings, onClose }) =
   );
 };
 
-const MainLayout = ({ userType = 'client' }) => {
+const MainLayout = ({ userType = "client" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [manuallyToggled, setManuallyToggled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -167,30 +181,30 @@ const MainLayout = ({ userType = 'client' }) => {
   const queryClient = useQueryClient();
 
   // Check if we're on the groups page
-  const isGroupsPage = location.pathname === '/groups';
+  const isGroupsPage = location.pathname === "/groups";
 
   const {
     data: userData,
     isLoading: loading,
-    error
+    error,
   } = useQuery({
-    queryKey: ['userProfile'],
+    queryKey: ["userProfile"],
     queryFn: async () => {
       try {
-        const response = await get('users/getUserProfile');
+        const response = await get("users/getUserProfile");
         if (response?.status === 200 && response.data) {
           return response.data;
         } else if (response) {
           return response;
         }
-        throw new Error('Failed to fetch user profile');
+        throw new Error("Failed to fetch user profile");
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        console.error("Error fetching user profile:", error);
         return {
-          first_name: localStorage.getItem('name')?.split(' ')[0] || 'User',
-          last_name: localStorage.getItem('name')?.split(' ')[1] || '',
-          email: localStorage.getItem('email') || 'user@example.com',
-          user_type: localStorage.getItem('role') || 'User'
+          first_name: localStorage.getItem("name")?.split(" ")[0] || "User",
+          last_name: localStorage.getItem("name")?.split(" ")[1] || "",
+          email: localStorage.getItem("email") || "user@example.com",
+          user_type: localStorage.getItem("role") || "User",
         };
       }
     },
@@ -198,12 +212,12 @@ const MainLayout = ({ userType = 'client' }) => {
     // =====================================
     //    Timing
     // =====================================
-    staleTime: 0, 
-    gcTime: 5 * 60 * 1000, 
-    refetchOnWindowFocus: true, 
-    refetchOnReconnect: true, 
-    refetchInterval: 120000 * 1000, 
-    refetchIntervalInBackground: true, 
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 120000 * 1000,
+    refetchIntervalInBackground: true,
     retry: (failureCount, error) => {
       if (error?.response?.status >= 400 && error?.response?.status < 500) {
         return false;
@@ -211,46 +225,46 @@ const MainLayout = ({ userType = 'client' }) => {
       return failureCount < 3;
     },
     onError: (error) => {
-      console.error('Query error:', error);
-      if (!localStorage.getItem('name')) {
-        toast.error('Failed to load user profile');
+      console.error("Query error:", error);
+      if (!localStorage.getItem("name")) {
+        toast.error("Failed to load user profile");
       }
-    }
+    },
   });
 
   const updateUserProfileMutation = useMutation({
     mutationFn: async (updatedData) => {
-      const response = await put('users/updateProfile', updatedData);
+      const response = await put("users/updateProfile", updatedData);
       return response.data || response;
     },
     onMutate: async (newUserData) => {
-      await queryClient.cancelQueries({ queryKey: ['userProfile'] });
+      await queryClient.cancelQueries({ queryKey: ["userProfile"] });
 
-      const previousUserData = queryClient.getQueryData(['userProfile']);
+      const previousUserData = queryClient.getQueryData(["userProfile"]);
 
-      queryClient.setQueryData(['userProfile'], (old) => ({
+      queryClient.setQueryData(["userProfile"], (old) => ({
         ...old,
-        ...newUserData
+        ...newUserData,
       }));
 
       return { previousUserData };
     },
     onError: (error, newUserData, context) => {
       // Roll back on error
-      queryClient.setQueryData(['userProfile'], context.previousUserData);
-      toast.error('Failed to update profile');
-      console.error('Update error:', error);
+      queryClient.setQueryData(["userProfile"], context.previousUserData);
+      toast.error("Failed to update profile");
+      console.error("Update error:", error);
     },
     onSuccess: (data) => {
-      toast.success('Profile updated successfully');
+      toast.success("Profile updated successfully");
     },
     onSettled: () => {
       // Invalidate to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    }
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
   });
 
-  // Helper function to update user profile
+  // Helper function to update user profil
   const updateUserProfile = (updatedData) => {
     updateUserProfileMutation.mutate(updatedData);
   };
@@ -258,29 +272,33 @@ const MainLayout = ({ userType = 'client' }) => {
   // Helper function to extract first name
   const getFirstName = (firstName, fullName) => {
     if (firstName) return firstName;
-    if (!fullName || typeof fullName !== 'string') return 'User';
-    return fullName.trim().split(' ')[0];
+    if (!fullName || typeof fullName !== "string") return "User";
+    return fullName.trim().split(" ")[0];
   };
 
-  const displayName = getFirstName(userData?.first_name || userData?.firstName, userData?.full_name);
-  const userEmail = userData?.email || 'user@example.com';
-  const fullName = userData?.first_name && userData?.last_name 
-    ? `${userData.first_name} ${userData.last_name}`
-    : userData?.firstName && userData?.lastName
-    ? `${userData.firstName} ${userData.lastName}`
-    : localStorage.getItem('name') || 'User';
+  const displayName = getFirstName(
+    userData?.first_name || userData?.firstName,
+    userData?.full_name
+  );
+  const userEmail = userData?.email || "user@example.com";
+  const fullName =
+    userData?.first_name && userData?.last_name
+      ? `${userData.first_name} ${userData.last_name}`
+      : userData?.firstName && userData?.lastName
+      ? `${userData.firstName} ${userData.lastName}`
+      : localStorage.getItem("name") || "User";
 
   // Navigate to settings with business verification focus
   const handleNavigateToSettings = () => {
-    navigate('/settings', { state: { focusBusinessVerification: true } });
+    navigate("/settings", { state: { focusBusinessVerification: true } });
   };
 
   // Handle closing verification card
   const handleCloseVerificationCard = () => {
     setShowVerificationCard(false);
-    
+
     // Reappear after 5 seconds if not verified (but only for none/rejected status)
-    if (userData?.business_profile?.verification_status !== 'approved') {
+    if (userData?.business_profile?.verification_status !== "approved") {
       setTimeout(() => {
         setShowVerificationCard(true);
       }, 5000);
@@ -291,14 +309,14 @@ const MainLayout = ({ userType = 'client' }) => {
   const handleLogout = () => {
     // Clear all queries from cache
     queryClient.clear();
-    
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('email');
-    localStorage.removeItem('name');
-    localStorage.removeItem('role');
-    localStorage.removeItem('jwt');
-    toast.success('Logged out successfully');
-    navigate('/login');
+
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("email");
+    localStorage.removeItem("name");
+    localStorage.removeItem("role");
+    localStorage.removeItem("jwt");
+    toast.success("Logged out successfully");
+    navigate("/login");
   };
 
   // Toggle sidebar function
@@ -312,42 +330,42 @@ const MainLayout = ({ userType = 'client' }) => {
   // Floating action menu options
   const floatingMenuOptions = [
     {
-      label: 'Dashboard',
+      label: "Dashboard",
       Icon: <FiHome className="w-4 h-4" />,
-      onClick: () => navigate('/dashboard'),
+      onClick: () => navigate("/dashboard"),
     },
     {
-      label: 'Wallet',
+      label: "Wallet",
       Icon: <FiCreditCard className="w-4 h-4" />,
-      onClick: () => navigate('/wallet'),
+      onClick: () => navigate("/wallet"),
     },
     {
-      label: 'My Campaigns',
+      label: "My Campaigns",
       Icon: <FiBriefcase className="w-4 h-4" />,
-      onClick: () => navigate('/campaigns'),
+      onClick: () => navigate("/campaigns"),
     },
     {
-      label: 'Create Campaign',
+      label: "Create Campaign",
       Icon: <FiPlus className="w-4 h-4" />,
-      onClick: () => navigate('/campaigns/create'),
+      onClick: () => navigate("/campaigns/create"),
     },
     {
-      label: 'Groups',
-      Icon: <IoChatbubblesSharp className='w-4 h-4'/>,
-      onClick: () => navigate('/groups'),
+      label: "Groups",
+      Icon: <IoChatbubblesSharp className="w-4 h-4" />,
+      onClick: () => navigate("/groups"),
     },
     {
-      label: 'Settings',
+      label: "Settings",
       Icon: <FiSettings className="w-4 h-4" />,
-      onClick: () => navigate('/settings'),
+      onClick: () => navigate("/settings"),
     },
   ];
 
   // Handle click outside user menu
   useEffect(() => {
     const handleClickOutside = (e) => {
-      const userButton = document.querySelector('.user-button');
-      const userMenu = document.querySelector('.user-menu');
+      const userButton = document.querySelector(".user-button");
+      const userMenu = document.querySelector(".user-menu");
 
       if (
         showUserMenu &&
@@ -360,8 +378,8 @@ const MainLayout = ({ userType = 'client' }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
 
   // Handle responsive behavior
@@ -370,15 +388,15 @@ const MainLayout = ({ userType = 'client' }) => {
       const windowWidth = window.innerWidth;
       const isCurrentlyMobile = windowWidth < 768;
       setIsMobile(isCurrentlyMobile);
-      
+
       if (!manuallyToggled && !isGroupsPage) {
         setSidebarOpen(!isCurrentlyMobile);
       }
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [manuallyToggled, isGroupsPage]);
 
   // Close sidebar on mobile when route changes
@@ -396,32 +414,37 @@ const MainLayout = ({ userType = 'client' }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const formattedDate = currentTime.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  const formattedDate = currentTime.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
-  const formattedTime = currentTime.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+  const formattedTime = currentTime.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
     hour12: true,
   });
 
   // Content class based on groups page or sidebar state
-  const contentClass = isGroupsPage ? '' : (sidebarOpen ? 'md:ml-64' : 'md:ml-16');
+  const contentClass = isGroupsPage
+    ? ""
+    : sidebarOpen
+    ? "md:ml-64"
+    : "md:ml-16";
 
   // Show floating menu when sidebar is closed, on mobile, or on groups page
   const showFloatingMenu = isMobile || !sidebarOpen || isGroupsPage;
 
   // Check if business verification card should be shown - exclude certain pages
-  const excludedPages = ['/groups', '/settings'];
+  const excludedPages = ["/groups", "/settings"];
   // const excludedPages = ['/groups', '/settings', '/dashboard'];
-  const shouldShowVerificationCard = !loading && 
-    userData?.user_type === 'brand' && 
-    userData?.business_profile?.verification_status !== 'approved' &&
+  const shouldShowVerificationCard =
+    !loading &&
+    userData?.user_type === "brand" &&
+    userData?.business_profile?.verification_status !== "approved" &&
     showVerificationCard &&
     !excludedPages.includes(location.pathname);
 
@@ -442,14 +465,18 @@ const MainLayout = ({ userType = 'client' }) => {
 
       {/* Conditionally render sidebar - not on groups page */}
       {!isGroupsPage && (
-        <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} userType={userType} />
+        <Sidebar
+          isOpen={sidebarOpen}
+          toggleSidebar={toggleSidebar}
+          userType={userType}
+        />
       )}
 
       <header
         className={`fixed top-0 right-0 z-50 bg-white/70 backdrop-blur-lg border-b border-white/20 flex items-center justify-between h-16 shadow-lg transition-all duration-300 ${
-          isGroupsPage ? 'left-0' : (sidebarOpen ? 'md:left-64' : 'md:left-16')
+          isGroupsPage ? "left-0" : sidebarOpen ? "md:left-64" : "md:left-16"
         } left-0`}
-        style={{ backdropFilter: 'blur(1px)' }}
+        style={{ backdropFilter: "blur(1px)" }}
       >
         {/* Glass effect overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
@@ -463,9 +490,9 @@ const MainLayout = ({ userType = 'client' }) => {
               whileTap={{ scale: 0.95 }}
               className="flex items-center justify-center"
             >
-              <img 
-                src={assets.MainLogo} 
-                alt="Social Gems Logo" 
+              <img
+                src={assets.MainLogo}
+                alt="Social Gems Logo"
                 className="h-8 w-auto object-contain max-w-full"
               />
             </motion.div>
@@ -500,9 +527,9 @@ const MainLayout = ({ userType = 'client' }) => {
               whileHover={{ scale: 1.05 }}
               className="ml-6 flex items-center justify-center"
             >
-              <img 
-                src={assets.MainLogo} 
-                alt="Social Gems Logo" 
+              <img
+                src={assets.MainLogo}
+                alt="Social Gems Logo"
                 className="h-10 w-auto object-contain max-w-full"
               />
             </motion.div>
@@ -511,7 +538,7 @@ const MainLayout = ({ userType = 'client' }) => {
           {/* Date and time display - hide on groups page for clean look */}
           <AnimatePresence>
             {(sidebarOpen || isMobile) && !isGroupsPage && (
-              <motion.div 
+              <motion.div
                 className="hidden md:flex items-center ml-6"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -519,19 +546,23 @@ const MainLayout = ({ userType = 'client' }) => {
                 transition={{ delay: 0.2 }}
               >
                 <div className="flex items-center text-secondary/80">
-                  <motion.div 
+                  <motion.div
                     className="flex items-center mr-6"
                     whileHover={{ scale: 1.05 }}
                   >
                     <FiCalendar className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm font-semibold">{formattedDate}</span>
+                    <span className="text-sm font-semibold">
+                      {formattedDate}
+                    </span>
                   </motion.div>
-                  <motion.div 
+                  <motion.div
                     className="flex items-center"
                     whileHover={{ scale: 1.05 }}
                   >
                     <FiClock className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm font-semibold">{formattedTime}</span>
+                    <span className="text-sm font-semibold">
+                      {formattedTime}
+                    </span>
                   </motion.div>
                 </div>
               </motion.div>
@@ -565,7 +596,7 @@ const MainLayout = ({ userType = 'client' }) => {
                     whileHover={{ scale: 1.1 }}
                   />
                 ) : (
-                  <motion.div 
+                  <motion.div
                     className="w-full h-full rounded-full bg-gradient-to-br from-primary to-[#E8C547] flex items-center justify-center text-secondary shadow-lg"
                     whileHover={{ scale: 1.1 }}
                   >
@@ -574,7 +605,7 @@ const MainLayout = ({ userType = 'client' }) => {
                 )}
                 {/* Online indicator with subtle animation to show real-time connection */}
                 {!loading && (
-                  <motion.span 
+                  <motion.span
                     className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -611,17 +642,17 @@ const MainLayout = ({ userType = 'client' }) => {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   transition={{ duration: 0.2 }}
                   className="user-menu absolute right-0 mt-2.5 w-64 bg-white border border-t-transparent border-primary backdrop-blur-lg rounded-b-xl overflow-hidden z-[60]"
-                  style={{ backdropFilter: 'blur(30px)' }}
+                  style={{ backdropFilter: "blur(30px)" }}
                   role="menu"
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"
                 >
                   {/* Glass effect overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
-                  
+
                   <div className="relative z-10 p-4 border-b border-white/20 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 flex items-center">
                     {/* User avatar in menu */}
-                    <motion.div 
+                    <motion.div
                       className="relative mr-3 w-12 h-12 flex-shrink-0"
                       whileHover={{ scale: 1.05 }}
                     >
@@ -637,7 +668,7 @@ const MainLayout = ({ userType = 'client' }) => {
                         </div>
                       )}
                     </motion.div>
-                    
+
                     {/* User details */}
                     <div className="overflow-hidden">
                       <p className="text-sm font-medium text-secondary truncate max-w-[160px]">
@@ -657,18 +688,27 @@ const MainLayout = ({ userType = 'client' }) => {
                   <div className="relative z-10 py-1">
                     <motion.button
                       onClick={() => {
-                        navigate('/settings');
+                        navigate("/settings");
                         setShowUserMenu(false);
                       }}
-                      whileHover={{ x: 5, backgroundColor: 'rgba(249, 215, 105, 0.1)' }}
+                      whileHover={{
+                        x: 5,
+                        backgroundColor: "rgba(249, 215, 105, 0.1)",
+                      }}
                       className="flex w-full items-center px-4 py-2 text-sm text-secondary hover:bg-primary/10 transition-colors"
                     >
-                      <FiSettings className="mr-2 text-secondary/60" size={16} />
+                      <FiSettings
+                        className="mr-2 text-secondary/60"
+                        size={16}
+                      />
                       Account Settings
                     </motion.button>
                     <motion.button
                       onClick={handleLogout}
-                      whileHover={{ x: 5, backgroundColor: 'rgba(239, 68, 68, 0.05)' }}
+                      whileHover={{
+                        x: 5,
+                        backgroundColor: "rgba(239, 68, 68, 0.05)",
+                      }}
                       className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 hover:bg-red-50/50 transition-colors"
                     >
                       <FiLogOut className="mr-3" size={16} />
@@ -687,18 +727,16 @@ const MainLayout = ({ userType = 'client' }) => {
         {/* Business Verification Card - Part of document flow */}
         <AnimatePresence mode="wait">
           {shouldShowVerificationCard && (
-            <BusinessVerificationCard 
-              userData={userData} 
+            <BusinessVerificationCard
+              userData={userData}
               onNavigateToSettings={handleNavigateToSettings}
               onClose={handleCloseVerificationCard}
             />
           )}
         </AnimatePresence>
-        
+
         {/* Main content - Remove padding for groups page on mobile */}
-        <main className={cn(
-          isGroupsPage && isMobile ? "" : "p-6"
-        )}>
+        <main className={cn(isGroupsPage && isMobile ? "" : "p-6")}>
           <Outlet />
         </main>
       </div>
@@ -706,10 +744,7 @@ const MainLayout = ({ userType = 'client' }) => {
       {/* Floating Action Menu */}
       <AnimatePresence>
         {showFloatingMenu && (
-          <FloatingActionMenu
-            options={floatingMenuOptions}
-            className="z-50"
-          />
+          <FloatingActionMenu options={floatingMenuOptions} className="z-50" />
         )}
       </AnimatePresence>
     </div>

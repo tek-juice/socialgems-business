@@ -289,6 +289,7 @@ const Signup = () => {
     email: "",
     phone_number: "",
     business_name: "",
+    first_name: "",
     username: "",
     country_id: "256",
     user_type: "brand",
@@ -507,6 +508,7 @@ const Signup = () => {
       email,
       phone_number,
       business_name,
+      first_name,
       username,
     } = signupData;
 
@@ -514,6 +516,7 @@ const Signup = () => {
       !email.trim() ||
       !phone_number.trim() ||
       !business_name.trim() ||
+      !first_name.trim() ||
       !username.trim()
     ) {
       toast.error("Please fill in all fields");

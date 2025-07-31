@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   FiMessageCircle, 
   FiSearch,
@@ -14,7 +15,9 @@ import {
   FiFile,
   FiEdit,
   FiCheck,
-  FiWifiOff
+  FiWifiOff,
+  FiAlertCircle,
+  FiTrash2
 } from 'react-icons/fi';
 import { IoSend, IoChatbubblesSharp } from "react-icons/io5";
 import { get, post, upload } from '../utils/service';
@@ -38,6 +41,158 @@ import {
   truncateText 
 } from './groups/helpers';
 
+// WhatsApp-style Deleted Message Component with remove functionality
+const DeletedMessage = ({ message, isOwn, showAvatar, showSenderName, currentUser, onRemoveDeleted }) => {
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
+  const [showRemoveMenu, setShowRemoveMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const longPressTimerRef = useRef(null);
+  const touchStartRef = useRef({ x: 0, y: 0 });
+
+  const senderName = message.senderUserName || 'Someone';
+  const deletedText = isOwn ? 'You deleted this message' : `${senderName} deleted this message`;
+
+  const handleTouchStart = (e) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    setLongPressTriggered(false);
+    
+    longPressTimerRef.current = setTimeout(() => {
+      setLongPressTriggered(true);
+      setMenuPosition({ x: touch.clientX, y: touch.clientY });
+      setShowRemoveMenu(true);
+    }, 500);
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+    
+    if (deltaX > 10 || deltaY > 10) {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
+    setShowRemoveMenu(true);
+  };
+
+  const handleRemoveForever = () => {
+    onRemoveDeleted(message.messageId);
+    setShowRemoveMenu(false);
+    toast.success('Deleted message removed');
+  };
+
+  useEffect(() => {
+    const handleClickOutside = () => setShowRemoveMenu(false);
+    if (showRemoveMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showRemoveMenu]);
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={cn(
+          "flex gap-2 mb-1 relative",
+          isOwn ? "flex-row-reverse" : "flex-row",
+          longPressTriggered && "ring-2 ring-red-300"
+        )}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onContextMenu={handleContextMenu}
+      >
+        {showAvatar && !isOwn && (
+          <div 
+            className="w-6 h-6 rounded-full bg-gradient-primary-soft flex items-center justify-center text-secondary text-xs font-bold flex-shrink-0 mt-auto border border-primary/20"
+          >
+            {message.senderUserName?.charAt(0)?.toUpperCase() || message.senderId?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
+        )}
+        
+        {!showAvatar && !isOwn && (
+          <div className="w-6 flex-shrink-0"></div>
+        )}
+
+        <div className={cn(
+          "max-w-xs lg:max-w-md",
+          isOwn ? "items-end" : "items-start"
+        )}>
+          {showSenderName && !isOwn && (
+            <div className="mb-1 ml-2">
+              <span className="text-xs font-normal text-black">
+                {message.senderUserName || 'Unknown User'}
+              </span>
+            </div>
+          )}
+
+          <div className={cn(
+            "p-3 rounded-2xl relative shadow-sm border cursor-pointer",
+            isOwn 
+              ? "bg-gray-100 text-gray-500 rounded-br-md border-gray-200" 
+              : "bg-gray-50 text-gray-500 rounded-bl-md border-gray-200"
+          )}>
+            <div className="flex items-center gap-2">
+              <FiAlertCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <div className="flex items-end justify-between gap-5 flex-1">
+                <span className="text-xs font-normal italic">{deletedText}</span>
+                <div className={cn(
+                  "flex items-center gap-1 justify-end text-gray-400"
+                )}>
+                  <span className="text-[10px]">{formatTimeOnly(message.timestamp)}</span>
+                  {isOwn && (
+                    <div className="ml-0.5">
+                      <FiCheck className="w-2.5 h-2.5" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Remove menu */}
+      {showRemoveMenu && (
+        <div 
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-[100]"
+          style={{ 
+            left: Math.min(menuPosition.x, window.innerWidth - 200), 
+            top: Math.min(menuPosition.y, window.innerHeight - 100)
+          }}
+        >
+          <button
+            onClick={handleRemoveForever}
+            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+          >
+            <FiTrash2 className="w-4 h-4" />
+            Remove deleted message
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
+
 const GroupsWithWebSocket = () => {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -60,13 +215,221 @@ const GroupsWithWebSocket = () => {
   
   const [groupMessagesMap, setGroupMessagesMap] = useState(new Map());
   const [lastMessages, setLastMessages] = useState(new Map());
+  const [loadingGroupMessages, setLoadingGroupMessages] = useState(new Set());
+  const [hiddenDeletedMessages, setHiddenDeletedMessages] = useState(new Set());
   
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const { isConnected, connectionStatus, typingUsers, sendMessage, addMessageListener } = useWebSocket();
+
+  // Load persisted state on mount
+  useEffect(() => {
+    const loadPersistedState = () => {
+      try {
+        // Load selected group
+        const cachedSelectedGroup = localStorage.getItem('socialGems_selectedGroup');
+        if (cachedSelectedGroup) {
+          const group = JSON.parse(cachedSelectedGroup);
+          setSelectedGroup(group);
+        }
+
+        // Load show chat list state
+        const cachedShowChatList = localStorage.getItem('socialGems_showChatList');
+        if (cachedShowChatList !== null) {
+          setShowChatList(JSON.parse(cachedShowChatList));
+        }
+
+        // Load hidden deleted messages
+        const cachedHiddenDeleted = localStorage.getItem('socialGems_hiddenDeletedMessages');
+        if (cachedHiddenDeleted) {
+          const hiddenSet = new Set(JSON.parse(cachedHiddenDeleted));
+          setHiddenDeletedMessages(hiddenSet);
+        }
+
+        console.log('🔄 [Cache] Persisted state loaded from localStorage');
+      } catch (error) {
+        console.error('Error loading persisted state:', error);
+      }
+    };
+
+    loadPersistedState();
+  }, []);
+
+  // Persist state changes
+  useEffect(() => {
+    if (selectedGroup) {
+      localStorage.setItem('socialGems_selectedGroup', JSON.stringify(selectedGroup));
+    } else {
+      localStorage.removeItem('socialGems_selectedGroup');
+    }
+  }, [selectedGroup]);
+
+  useEffect(() => {
+    localStorage.setItem('socialGems_showChatList', JSON.stringify(showChatList));
+  }, [showChatList]);
+
+  useEffect(() => {
+    if (hiddenDeletedMessages.size > 0) {
+      localStorage.setItem('socialGems_hiddenDeletedMessages', JSON.stringify([...hiddenDeletedMessages]));
+    }
+  }, [hiddenDeletedMessages]);
+
+  // TanStack Query for user profile with persistence
+  const { data: userData } = useQuery({
+    queryKey: ['socialGems_userProfile'],
+    queryFn: async () => {
+      const response = await get('users/getUserProfile');
+      if (response?.data) {
+        return { 
+          id: response.data.user_id,
+          name: `${response.data.first_name} ${response.data.last_name}`,
+          avatar: response.data.profile_pic,
+          email: response.data.email
+        };
+      }
+      throw new Error('Failed to fetch user profile');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 2,
+    onSuccess: (data) => {
+      setCurrentUser(data);
+    }
+  });
+
+  // TanStack Query for groups with persistence and background refresh
+  const { data: backgroundGroups } = useQuery({
+    queryKey: ['socialGems_groups'],
+    queryFn: async () => {
+      const response = await get('groups/myGroups');
+      if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      return [];
+    },
+    enabled: !!userData,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 60 * 60 * 1000, // 1 hour cache time
+    refetchInterval: 30 * 1000, // Background refresh every 30 seconds
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 2,
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        const currentGroupIds = groups.map(g => g.group_id).sort().join(',');
+        const newGroupIds = data.map(g => g.group_id).sort().join(',');
+        
+        if (currentGroupIds !== newGroupIds) {
+          console.log('🔄 [TanStack] Groups updated via background refresh');
+          setGroups(data);
+          
+          // Load messages for any new groups
+          const newGroups = data.filter(newGroup => 
+            !groups.find(existingGroup => existingGroup.group_id === newGroup.group_id)
+          );
+          if (newGroups.length > 0) {
+            newGroups.forEach(group => fetchMessagesForGroup(group.group_id, group.name));
+          }
+        }
+      }
+    }
+  });
+
+  // TanStack Query for messages with persistence and background refresh
+  const { data: backgroundMessageRefresh } = useQuery({
+    queryKey: ['socialGems_messages', groups.map(g => g.group_id).join(',')],
+    queryFn: async () => {
+      if (!groups || groups.length === 0) return null;
+      
+      console.log('🔄 [TanStack] Background message refresh...');
+      
+      const refreshPromises = groups.map(async (group) => {
+        try {
+          const response = await get(`chat/getChats/${group.group_id}`);
+          
+          let messagesData = null;
+          
+          if (Array.isArray(response)) {
+            messagesData = response;
+          } else if (response?.data && Array.isArray(response.data)) {
+            messagesData = response.data;
+          } else if (response && typeof response === 'object' && response.length !== undefined) {
+            messagesData = Object.values(response);
+          }
+          
+          if (messagesData && messagesData.length > 0) {
+            const sortedMessages = messagesData.sort((a, b) => 
+              new Date(a.timestamp) - new Date(b.timestamp)
+            );
+            
+            // Check if messages have changed
+            const existingMessages = groupMessagesMap.get(group.group_id) || [];
+            const existingIds = existingMessages.map(m => m.messageId).join(',');
+            const newIds = sortedMessages.map(m => m.messageId).join(',');
+            
+            if (existingIds !== newIds) {
+              console.log(`📨 [TanStack] Messages updated for group ${group.group_id}`);
+              
+              // Update messages map
+              setGroupMessagesMap(prevMap => {
+                const newMap = new Map(prevMap);
+                newMap.set(group.group_id, sortedMessages);
+                return newMap;
+              });
+              
+              // Update last messages
+              const lastMessage = sortedMessages[sortedMessages.length - 1];
+              if (lastMessage) {
+                setLastMessages(prevMap => {
+                  const newMap = new Map(prevMap);
+                  newMap.set(group.group_id, lastMessage);
+                  return newMap;
+                });
+              }
+              
+              // Update current view if this is the selected group
+              if (selectedGroup?.group_id === group.group_id) {
+                setMessages(sortedMessages);
+                // Smart auto-scroll: only scroll if user is near bottom
+                setTimeout(() => {
+                  const container = messagesContainerRef.current;
+                  if (container) {
+                    const isNearBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 100;
+                    if (isNearBottom) {
+                      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }
+                }, 100);
+              }
+            }
+          }
+          
+          return { groupId: group.group_id, success: true };
+        } catch (error) {
+          console.error(`Background message refresh failed for group ${group.group_id}:`, error);
+          return { groupId: group.group_id, success: false };
+        }
+      });
+      
+      await Promise.allSettled(refreshPromises);
+      return Date.now();
+    },
+    enabled: !!groups && groups.length > 0 && !!userData,
+    staleTime: 10 * 1000, // 10 seconds
+    gcTime: 60 * 60 * 1000, // 1 hour cache time
+    refetchInterval: 15 * 1000, // Background refresh every 15 seconds
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 1
+  });
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -83,7 +446,6 @@ const GroupsWithWebSocket = () => {
   }, []);
 
   const addMessageToGroup = useCallback((groupId, message) => {
-    // Log only for testing message functionality
     console.log('📝 [Groups] Adding message to group:', groupId, 'MessageID:', message.messageId, 'From:', message.senderId);
     
     setGroupMessagesMap(prevMap => {
@@ -133,13 +495,15 @@ const GroupsWithWebSocket = () => {
         return newMessages;
       });
     }
-  }, [selectedGroup]);
+    
+    // Invalidate cache to trigger background refresh
+    queryClient.invalidateQueries({ queryKey: ['socialGems_messages'] });
+  }, [selectedGroup, queryClient]);
 
   useEffect(() => {
     if (!currentUser) return;
     
     const removeListener = addMessageListener((data) => {
-      // Log all WebSocket messages for testing
       console.log('📨 [Groups] WebSocket message received:', data.type, data);
       
       const messageTypes = ['SEND_MESSAGE', 'MESSAGE_RECEIVED', 'NEW_MESSAGE', 'MESSAGE'];
@@ -163,19 +527,48 @@ const GroupsWithWebSocket = () => {
       
       if (data.type === 'DELETE_MESSAGE' && data.messageId && data.conversationId) {
         const groupId = data.conversationId;
-        console.log('🗑️ [Groups] Deleting message:', data.messageId, 'from group:', groupId);
+        console.log('🗑️ [Groups] Marking message as deleted:', data.messageId, 'from group:', groupId);
         
+        // Mark message as deleted instead of removing it
         setGroupMessagesMap(prevMap => {
           const newMap = new Map(prevMap);
           const currentMessages = newMap.get(groupId) || [];
-          const filteredMessages = currentMessages.filter(msg => msg.messageId !== data.messageId);
-          newMap.set(groupId, filteredMessages);
+          const updatedMessages = currentMessages.map(msg => 
+            msg.messageId === data.messageId 
+              ? { ...msg, status: 'DELETED', deletedAt: new Date().toISOString() }
+              : msg
+          );
+          newMap.set(groupId, updatedMessages);
           return newMap;
         });
         
-        if (selectedGroup?.group_id === groupId) {
-          setMessages(prevMessages => prevMessages.filter(msg => msg.messageId !== data.messageId));
+        // Update last message to show as deleted
+        const updatedMessages = groupMessagesMap.get(groupId) || [];
+        const deletedMessage = updatedMessages.find(msg => msg.messageId === data.messageId);
+        if (deletedMessage) {
+          const updatedDeletedMessage = { ...deletedMessage, status: 'DELETED', text: 'This message was deleted' };
+          setLastMessages(prevMap => {
+            const newMap = new Map(prevMap);
+            const currentLastMessage = newMap.get(groupId);
+            if (currentLastMessage && currentLastMessage.messageId === data.messageId) {
+              newMap.set(groupId, updatedDeletedMessage);
+            }
+            return newMap;
+          });
         }
+        
+        if (selectedGroup?.group_id === groupId) {
+          setMessages(prevMessages => 
+            prevMessages.map(msg => 
+              msg.messageId === data.messageId 
+                ? { ...msg, status: 'DELETED', deletedAt: new Date().toISOString() }
+                : msg
+            )
+          );
+        }
+        
+        // Invalidate cache to sync changes
+        queryClient.invalidateQueries({ queryKey: ['socialGems_messages'] });
       }
       
       if (data.type === 'MESSAGE_EDITED' && data.message) {
@@ -193,6 +586,16 @@ const GroupsWithWebSocket = () => {
           return newMap;
         });
         
+        // Update last message if this was the last message
+        setLastMessages(prevMap => {
+          const newMap = new Map(prevMap);
+          const currentLastMessage = newMap.get(groupId);
+          if (currentLastMessage && currentLastMessage.messageId === message.messageId) {
+            newMap.set(groupId, message);
+          }
+          return newMap;
+        });
+        
         if (selectedGroup?.group_id === groupId) {
           setMessages(prevMessages => 
             prevMessages.map(msg => 
@@ -200,11 +603,14 @@ const GroupsWithWebSocket = () => {
             )
           );
         }
+        
+        // Invalidate cache to sync changes
+        queryClient.invalidateQueries({ queryKey: ['socialGems_messages'] });
       }
     });
 
     return removeListener;
-  }, [addMessageListener, currentUser, selectedGroup, groups, addMessageToGroup]);
+  }, [addMessageListener, currentUser, selectedGroup, groups, addMessageToGroup, groupMessagesMap, queryClient]);
 
   const fetchUserProfile = async () => {
     try {
@@ -224,27 +630,9 @@ const GroupsWithWebSocket = () => {
     }
   };
 
-  const fetchGroups = async () => {
-    try {
-      const response = await get('groups/myGroups');
-      
-      if (response?.data && Array.isArray(response.data)) {
-        setGroups(response.data);
-        return response.data;
-      } else {
-        setGroups([]);
-        return [];
-      }
-    } catch (error) {
-      toast.error('Failed to fetch groups');
-      setGroups([]);
-      return [];
-    }
-  };
-
   const fetchMessagesForGroup = async (groupId, groupName = 'Unknown') => {
     try {
-      setMessagesLoading(true);
+      setLoadingGroupMessages(prev => new Set(prev).add(groupId));
       
       const response = await get(`chat/getChats/${groupId}`);
       
@@ -288,9 +676,45 @@ const GroupsWithWebSocket = () => {
         return [];
       }
     } catch (error) {
+      console.error(`Failed to fetch messages for group ${groupId}:`, error);
       return [];
     } finally {
-      setMessagesLoading(false);
+      setLoadingGroupMessages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(groupId);
+        return newSet;
+      });
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const response = await get('groups/myGroups');
+      
+      if (response?.data && Array.isArray(response.data)) {
+        setGroups(response.data);
+        
+        // Load messages for all groups immediately
+        const groupsData = response.data;
+        console.log('📂 [Groups] Loading messages for all groups immediately...');
+        
+        // Fetch messages for all groups in parallel
+        const messagePromises = groupsData.map(group => 
+          fetchMessagesForGroup(group.group_id, group.name)
+        );
+        
+        await Promise.allSettled(messagePromises);
+        console.log('✅ [Groups] All group messages loaded');
+        
+        return groupsData;
+      } else {
+        setGroups([]);
+        return [];
+      }
+    } catch (error) {
+      toast.error('Failed to fetch groups');
+      setGroups([]);
+      return [];
     }
   };
 
@@ -298,16 +722,8 @@ const GroupsWithWebSocket = () => {
     setSelectedGroup(group);
     
     const existingMessages = groupMessagesMap.get(group.group_id);
-    if (existingMessages && existingMessages.length > 0) {
+    if (existingMessages && existingMessages.length >= 0) {
       setMessages(existingMessages);
-      
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-      }, 100);
-    } else {
-      setMessages([]);
-      const groupMessages = await fetchMessagesForGroup(group.group_id, group.name);
-      setMessages(groupMessages);
       
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
@@ -327,12 +743,62 @@ const GroupsWithWebSocket = () => {
     setShowGroupInfo(false);
   };
 
+  // Close chat functionality
+  const handleCloseChat = () => {
+    setSelectedGroup(null);
+    setMessages([]);
+    setShowGroupInfo(false);
+    if (isMobile) {
+      setShowChatList(true);
+    }
+  };
+
+  // Remove deleted message forever
+  const handleRemoveDeletedMessage = (messageId) => {
+    setHiddenDeletedMessages(prev => new Set(prev).add(messageId));
+    
+    // Remove from current messages view
+    if (selectedGroup) {
+      setMessages(prevMessages => prevMessages.filter(msg => msg.messageId !== messageId));
+      
+      // Remove from group messages map
+      setGroupMessagesMap(prevMap => {
+        const newMap = new Map(prevMap);
+        const currentMessages = newMap.get(selectedGroup.group_id) || [];
+        const filteredMessages = currentMessages.filter(msg => msg.messageId !== messageId);
+        newMap.set(selectedGroup.group_id, filteredMessages);
+        return newMap;
+      });
+      
+      // Update last message if this was the last message
+      const remainingMessages = groupMessagesMap.get(selectedGroup.group_id)?.filter(msg => msg.messageId !== messageId) || [];
+      if (remainingMessages.length > 0) {
+        const newLastMessage = remainingMessages[remainingMessages.length - 1];
+        setLastMessages(prevMap => {
+          const newMap = new Map(prevMap);
+          newMap.set(selectedGroup.group_id, newLastMessage);
+          return newMap;
+        });
+      } else {
+        setLastMessages(prevMap => {
+          const newMap = new Map(prevMap);
+          newMap.delete(selectedGroup.group_id);
+          return newMap;
+        });
+      }
+    }
+  };
+
   const handleGroupUpdated = () => {
     fetchGroups();
+    // Invalidate TanStack queries to refresh background data
+    queryClient.invalidateQueries({ queryKey: ['socialGems_groups'] });
   };
 
   const handleGroupDeleted = () => {
     fetchGroups();
+    // Invalidate TanStack queries to refresh background data
+    queryClient.invalidateQueries({ queryKey: ['socialGems_groups'] });
     setSelectedGroup(null);
     setMessages([]);
     if (isMobile) {
@@ -368,12 +834,16 @@ const GroupsWithWebSocket = () => {
 
   const handleMessageContextMenu = (e, message) => {
     e.preventDefault();
-    const rect = e.currentTarget.getBoundingClientRect();
+    
+    // Don't show context menu for deleted messages
+    if (message.status === 'DELETED') return;
+    
+    const rect = e.currentTarget?.getBoundingClientRect();
     setContextMenu({
       isOpen: true,
       position: {
-        x: e.clientX || rect.left + rect.width / 2,
-        y: e.clientY || rect.top
+        x: e.clientX || (rect ? rect.left + rect.width / 2 : 0),
+        y: e.clientY || (rect ? rect.top : 0)
       },
       message
     });
@@ -382,26 +852,83 @@ const GroupsWithWebSocket = () => {
   const handleEditMessage = (message) => {
     setEditingMessage(message);
     setNewMessage(message.text);
+    setContextMenu({ ...contextMenu, isOpen: false });
   };
 
-  const handleDeleteMessage = (message) => {
+  const handleDeleteMessage = async (message) => {
     if (window.confirm('Are you sure you want to delete this message?')) {
-      sendMessage({
-        type: 'DELETE_MESSAGE',
-        messageId: message.messageId,
-        conversationId: selectedGroup.group_id,
-        fromUserId: currentUser?.id
-      });
+      try {
+        // Call the delete API endpoint
+        const response = await get(`chat/deleteMessage/${message.messageId}`, {
+          body: JSON.stringify({
+            conversationId: selectedGroup.group_id,
+            text: message.text,
+            receiverId: selectedGroup.group_id,
+            media: message.media
+          }),
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Mark message as deleted locally for better UX
+        setMessages(prevMessages => 
+          prevMessages.map(msg => 
+            msg.messageId === message.messageId 
+              ? { ...msg, status: 'DELETED', deletedAt: new Date().toISOString() }
+              : msg
+          )
+        );
+        
+        setGroupMessagesMap(prevMap => {
+          const newMap = new Map(prevMap);
+          const currentMessages = newMap.get(selectedGroup.group_id) || [];
+          const updatedMessages = currentMessages.map(msg => 
+            msg.messageId === message.messageId 
+              ? { ...msg, status: 'DELETED', deletedAt: new Date().toISOString() }
+              : msg
+          );
+          newMap.set(selectedGroup.group_id, updatedMessages);
+          return newMap;
+        });
+
+        // Update last message if this was the last message
+        setLastMessages(prevMap => {
+          const newMap = new Map(prevMap);
+          const currentLastMessage = newMap.get(selectedGroup.group_id);
+          if (currentLastMessage && currentLastMessage.messageId === message.messageId) {
+            newMap.set(selectedGroup.group_id, { ...message, status: 'DELETED', text: 'This message was deleted' });
+          }
+          return newMap;
+        });
+
+        // Broadcast delete via WebSocket
+        sendMessage({
+          type: 'DELETE_MESSAGE',
+          messageId: message.messageId,
+          conversationId: selectedGroup.group_id,
+          fromUserId: currentUser?.id
+        });
+
+        toast.success('Message deleted successfully');
+        
+      } catch (error) {
+        console.error('Failed to delete message:', error);
+        toast.error('Failed to delete message');
+      }
     }
+    setContextMenu({ ...contextMenu, isOpen: false });
   };
 
   const handleCopyMessage = (text) => {
     navigator.clipboard.writeText(text);
     toast.success('Message copied to clipboard');
+    setContextMenu({ ...contextMenu, isOpen: false });
   };
 
   const handleReplyMessage = (message) => {
     setNewMessage(`@${message.senderUserName} `);
+    setContextMenu({ ...contextMenu, isOpen: false });
   };
 
   const handleFileSelect = () => {
@@ -492,6 +1019,77 @@ const GroupsWithWebSocket = () => {
     }
 
     const conversationId = selectedGroup.group_id;
+    const isEditMode = editingMessage !== null;
+    
+    // Handle edit message with correct payload structure
+    if (isEditMode) {
+      try {
+        const editPayload = {
+          messageId: editingMessage.messageId,
+          newContent: newMessage,
+          userId: currentUser?.id,
+          conversationId: conversationId,
+          receiverId: selectedGroup.group_id,
+          media: editingMessage.media
+        };
+
+        console.log('📤 [Groups] Editing message with payload:', editPayload);
+        
+        const response = await post(`chat/editMessage/${editingMessage.messageId}`, editPayload);
+
+        // Update the message in local state
+        const updatedMessage = {
+          ...editingMessage,
+          text: newMessage,
+          timestamp: new Date().toISOString()
+        };
+
+        setMessages(prevMessages => 
+          prevMessages.map(msg => 
+            msg.messageId === editingMessage.messageId ? updatedMessage : msg
+          )
+        );
+        
+        setGroupMessagesMap(prevMap => {
+          const newMap = new Map(prevMap);
+          const currentMessages = newMap.get(conversationId) || [];
+          const updatedMessages = currentMessages.map(msg => 
+            msg.messageId === editingMessage.messageId ? updatedMessage : msg
+          );
+          newMap.set(conversationId, updatedMessages);
+          return newMap;
+        });
+
+        // Update last message if this was the last message
+        setLastMessages(prevMap => {
+          const newMap = new Map(prevMap);
+          const currentLastMessage = newMap.get(conversationId);
+          if (currentLastMessage && currentLastMessage.messageId === editingMessage.messageId) {
+            newMap.set(conversationId, updatedMessage);
+          }
+          return newMap;
+        });
+
+        // Broadcast edit via WebSocket
+        sendMessage({
+          type: 'MESSAGE_EDITED',
+          message: updatedMessage,
+          fromUserId: currentUser?.id,
+          conversationId: conversationId
+        });
+
+        setNewMessage('');
+        setEditingMessage(null);
+        toast.success('Message updated successfully');
+        
+      } catch (error) {
+        console.error('Failed to edit message:', error);
+        toast.error('Failed to edit message');
+      }
+      return;
+    }
+
+    // Handle new message
     const tempId = `temp_${Date.now()}_${Math.random()}`;
     
     let mediaData = null;
@@ -522,7 +1120,6 @@ const GroupsWithWebSocket = () => {
     const messageText = newMessage;
     setNewMessage('');
     removeSelectedFile();
-    setEditingMessage(null);
 
     if (isTyping) {
       setIsTyping(false);
@@ -599,12 +1196,28 @@ const GroupsWithWebSocket = () => {
     }
   };
 
-  const filteredGroups = groups.filter(group =>
+  // Sort groups by most recent message
+  const sortedGroups = [...groups].sort((a, b) => {
+    const lastMessageA = lastMessages.get(a.group_id);
+    const lastMessageB = lastMessages.get(b.group_id);
+    
+    if (!lastMessageA && !lastMessageB) return 0;
+    if (!lastMessageA) return 1;
+    if (!lastMessageB) return -1;
+    
+    return new Date(lastMessageB.timestamp) - new Date(lastMessageA.timestamp);
+  });
+
+  const filteredGroups = sortedGroups.filter(group =>
     group.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getLastMessage = (groupId) => {
-    return lastMessages.get(groupId) || null;
+    const lastMsg = lastMessages.get(groupId);
+    if (lastMsg && lastMsg.status === 'DELETED') {
+      return { ...lastMsg, text: 'This message was deleted' };
+    }
+    return lastMsg || null;
   };
 
   const getTypingIndicator = (groupId) => {
@@ -634,6 +1247,11 @@ const GroupsWithWebSocket = () => {
     const typingIndicator = getTypingIndicator(selectedGroup?.group_id);
 
     messages.forEach((message, index) => {
+      // Skip hidden deleted messages
+      if (message.status === 'DELETED' && hiddenDeletedMessages.has(message.messageId)) {
+        return;
+      }
+
       const previousMessage = index > 0 ? messages[index - 1] : null;
       const isOwn = message.senderId === currentUser?.id;
       
@@ -647,18 +1265,34 @@ const GroupsWithWebSocket = () => {
       const showAvatar = !shouldGroup;
       const showSenderName = !isOwn && !shouldGroup;
 
-      renderedMessages.push(
-        <div key={message.messageId} data-message-id={message.messageId}>
-          <ChatMessage
-            message={message}
-            isOwn={isOwn}
-            showAvatar={showAvatar}
-            showSenderName={showSenderName}
-            currentUser={currentUser}
-            onContextMenu={handleMessageContextMenu}
-          />
-        </div>
-      );
+      // Render deleted message or regular message based on status
+      if (message.status === 'DELETED') {
+        renderedMessages.push(
+          <div key={message.messageId} data-message-id={message.messageId}>
+            <DeletedMessage
+              message={message}
+              isOwn={isOwn}
+              showAvatar={showAvatar}
+              showSenderName={showSenderName}
+              currentUser={currentUser}
+              onRemoveDeleted={handleRemoveDeletedMessage}
+            />
+          </div>
+        );
+      } else {
+        renderedMessages.push(
+          <div key={message.messageId} data-message-id={message.messageId}>
+            <ChatMessage
+              message={message}
+              isOwn={isOwn}
+              showAvatar={showAvatar}
+              showSenderName={showSenderName}
+              currentUser={currentUser}
+              onContextMenu={handleMessageContextMenu}
+            />
+          </div>
+        );
+      }
     });
 
     if (typingIndicator) {
@@ -704,7 +1338,20 @@ const GroupsWithWebSocket = () => {
     initializeApp();
   }, []);
 
-  if (loading) {
+  // Restore messages for selected group after data loads
+  useEffect(() => {
+    if (selectedGroup && groupMessagesMap.has(selectedGroup.group_id)) {
+      const existingMessages = groupMessagesMap.get(selectedGroup.group_id) || [];
+      setMessages(existingMessages);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      }, 100);
+    }
+  }, [selectedGroup, groupMessagesMap]);
+
+  const isLoading = loading || !userData;
+
+  if (isLoading) {
     return (
       <div className="h-[calc(100vh-112px)] flex bg-primary-scale-50 border-2 border-primary/20 rounded-2xl">
         <div className="flex-1 flex items-center justify-center">
@@ -712,7 +1359,7 @@ const GroupsWithWebSocket = () => {
             <div className="w-16 h-16 bg-primary/20 rounded-full animate-pulse mx-auto mb-4"></div>
             <div className="h-6 bg-primary/20 rounded w-48 animate-pulse mb-2 mx-auto"></div>
             <div className="h-4 bg-primary/20 rounded w-32 animate-pulse mx-auto mb-4"></div>
-            <p className="text-xs text-secondary/60">Loading groups...</p>
+            <p className="text-xs text-secondary/60">Loading groups and messages...</p>
           </div>
         </div>
       </div>
@@ -767,7 +1414,7 @@ const GroupsWithWebSocket = () => {
                 isActive={selectedGroup?.group_id === group.group_id}
                 onClick={handleGroupSelect}
                 lastMessage={getLastMessage(group.group_id)}
-                isLoadingMessages={false}
+                isLoadingMessages={loadingGroupMessages.has(group.group_id)}
               />
             ))
           ) : (
@@ -782,12 +1429,14 @@ const GroupsWithWebSocket = () => {
           <p className="text-xs text-secondary/60 text-center">
             {groups.length} groups • {selectedGroup ? `${messages.length} messages` : 'Select a group to chat'}
           </p>
-          {isConnected && (
+
+          {/* Web socket connection  */}
+          {/* {isConnected && (
             <div className="flex items-center justify-center gap-1 mt-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <p className="text-xs text-green-600 text-center">Real-time enabled</p>
             </div>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -836,6 +1485,13 @@ const GroupsWithWebSocket = () => {
                   className="p-2 hover:bg-secondary/10 rounded-full transition-colors"
                 >
                   <FiInfo className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={handleCloseChat}
+                  className="p-2 hover:bg-red-100 text-red-600 rounded-full transition-colors"
+                  title="Close Chat"
+                >
+                  <FiX className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -925,14 +1581,15 @@ const GroupsWithWebSocket = () => {
 
             <div className="p-4 bg-white border-t border-primary/20">
               <form onSubmit={handleSendMessage} className="flex items-end gap-3">
-                <button
+                {/* Button for file uploads  */}
+                {/* <button
                   type="button"
                   onClick={handleFileSelect}
-                  disabled={uploadingFile}
-                  className="p-3 text-secondary/60 hover:text-secondary hover:bg-secondary/10 rounded-full transition-all duration-200"
+                  disabled={uploadingFile || editingMessage}
+                  className="p-3 text-secondary/60 hover:text-secondary hover:bg-secondary/10 rounded-full transition-all duration-200 disabled:opacity-50"
                 >
                   <FiPaperclip className="w-4 h-4" />
-                </button>
+                </button> */}
 
                 <input
                   ref={fileInputRef}
@@ -948,7 +1605,9 @@ const GroupsWithWebSocket = () => {
                     value={newMessage}
                     onChange={(e) => {
                       setNewMessage(e.target.value);
-                      handleTyping();
+                      if (!editingMessage) {
+                        handleTyping();
+                      }
                     }}
                     placeholder={editingMessage ? "Edit your message..." : "Type a message..."}
                     className="w-full pl-4 pr-12 py-3 bg-white border border-primary/30 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-xs text-secondary placeholder-secondary/60"
@@ -958,16 +1617,18 @@ const GroupsWithWebSocket = () => {
                   
                   <button
                     type="submit"
-                    disabled={(!newMessage.trim() && !selectedFile) || uploadingFile}
+                    disabled={!newMessage.trim() || uploadingFile}
                     className={cn(
                       "absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full transition-all duration-200",
-                      (newMessage.trim() || selectedFile) && !uploadingFile
+                      newMessage.trim() && !uploadingFile
                         ? "bg-secondary text-white hover:shadow-lg"
                         : "bg-secondary/20 text-secondary/40 cursor-not-allowed"
                     )}
                   >
                     {uploadingFile ? (
                       <FiLoader className="w-4 h-4 animate-spin" />
+                    ) : editingMessage ? (
+                      <FiCheck className="w-4 h-4" />
                     ) : (
                       <IoSend className="w-4 h-4" />
                     )}

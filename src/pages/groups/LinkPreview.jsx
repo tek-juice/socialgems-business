@@ -9,14 +9,20 @@ const LinkPreview = ({ url }) => {
   useEffect(() => {
     const fetchPreview = async () => {
       try {
-        // Use the correct environment variable based on your framework
-        // For Next.js: process.env.NEXT_PUBLIC_LINK_PREVIEW_API_KEY
-        // For Vite: import.meta.env.VITE_LINK_PREVIEW_API_KEY
-        const apiKey = process.env.NEXT_PUBLIC_LINK_PREVIEW_API_KEY || 
-                      import.meta.env.VITE_LINK_PREVIEW_API_KEY;
+        // Use Vite environment variable
+        const apiKey = import.meta.env.VITE_LINK_PREVIEW_API_KEY;
         
         if (!apiKey) {
-          throw new Error('Link preview API key not configured');
+          // Skip API call if no key, just show simple link
+          const domain = new URL(url).hostname;
+          setPreview({
+            title: domain,
+            description: url,
+            image: null,
+            url: url
+          });
+          setLoading(false);
+          return;
         }
 
         // Validate URL
@@ -56,7 +62,6 @@ const LinkPreview = ({ url }) => {
         }
       } catch (error) {
         console.error('Failed to fetch rich link preview:', error);
-        setError(error.message);
         
         // If API fails, fallback to simple domain display
         try {
@@ -95,7 +100,7 @@ const LinkPreview = ({ url }) => {
   if (error) {
     return (
       <div className="mt-2 p-3 bg-red-50 rounded-xl border border-red-200 text-red-600 text-sm">
-        <p>Couldn't load preview: {error}</p>
+        <p>Couldn't load preview</p>
         <a 
           href={url} 
           target="_blank" 
