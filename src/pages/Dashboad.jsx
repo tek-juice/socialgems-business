@@ -25,7 +25,8 @@ import {
   FiEdit,
   FiTrash2,
   FiGrid,
-  FiMapPin
+  FiMapPin,
+  FiInfo
 } from 'react-icons/fi';
 import { LineChart, Line, AreaChart, Area, Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
 import { get } from '../utils/service';
@@ -37,6 +38,60 @@ import { format } from 'date-fns';
 function cn(...classes) {
   return classes.filter(Boolean).join(' ')
 }
+
+// ============= CAMPAIGN DESCRIPTION COMPONENT =============
+const CampaignDescription = ({ description, wordLimit = 20, className = "" }) => {
+  const [expanded, setExpanded] = useState(false);
+  
+  // Function to extract first N words from HTML content
+  const getPreview = (html, wordLimit) => {
+    if (!html) return { text: 'No description available', isTruncated: false };
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    const text = tempDiv.textContent || tempDiv.innerText || '';
+    const words = text.trim().split(/\s+/);
+    const isTruncated = words.length > wordLimit;
+    const preview = words.slice(0, wordLimit).join(' ');
+    return {
+      text: preview + (isTruncated ? '...' : ''),
+      isTruncated
+    };
+  };
+
+  const preview = getPreview(description, wordLimit);
+
+  return (
+    <div className={className}>
+      {!expanded ? (
+        <p className="text-gray-600 text-xs mb-3 line-clamp-2">
+          {preview.text}{' '}
+          {preview.isTruncated && (
+            <button
+              onClick={() => setExpanded(true)}
+              className="text-secondary text-xs font-bold hover:underline"
+            >
+              Read More
+            </button>
+          )}
+        </p>
+      ) : (
+        <div>
+          <div
+            className="text-gray-600 text-xs mb-3 leading-relaxed prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: description }}
+          />
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-secondary text-xs font-bold hover:underline"
+          >
+            Read Less
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ============= SKELETON COMPONENTS =============
 const SkeletonLine = ({ className }) => (
@@ -95,9 +150,10 @@ const CampaignCard = ({ campaign, onClick }) => {
         </span>
       </div>
       
-      <p className="text-gray-600 text-xs mb-3 line-clamp-2">
-        {campaign.description || 'No description available'}
-      </p>
+      <CampaignDescription 
+        description={campaign.description} 
+        wordLimit={15}
+      />
       
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1">
@@ -148,13 +204,17 @@ const CampaignTable = ({ campaigns, onCampaignClick }) => {
                       <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-[#E8C547] flex items-center justify-center flex-shrink-0">
                         <FiBriefcase className="w-3 h-3 text-secondary" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 text-sm">
                           {truncateText(campaign.title || 'Untitled Campaign', 25)}
                         </p>
-                        <p className="text-gray-500 text-xs">
-                          {truncateText(campaign.description || 'No description', 35)}
-                        </p>
+                        <div className="max-w-xs">
+                          <CampaignDescription 
+                            description={campaign.description} 
+                            wordLimit={8}
+                            className="mt-1"
+                          />
+                        </div>
                       </div>
                     </div>
                   </td>

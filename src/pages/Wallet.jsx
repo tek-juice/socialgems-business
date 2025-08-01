@@ -41,8 +41,6 @@ import { FaCheckCircle, FaHourglassHalf, FaTimesCircle } from "react-icons/fa";
 
 import { MdAccessTimeFilled, MdError } from "react-icons/md";
 
-
-
 // Custom utility function
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -65,6 +63,60 @@ const SkeletonCircle = ({ className }) => (
 
 const SkeletonButton = ({ className }) => (
   <div className={cn("bg-gray-200 rounded-lg animate-pulse", className)} />
+);
+
+// Table Components
+const Table = ({ className, children, ...props }) => (
+  <div className="relative w-full overflow-auto">
+    <table className={cn("w-full caption-bottom text-sm", className)} {...props}>
+      {children}
+    </table>
+  </div>
+);
+
+const TableHeader = ({ className, children, ...props }) => (
+  <thead className={cn(className)} {...props}>
+    {children}
+  </thead>
+);
+
+const TableBody = ({ className, children, ...props }) => (
+  <tbody className={cn("[&_tr:last-child]:border-0", className)} {...props}>
+    {children}
+  </tbody>
+);
+
+const TableRow = ({ className, children, ...props }) => (
+  <tr
+    className={cn(
+      "border-b border-gray-200 transition-colors hover:bg-gray-50 data-[state=selected]:bg-gray-50",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </tr>
+);
+
+const TableHead = ({ className, children, ...props }) => (
+  <th
+    className={cn(
+      "h-12 px-4 text-left align-middle font-medium text-gray-600 bg-gray-50",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </th>
+);
+
+const TableCell = ({ className, children, ...props }) => (
+  <td
+    className={cn("p-4 align-middle", className)}
+    {...props}
+  >
+    {children}
+  </td>
 );
 
 // Custom Components
@@ -119,7 +171,7 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
   const variants = {
     default: "bg-gray-100 text-gray-800",
     success: "bg-green-100 text-green-800",
-    warning: "bg-primary-scale-100 text-secondary",
+    warning: "bg-yellow-100 text-yellow-800",
     error: "bg-red-100 text-red-800",
     info: "bg-blue-100 text-blue-800",
     gold: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary",
@@ -412,7 +464,7 @@ const CreditCard = ({ balance, currency, walletId }) => {
   );
 };
 
-// Transaction Card Component
+// Transaction Card Component (Mobile)
 const TransactionCard = ({ transaction, onClick, isLastOdd = false }) => {
   const getTransactionIcon = (type) => {
     switch (type.toUpperCase()) {
@@ -427,34 +479,6 @@ const TransactionCard = ({ transaction, onClick, isLastOdd = false }) => {
         return <FiDollarSign className="w-5 h-5 text-gray-600" />;
     }
   };
-
-  const getTransactionTypeChip = (type) => {
-    switch (type.toUpperCase()) {
-      case "DEPOSIT":
-        return <Badge variant="success">Deposit</Badge>;
-      case "WITHDRAWAL":
-      case "WITHDRAW":
-        return <Badge variant="error">Withdrawal</Badge>;
-      case "CAMPAIGN_PAYMENT":
-        return <Badge variant="info">Campaign Payment</Badge>;
-      default:
-        return <Badge>{type}</Badge>;
-    }
-  };
-
-  // const getStatusBadge = (status) => {
-  //   switch (status.toUpperCase()) {
-  //     case "SUCCESS":
-  //       return <Badge variant="success">Success</Badge>;
-  //     case "PENDING":
-  //       return <Badge variant="warning">Pending</Badge>;
-  //     case "FAILED":
-  //     case "ERROR":
-  //       return <Badge variant="error">Failed</Badge>;
-  //     default:
-  //       return <Badge>{status}</Badge>;
-  //   }
-  // };
 
   const getStatusBadge = (status) => {
     switch (status.toUpperCase()) {
@@ -511,8 +535,6 @@ const TransactionCard = ({ transaction, onClick, isLastOdd = false }) => {
   };
 
   return (
-
-    // Cards places 
     <motion.div
       layout
       initial={{ opacity: 0, y: 20 }}
@@ -552,13 +574,127 @@ const TransactionCard = ({ transaction, onClick, isLastOdd = false }) => {
           <FiChevronRight className="w-4 h-4 text-gray-400" />
         </div>
       </div>
-      
-      {/* {transaction.narration && (
-        <div className="mt-3 pt-3 border-t border-gray-100">
-          <p className="text-xs text-gray-600 truncate">{transaction.narration}</p>
-        </div>
-      )} */}
     </motion.div>
+  );
+};
+
+// Transaction Table Row Component (Desktop)
+const TransactionTableRow = ({ transaction, onClick }) => {
+  const getTransactionIcon = (type) => {
+    switch (type.toUpperCase()) {
+      case "DEPOSIT":
+        return <FiArrowDownLeft className="w-5 h-5 text-green-600" />;
+      case "WITHDRAWAL":
+      case "WITHDRAW":
+        return <FiArrowUpRight className="w-5 h-5 text-red-600" />;
+      case "CAMPAIGN_PAYMENT":
+        return <HiArrowsRightLeft className="w-5 h-5 text-blue-600" />;
+      default:
+        return <FiDollarSign className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status.toUpperCase()) {
+      case "SUCCESS":
+        return (
+          <Badge variant="success">
+            <FaCheckCircle style={{ marginRight: 5 }} />
+            Success
+          </Badge>
+        );
+      case "PENDING":
+        return (
+          <Badge variant="warning">
+            <MdAccessTimeFilled style={{ marginRight: 5 }} />
+            Pending
+          </Badge>
+        );
+      case "FAILED":
+      case "ERROR":
+        return (
+          <Badge variant="error">
+            <MdError style={{ marginRight: 5 }} />
+            Failed
+          </Badge>
+        );
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  const getAmountColor = (type) => {
+    if (
+      type.toLowerCase().includes("deposit") ||
+      type.toLowerCase().includes("credit") ||
+      type.toLowerCase().includes("campaign")
+    ) {
+      return "text-green-600 font-semibold";
+    } else if (
+      type.toLowerCase().includes("withdrawal") ||
+      type.toLowerCase().includes("withdraw") ||
+      type.toLowerCase().includes("debit")
+    ) {
+      return "text-red-600 font-semibold";
+    }
+    return "text-gray-800 font-medium";
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
+  return (
+    <TableRow 
+      className="cursor-pointer hover:bg-gray-50" 
+      onClick={() => onClick(transaction)}
+    >
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+            {getTransactionIcon(transaction.trans_type)}
+          </div>
+          <div>
+            <div className="font-medium text-sm">
+              {transaction.trans_type === "CAMPAIGN_PAYMENT" ? "Campaign Payment" : 
+               transaction.trans_type === "DEPOSIT" ? "Deposit" : 
+               transaction.trans_type === "WITHDRAWAL" ? "Withdrawal" : 
+               transaction.trans_type}
+            </div>
+            <div className="text-xs text-gray-500">ID: {transaction.trans_id}</div>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="text-sm text-gray-900">{formatDate(transaction.created_on)}</div>
+      </TableCell>
+      <TableCell>
+        <div className={`text-sm ${getAmountColor(transaction.trans_type)}`}>
+          {transaction.currency} {Number(transaction.amount).toFixed(2)}
+        </div>
+      </TableCell>
+      <TableCell>
+        {getStatusBadge(transaction.status)}
+      </TableCell>
+      <TableCell>
+        {transaction.narration && (
+          <div className="text-sm text-gray-600 max-w-xs truncate">
+            {transaction.narration}
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <FiMoreHorizontal className="w-4 h-4" />
+        </Button>
+      </TableCell>
+    </TableRow>
   );
 };
 
@@ -671,7 +807,6 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
                   <div className="text-lg font-bold text-gray-900">
                     {transaction.currency} {Number(transaction.amount).toFixed(2)}
                   </div>
-                  {/* {getStatusBadge(transaction.status)} */}
                 </div>
               </div>
 
@@ -857,36 +992,6 @@ const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
         </form>
       </motion.div>
     </div>
-  );
-};
-
-// Animated Counter Component
-const AnimatedCounter = ({ value, prefix = '', suffix = '' }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const increment = value / 50;
-      const interval = setInterval(() => {
-        setDisplayValue(prev => {
-          const next = prev + increment;
-          if (next >= value) {
-            clearInterval(interval);
-            return value;
-          }
-          return next;
-        });
-      }, 30);
-      return () => clearInterval(interval);
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [value]);
-
-  return (
-    <span>
-      {prefix}{Math.floor(displayValue).toLocaleString()}{suffix}
-    </span>
   );
 };
 
@@ -1077,11 +1182,8 @@ export default function WalletPage() {
     const all = transactions.length;
     const success = transactions.filter(t => t.status.toUpperCase() === 'SUCCESS').length;
     const pending = transactions.filter(t => t.status.toUpperCase() === 'PENDING').length;
-    // const failed = transactions.filter(t => t.status.toUpperCase() === 'FAILED').length;
     
     return { all, success, pending };
-
-    // return { all, success, pending, failed };
   };
 
   const tabCounts = getTabCounts();
@@ -1090,7 +1192,6 @@ export default function WalletPage() {
     { label: `All ${tabCounts.all}`, value: "all" },
     { label: `Success ${tabCounts.success}`, value: "success" },
     { label: `Pending ${tabCounts.pending}`, value: "pending" },
-    // { label: `Failed ${tabCounts.failed}`, value: "failed" }
   ];
 
   // Filter transactions
@@ -1156,10 +1257,6 @@ export default function WalletPage() {
               <div className="flex gap-2 flex-col">
                 <SkeletonLine className="h-10 w-64" />
                 <SkeletonLine className="h-5 w-96" />
-              </div>
-              <div className="flex items-center gap-3">
-                <SkeletonButton className="h-12 w-32" />
-                <SkeletonButton className="h-12 w-28" />
               </div>
             </motion.div>
 
@@ -1278,76 +1375,11 @@ export default function WalletPage() {
                 Manage your balance and transactions seamlessly with real-time insights.
               </p>
             </div>
-            {/* <div className="flex items-center gap-3">
-              <motion.button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300 shadow-sm ${refreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <motion.div
-                  animate={refreshing ? { rotate: 360 } : { rotate: 0 }}
-                  transition={{
-                    duration: 1,
-                    repeat: refreshing ? Infinity : 0,
-                    ease: "linear",
-                  }}
-                >
-                  <FiRefreshCw className="w-4 h-4" />
-                </motion.div>
-                {refreshing ? "Refreshing..." : "Refresh Data"}
-              </motion.button>
-              <motion.button
-                onClick={() => setShowAddFunds(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-[#E8C547] text-secondary rounded-xl hover:from-[#E8C547] hover:to-primary transition-all duration-300 font-medium shadow-lg"
-              >
-                <FiPlus className="w-4 h-4" />
-                Add Funds
-              </motion.button>
-            </div> */}
           </div>
 
           {/* Grid Layout */}
           <div className="grid grid-cols-1 gap-6">
             {/* Wallet Card */}
-            {/* <div>
-              <motion.div 
-                whileHover={{ y: -5 }}
-                className="bg-white rounded-2xl p-6 shadow-lg border border-gray-200"
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <FiCreditCard className="w-6 h-6 text-secondary" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Your Card</h3>
-                      <p className="text-sm text-gray-600">Digital wallet card</p>
-                    </div>
-                  </div>
-                </div>
-
-                <CreditCard
-                  balance={
-                    walletData ? formatBalance(walletData.balance) : "0.00"
-                  }
-                  currency={walletData?.asset || "USD"}
-                  walletId={walletData?.wallet_id}
-                />
-
-                <div className="mt-6">
-                  <Button
-                    onClick={() => setShowAddFunds(true)}
-                    className="w-full"
-                  >
-                    <FiPlus className="w-4 h-4 mr-2" />
-                    Add Funds
-                  </Button>
-                </div>
-              </motion.div>
-            </div> */}
-
             <div>
               <motion.div 
                 whileHover={{ y: -5 }}
@@ -1464,46 +1496,102 @@ export default function WalletPage() {
             </div>
           </div>
 
-          {/* Transaction Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {currentItems.length ? (
-              <AnimatePresence mode="wait">
-                {currentItems.map((transaction, index) => {
-                  const isLastOdd = currentItems.length % 2 !== 0 && index === currentItems.length - 1;
-                  return (
-                    <TransactionCard
-                      key={transaction.trans_id}
-                      transaction={transaction}
-                      onClick={handleTransactionClick}
-                      isLastOdd={isLastOdd}
-                    />
-                  );
-                })}
-              </AnimatePresence>
-            ) : (
-              <div className="col-span-full text-center py-12">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
-                    <FiCreditCard className="w-8 h-8 text-secondary" />
+          {/* Desktop Table View (Hidden on Mobile) */}
+          <div className="hidden md:block">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Transaction</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {currentItems.length ? (
+                    currentItems.map((transaction) => (
+                      <TransactionTableRow
+                        key={transaction.trans_id}
+                        transaction={transaction}
+                        onClick={handleTransactionClick}
+                      />
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12">
+                        <div className="flex flex-col items-center justify-center space-y-4">
+                          <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
+                            <FiCreditCard className="w-8 h-8 text-secondary" />
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-semibold text-secondary">
+                              No Transactions Available
+                            </h3>
+                            <p className="text-sm text-gray-600 max-w-md">
+                              Your transaction history is empty. Add funds to your wallet to get started with transactions.
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={() => setShowAddFunds(true)}
+                            className="mt-4"
+                          >
+                            <FiPlus className="w-4 h-4 mr-2" />
+                            Add Funds
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View (Hidden on Desktop) */}
+          <div className="md:hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {currentItems.length ? (
+                <AnimatePresence mode="wait">
+                  {currentItems.map((transaction, index) => {
+                    const isLastOdd = currentItems.length % 2 !== 0 && index === currentItems.length - 1;
+                    return (
+                      <TransactionCard
+                        key={transaction.trans_id}
+                        transaction={transaction}
+                        onClick={handleTransactionClick}
+                        isLastOdd={isLastOdd}
+                      />
+                    );
+                  })}
+                </AnimatePresence>
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
+                      <FiCreditCard className="w-8 h-8 text-secondary" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-secondary">
+                        No Transactions Available
+                      </h3>
+                      <p className="text-sm text-gray-600 max-w-md">
+                        Your transaction history is empty. Add funds to your wallet to get started with transactions.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => setShowAddFunds(true)}
+                      className="mt-4"
+                    >
+                      <FiPlus className="w-4 h-4 mr-2" />
+                      Add Funds
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-semibold text-secondary">
-                      No Transactions Available
-                    </h3>
-                    <p className="text-sm text-gray-600 max-w-md">
-                      Your transaction history is empty. Add funds to your wallet to get started with transactions.
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setShowAddFunds(true)}
-                    className="mt-4"
-                  >
-                    <FiPlus className="w-4 h-4 mr-2" />
-                    Add Funds
-                  </Button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Pagination */}

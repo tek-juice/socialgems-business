@@ -20,7 +20,7 @@ import {
   FiTrash2
 } from 'react-icons/fi';
 import { IoSend, IoChatbubblesSharp } from "react-icons/io5";
-import { get, post, upload } from '../utils/service';
+import { get, patch, post, upload } from '../utils/service';
 import { toast } from 'sonner';
 import { cn } from '../lib/utils';
 
@@ -1035,7 +1035,7 @@ const GroupsWithWebSocket = () => {
 
         console.log('📤 [Groups] Editing message with payload:', editPayload);
         
-        const response = await post(`chat/editMessage/${editingMessage.messageId}`, editPayload);
+        const response = await patch(`chat/editMessage`, editPayload);
 
         // Update the message in local state
         const updatedMessage = {

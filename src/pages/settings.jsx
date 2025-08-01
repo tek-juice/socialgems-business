@@ -755,6 +755,18 @@ export default function SettingsPage() {
     fetchUserProfile();
   }, []);
 
+  // Auto-populate business form data when userData changes
+  useEffect(() => {
+    if (userData) {
+      setBusinessFormData(prev => ({
+        ...prev,
+        business_name: userData?.first_name || userData?.firstName || '',
+        business_email: userData?.email || '',
+        business_phone: userData?.phone || ''
+      }));
+    }
+  }, [userData]);
+
   const handleSaveProfile = async (formData, bioValue) => {
     setProfileLoading(true);
     try {
@@ -954,15 +966,9 @@ export default function SettingsPage() {
         </div>
         
         {/* Grid Skeletons */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <SkeletonLoader className="h-64 w-full" />
-            <SkeletonLoader className="h-48 w-full" />
-          </div>
-          <div className="space-y-6">
-            <SkeletonLoader className="h-48 w-full" />
-            <SkeletonLoader className="h-32 w-full" />
-          </div>
+        <div className="space-y-6">
+          <SkeletonLoader className="h-64 w-full" />
+          <SkeletonLoader className="h-48 w-full" />
         </div>
       </div>
     );
@@ -988,7 +994,6 @@ export default function SettingsPage() {
             <h1 className="text-2xl font-bold text-gray-900">
               {userData?.first_name || userData?.firstName || 'User'} {userData?.last_name || userData?.lastName || ''}
             </h1>
-            {/* <Badge variant="gold">{userData?.level_name || 'Member'}</Badge> */}
             {userData?.email_verified === "yes" && (
               <RiVerifiedBadgeFill className="w-5 h-5 text-green-500" />
             )}
@@ -999,21 +1004,17 @@ export default function SettingsPage() {
             {userData?.bio || 'No bio available'}
           </p>
           
-          <div className="flex items-center gap-6">
+          {/* <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <WalletIcon className="w-4 h-4 text-gray-500" />
               <span className="text-xs font-semibold text-gray-900">{userData?.wallet?.balance || '0'}</span>
               <span className="text-xs text-gray-500">GEMS</span>
             </div>
             <div className="flex items-center gap-2">
-              <CrownIcon className="w-4 h-4 text-gray-500" />
-              <span className="text-xs font-semibold text-gray-900">Level {userData?.level_id || '1'}</span>
-            </div>
-            <div className="flex items-center gap-2">
               <UserIcon className="w-4 h-4 text-gray-500" />
               <span className="text-xs text-gray-500 capitalize">{userData?.user_type || 'User'}</span>
             </div>
-          </div>
+          </div> */}
         </div>
         
         <Button onClick={() => setIsProfileEditOpen(true)} className="shrink-0 font-semibold">
@@ -1022,321 +1023,197 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Account Verification */}
+      <div className="space-y-8">
+        {/* Account Verification */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <ShieldIcon className="w-5 h-5 text-gray-700" />
+            <h2 className="text-lg font-semibold text-gray-900">Account Verification</h2>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Email Verification */}
+            <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-4">
+                <MailIcon className="w-5 h-5 text-gray-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Email Address</p>
+                  <p className="text-xs text-gray-600">{userData?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {userData?.email_verified === "yes" ? (
+                  <>
+                    <CheckIcon className="w-4 h-4 text-green-600" />
+                    <Badge variant="success">Verified</Badge>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {!emailOtpSent ? (
+                      <Button size="sm" onClick={handleSendEmailOtp} disabled={verificationLoading}>
+                        Send OTP
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter OTP"
+                          value={emailOtp}
+                          onChange={(e) => setEmailOtp(e.target.value)}
+                          className="w-20 h-8"
+                        />
+                        <Button size="sm" onClick={handleVerifyEmailOtp} disabled={verificationLoading || !emailOtp}>
+                          Verify
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Phone Verification */}
+            <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-4">
+                <PhoneIcon className="w-5 h-5 text-gray-600" />
+                <div>
+                  <p className="text-xs font-medium text-gray-900">Phone Number</p>
+                  <p className="text-xs text-gray-600">{userData?.phone}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {userData?.phone_verified === "yes" ? (
+                  <>
+                    <CheckIcon className="w-4 h-4 text-green-600" />
+                    <Badge variant="success">Verified</Badge>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {!phoneOtpSent ? (
+                      <Button size="sm" onClick={handleSendPhoneOtp} disabled={verificationLoading}>
+                        Send OTP
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter OTP"
+                          value={phoneOtp}
+                          onChange={(e) => setPhoneOtp(e.target.value)}
+                          className="w-20 h-8"
+                        />
+                        <Button size="sm" onClick={handleVerifyPhoneOtp} disabled={verificationLoading || !phoneOtp}>
+                          Verify
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Business Verification - Only show for brand users */}
+        {userData?.user_type === "brand" && (
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <ShieldIcon className="w-5 h-5 text-gray-700" />
-              <h2 className="text-lg font-semibold text-gray-900">Account Verification</h2>
+              <BriefcaseIcon className="w-5 h-5 text-gray-700" />
+              <h2 className="text-lg font-semibold text-gray-900">Business Verification</h2>
             </div>
-            
-            <div className="space-y-4">
-              {/* Email Verification */}
-              <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <MailIcon className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-xs font-medium text-gray-900">Email Address</p>
-                    <p className="text-xs text-gray-600">{userData?.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {userData?.email_verified === "yes" ? (
-                    <>
-                      <CheckIcon className="w-4 h-4 text-green-600" />
-                      <Badge variant="success">Verified</Badge>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {!emailOtpSent ? (
-                        <Button size="sm" onClick={handleSendEmailOtp} disabled={verificationLoading}>
-                          Send OTP
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter OTP"
-                            value={emailOtp}
-                            onChange={(e) => setEmailOtp(e.target.value)}
-                            className="w-20 h-8"
-                          />
-                          <Button size="sm" onClick={handleVerifyEmailOtp} disabled={verificationLoading || !emailOtp}>
-                            Verify
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* Phone Verification */}
-              <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-4">
-                  <PhoneIcon className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-xs font-medium text-gray-900">Phone Number</p>
-                    <p className="text-xs text-gray-600">{userData?.phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {userData?.phone_verified === "yes" ? (
-                    <>
-                      <CheckIcon className="w-4 h-4 text-green-600" />
-                      <Badge variant="success">Verified</Badge>
-                    </>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      {!phoneOtpSent ? (
-                        <Button size="sm" onClick={handleSendPhoneOtp} disabled={verificationLoading}>
-                          Send OTP
-                        </Button>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Input
-                            placeholder="Enter OTP"
-                            value={phoneOtp}
-                            onChange={(e) => setPhoneOtp(e.target.value)}
-                            className="w-20 h-8"
-                          />
-                          <Button size="sm" onClick={handleVerifyPhoneOtp} disabled={verificationLoading || !phoneOtp}>
-                            Verify
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Account Level */}
-              <div className="py-4 px-5 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <CrownIcon className="w-5 h-5 text-secondary" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">Account Level</p>
-                      <p className="text-xs text-gray-600">Level {userData?.level_id || 1} - Enhanced features unlocked</p>
-                    </div>
-                  </div>
-                  <Badge variant="gold">{userData?.level_name || 'Member'}</Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Business Verification - Only show for brand users */}
-          {userData?.user_type === "brand" && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <BriefcaseIcon className="w-5 h-5 text-gray-700" />
-                <h2 className="text-lg font-semibold text-gray-900">Business Verification</h2>
-              </div>
-
-              <div className={`p-5 ${businessStatus.bgColor} rounded-lg border border-gray-200 mb-6`}>
-                <div className="flex items-center gap-3">
-                  <businessStatus.icon className={`w-5 h-5 ${businessStatus.color}`} />
-                  <div>
-                    <p className={`text-xs font-medium ${businessStatus.color}`}>{businessStatus.title}</p>
-                    <p className="text-xs text-gray-600">{businessStatus.description}</p>
-                  </div>
-                </div>
-              </div>
-
-              {(businessStatus.status === 'none' || businessStatus.status === 'rejected') && (
+            <div className={`p-5 ${businessStatus.bgColor} rounded-lg border border-gray-200 mb-6`}>
+              <div className="flex items-center gap-3">
+                <businessStatus.icon className={`w-5 h-5 ${businessStatus.color}`} />
                 <div>
-                  {!showBusinessForm ? (
-                    <Button onClick={() => setShowBusinessForm(true)} className='font-semibold'>
-                      {businessStatus.status === 'rejected' ? 'Resubmit Verification' : 'Start Business Verification'}
-                    </Button>
-                  ) : (
-                    <form onSubmit={handleBusinessSubmit} className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="business-name">Business Name</Label>
-                          <Input 
-                            id="business-name" 
-                            placeholder="Your Business Name"
-                            value={businessFormData.business_name}
-                            onChange={(e) => handleBusinessInputChange('business_name', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="business-email">Business Email</Label>
-                          <Input 
-                            id="business-email" 
-                            type="email" 
-                            placeholder="business@company.com"
-                            value={businessFormData.business_email}
-                            onChange={(e) => handleBusinessInputChange('business_email', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="business-website">Website (Optional)</Label>
-                          <Input 
-                            id="business-website" 
-                            placeholder="https://yourwebsite.com"
-                            value={businessFormData.business_website}
-                            onChange={(e) => handleBusinessInputChange('business_website', e.target.value)}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="business-phone">Business Phone</Label>
-                          <Input 
-                            id="business-phone" 
-                            placeholder="+256-772-123456"
-                            value={businessFormData.business_phone}
-                            onChange={(e) => handleBusinessInputChange('business_phone', e.target.value)}
-                            required
-                          />
-                        </div>
-                      </div>
+                  <p className={`text-xs font-medium ${businessStatus.color}`}>{businessStatus.title}</p>
+                  <p className="text-xs text-gray-600">{businessStatus.description}</p>
+                </div>
+              </div>
+            </div>
+
+            {(businessStatus.status === 'none' || businessStatus.status === 'rejected') && (
+              <div>
+                {!showBusinessForm ? (
+                  <Button onClick={() => setShowBusinessForm(true)} className='font-semibold'>
+                    {businessStatus.status === 'rejected' ? 'Resubmit Verification' : 'Start Business Verification'}
+                  </Button>
+                ) : (
+                  <form onSubmit={handleBusinessSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="business-address">Business Address</Label>
-                        <Textarea 
-                          id="business-address" 
-                          placeholder="Full business address"
-                          value={businessFormData.business_address}
-                          onChange={(e) => handleBusinessInputChange('business_address', e.target.value)}
+                        <Label htmlFor="business-name">Business Name</Label>
+                        <Input 
+                          id="business-name" 
+                          placeholder="Your Business Name"
+                          value={businessFormData.business_name}
+                          onChange={(e) => handleBusinessInputChange('business_name', e.target.value)}
                           required
                         />
                       </div>
                       <div>
-                        <Label htmlFor="business-description">Business Description</Label>
-                        <Textarea 
-                          id="business-description" 
-                          placeholder="Describe your business and services"
-                          value={businessFormData.business_description}
-                          onChange={(e) => handleBusinessInputChange('business_description', e.target.value)}
+                        <Label htmlFor="business-email">Business Email</Label>
+                        <Input 
+                          id="business-email" 
+                          type="email" 
+                          placeholder="business@company.com"
+                          value={businessFormData.business_email}
+                          onChange={(e) => handleBusinessInputChange('business_email', e.target.value)}
                           required
                         />
                       </div>
-                      <div className="flex gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setShowBusinessForm(false)} disabled={businessLoading}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" disabled={businessLoading}>
-                          {businessLoading ? 'Submitting...' : 'Submit for Review'}
-                        </Button>
+                      <div>
+                        <Label htmlFor="business-website">Website (Optional)</Label>
+                        <Input 
+                          id="business-website" 
+                          placeholder="https://yourwebsite.com"
+                          value={businessFormData.business_website}
+                          onChange={(e) => handleBusinessInputChange('business_website', e.target.value)}
+                        />
                       </div>
-                    </form>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <UserIcon className="w-5 h-5 text-gray-700" />
-              <h3 className="text-sm font-semibold text-gray-900">Account Overview</h3>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="py-3 px-4 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 rounded-lg border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600">Account Type</p>
-                    <p className="text-sm font-bold text-secondary capitalize">{userData?.user_type || 'User'}</p>
-                  </div>
-                  <BriefcaseIcon className="w-6 h-6 text-secondary" />
-                </div>
-              </div>
-
-              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600">Member Since</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {userData?.created_on 
-                        ? new Date(userData.created_on).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-                        : 'Unknown'
-                      }
-                    </p>
-                  </div>
-                  <ClockIcon className="w-6 h-6 text-gray-600" />
-                </div>
-              </div>
-
-              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-600">Referral Code</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-secondary">{userData?.referral_code || 'N/A'}</p>
-                      {userData?.referral_code && (
-                        <button 
-                          className="text-gray-500 hover:text-secondary transition-colors"
-                          onClick={() => {
-                            navigator.clipboard.writeText(userData.referral_code);
-                            toast.success('Referral code copied!');
-                          }}
-                        >
-                          <CopyIcon className="w-3 h-3" />
-                        </button>
-                      )}
+                      <div>
+                        <Label htmlFor="business-phone">Business Phone</Label>
+                        <Input 
+                          id="business-phone" 
+                          placeholder="+256-772-123456"
+                          value={businessFormData.business_phone}
+                          onChange={(e) => handleBusinessInputChange('business_phone', e.target.value)}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Security Settings */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <SettingsIcon className="w-5 h-5 text-gray-700" />
-              <h3 className="text-sm font-semibold text-gray-900">Security & Privacy</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div className="py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {userData?.has_pin ? (
-                      <LockIcon className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <UnlockIcon className="w-4 h-4 text-red-600" />
-                    )}
                     <div>
-                      <p className="text-xs font-medium text-gray-900">Wallet PIN</p>
-                      <p className="text-xs text-gray-600">Secure your wallet transactions</p>
+                      <Label htmlFor="business-address">Business Address</Label>
+                      <Textarea 
+                        id="business-address" 
+                        placeholder="Full business address"
+                        value={businessFormData.business_address}
+                        onChange={(e) => handleBusinessInputChange('business_address', e.target.value)}
+                        required
+                      />
                     </div>
-                  </div>
-                  <div>
-                    {userData?.has_pin ? (
-                      <Badge variant="success">Enabled</Badge>
-                    ) : (
-                      <Button size="sm" onClick={() => setShowPinModal(true)}>
-                        Enable PIN
+                    <div>
+                      <Label htmlFor="business-description">Business Description</Label>
+                      <Textarea 
+                        id="business-description" 
+                        placeholder="Describe your business and services"
+                        value={businessFormData.business_description}
+                        onChange={(e) => handleBusinessInputChange('business_description', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setShowBusinessForm(false)} disabled={businessLoading}>
+                        Cancel
                       </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="py-3 px-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <WalletIcon className="w-4 h-4 text-blue-600" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-900">Wallet Balance</p>
-                      <p className="text-xs text-gray-600">{userData?.wallet?.balance || '0'} GEMS available</p>
+                      <Button type="submit" disabled={businessLoading}>
+                        {businessLoading ? 'Submitting...' : 'Submit for Review'}
+                      </Button>
                     </div>
-                  </div>
-                  <Badge variant="info">{userData?.wallet?.balance || '0'} GEMS</Badge>
-                </div>
+                  </form>
+                )}
               </div>
-            </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}
