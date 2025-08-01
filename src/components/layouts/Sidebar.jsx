@@ -42,13 +42,12 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
     {
       title: 'Campaigns',
       icon: <FiBriefcase />,
-      badge: (campaignCount > 0 && !expandedItems['Campaigns']) ? campaignCount.toString() : null,
+      badge: campaignCount > 0 ? campaignCount.toString() : null,
       children: [
         {
           title: 'My Campaigns',
           path: '/campaigns',
           icon: <FiCircle />,
-          badge: (campaignCount > 0 && expandedItems['Campaigns']) ? campaignCount.toString() : null,
         },
         {
           title: 'Create Campaign',
@@ -69,7 +68,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
       icon: <FiSettings />,
       badge: null
     }
-  ], [campaignCount, expandedItems]);
+  ], [campaignCount]);
 
   // Fetch campaign count in background
   useEffect(() => {
@@ -355,12 +354,7 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
                         >
                           {child.icon}
                         </motion.span>
-                        <span className="text-sm font-medium flex-1">{child.title}</span>
-                        {child.badge && (
-                          <span className="ml-auto text-xs bg-white text-secondary px-2 py-0.5 rounded-full font-medium">
-                            {child.badge}
-                          </span>
-                        )}
+                        <span className="text-sm font-medium">{child.title}</span>
                       </NavLink>
                     </motion.div>
                   ))}

@@ -1341,27 +1341,29 @@ useEffect(() => {
                   <CampaignDescription description={campaign.description} />
                 )}
 
-                {/* Campaign Tasks Accordion - Always visible */}
-                <div className='border border-gray-100 rounded-xl overflow-hidden'>
-                  <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
-                    <div>
-                      <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
-                        Campaign Tasks 
-                        {tasksLoading && <span className="text-sm font-normal text-gray-500 ml-2">(Loading...)</span>}
-                      </h3>
+                {/* Campaign Tasks Accordion - Only show if tasks exist or loading */}
+                {(tasksLoading || (allTasks && allTasks.length > 0)) && (
+                  <div className='border border-gray-100 rounded-xl overflow-hidden'>
+                    <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
+                      <div>
+                        <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
+                          Campaign Tasks 
+                          {tasksLoading && <span className="text-sm font-normal text-gray-500 ml-2">(Loading...)</span>}
+                        </h3>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Enhanced Tasks Display - Always show */}
-                  {tasksLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                      <span className="text-gray-600 text-sm">Loading tasks...</span>
-                    </div>
-                  ) : (
-                    <TasksAccordion tasks={allTasks} />
-                  )}
-                </div>
+                    {/* Enhanced Tasks Display - Always show */}
+                    {tasksLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                        <span className="text-gray-600 text-sm">Loading tasks...</span>
+                      </div>
+                    ) : (
+                      <TasksAccordion tasks={allTasks} />
+                    )}
+                  </div>
+                )}
 
               </div>
 

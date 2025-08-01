@@ -76,7 +76,7 @@ export const decodeHtmlEntities = (text) => {
     const startDate = new Date(campaign.start_date);
     const now = new Date();
     
-    if (now < startDate) return <Badge variant="warning">Planned</Badge>;
+    if (now < startDate) return <Badge variant="warning">Open to Applications</Badge>;
     if (now > endDate) return <Badge variant="info">Completed</Badge>;
     return <Badge variant="success">Active</Badge>;
   };

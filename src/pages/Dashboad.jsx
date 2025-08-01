@@ -118,7 +118,7 @@ const CampaignCard = ({ campaign, onClick }) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-700 border-green-200';
       case 'Completed': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'Planned': return 'bg-primary-scale-100 text-primary-scale-700 border-primary-scale-200';
+      case 'Open To Applications': return 'bg-primary-scale-100 text-primary-scale-700 border-primary-scale-200';
       case 'Closed': return 'bg-gray-100 text-gray-700 border-gray-200';
       default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -171,7 +171,7 @@ const CampaignTable = ({ campaigns, onCampaignClick }) => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-700';
       case 'Completed': return 'bg-blue-100 text-blue-700';
-      case 'Planned': return 'bg-primary-scale-100 text-primary-scale-700';
+      case 'Open to Applications': return 'bg-primary-scale-100 text-primary-scale-700';
       case 'Closed': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -621,7 +621,7 @@ const getStatusName = (campaign) => {
   const startDate = new Date(campaign.start_date);
   const now = new Date();
   
-  if (now < startDate) return 'Planned';
+  if (now < startDate) return 'Open to Applications';
   if (now > endDate) return 'Completed';
   return 'Active';
 };

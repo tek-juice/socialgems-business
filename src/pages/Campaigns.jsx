@@ -570,7 +570,7 @@ const getStatusName = (campaign) => {
   if (campaign.status === 'draft') return 'Draft';
   if (campaign.status === 'completed') return 'Closed';
   if (campaign.status === 'active') return 'Active';
-  if (campaign.status === 'planned') return 'Planned';
+  if (campaign.status === 'open_to_applications') return 'Open To Applications';
   if (campaign.closed_date) return 'Closed';
   
   // Fall back to date-based logic
@@ -578,7 +578,7 @@ const getStatusName = (campaign) => {
   const startDate = new Date(campaign.start_date);
   const now = new Date();
   
-  if (now < startDate) return 'Planned';
+  if (now < startDate) return 'Open to Applications';
   if (now > endDate) return 'Completed';
   return 'Active';
 };
@@ -588,8 +588,8 @@ const getStatusBadge = (campaign) => {
   switch (status) {
     case "Active":
       return <Badge variant="success">Active</Badge>;
-    case "Planned":
-      return <Badge variant="warning">Planned</Badge>;
+    case "Open to Applications":
+      return <Badge variant="warning">Open to Applications</Badge>;
     case "Completed":
       return <Badge variant="info">Completed</Badge>;
     case "Closed":
