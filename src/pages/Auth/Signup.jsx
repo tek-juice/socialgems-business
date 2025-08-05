@@ -55,7 +55,6 @@ const Ripple = memo(function Ripple({
   return (
     <section
       className={`max-w-[50%] absolute inset-0 flex items-center justify-center
-        dark:bg-white/5 bg-neutral-50
         [mask-image:linear-gradient(to_bottom,black,transparent)]
         dark:[mask-image:linear-gradient(to_bottom,white,transparent)] ${className}`}
     >
