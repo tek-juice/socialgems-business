@@ -1,12 +1,268 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState } from "react";
+import * as React from "react";
+import { useState, memo } from "react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { post } from '../../utils/service';
 import { LogIn, Lock, Mail, EyeOff, Eye } from "lucide-react";
 import { assets } from "../../assets/assets";
+
+// Animation Components
+const cn = (...classes) => {
+  return classes.filter(Boolean).join(' ');
+};
+
+// Ripple Component
+const Ripple = memo(function Ripple({
+  mainCircleSize = 210,
+  mainCircleOpacity = 0.24,
+  numCircles = 8,
+  className = '',
+}) {
+  return (
+    <section
+      className={`max-w-[50%] absolute inset-0 flex items-center justify-center
+        dark:bg-white/5 bg-neutral-50
+        [mask-image:linear-gradient(to_bottom,black,transparent)]
+        dark:[mask-image:linear-gradient(to_bottom,white,transparent)] ${className}`}
+    >
+      {Array.from({ length: numCircles }, (_, i) => {
+        const size = mainCircleSize + i * 70;
+        const opacity = mainCircleOpacity - i * 0.03;
+        const animationDelay = `${i * 0.1}s`;
+        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
+        const borderOpacity = 5 + i * 5;
+
+        return (
+          <span
+            key={i}
+            className='absolute animate-ripple rounded-full bg-foreground/15 border'
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              opacity: opacity,
+              animationDelay: animationDelay,
+              borderStyle: borderStyle,
+              borderWidth: '1px',
+              borderColor: `var(--foreground) dark:var(--background) / ${
+                borderOpacity / 100
+              })`,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+            }}
+          />
+        );
+      })}
+    </section>
+  );
+});
+
+// OrbitingCircles Component
+const OrbitingCircles = memo(function OrbitingCircles({
+  className,
+  children,
+  reverse = false,
+  duration = 25, // Slower animation
+  delay = 10,
+  radius = 50,
+  path = true,
+}) {
+  return (
+    <>
+      {path && (
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          version='1.1'
+          className='pointer-events-none absolute inset-0 size-full'
+        >
+          <circle
+            className='stroke-black/5 stroke-1 dark:stroke-white/5' // Reduced opacity
+            cx='50%'
+            cy='50%'
+            r={radius}
+            fill='none'
+          />
+        </svg>
+      )}
+      <section
+        style={
+          {
+            '--duration': duration,
+            '--radius': radius,
+            '--delay': -delay,
+          }
+        }
+        className={cn(
+          'absolute flex size-full transform-gpu animate-orbit items-center justify-center rounded-full border-0 bg-transparent [animation-delay:calc(var(--delay)*1000ms)]',
+          { '[animation-direction:reverse]': reverse },
+          className
+        )}
+        css={{
+          willChange: 'transform',
+          backfaceVisibility: 'hidden',
+          transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
+        }}
+      >
+        {children}
+      </section>
+    </>
+  );
+});
+
+
+// TechOrbitDisplay Component
+const TechOrbitDisplay = memo(function TechOrbitDisplay({
+  iconsArray,
+  text = 'SOCIAL GEMS',
+}) {
+  return (
+    <section className='relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg'>
+      <div className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-primary to-secondary bg-clip-text text-center text-4xl lg:text-7xl font-semibold leading-none text-transparent z-20 relative flex items-center gap-3'>
+        <img
+          src={assets.LogoIcon}
+          alt="Logo"
+          className="h-8 w-8 lg:h-12 lg:w-12 object-contain"
+        />
+        <span>{text}</span>
+      </div>
+
+      <div className="absolute inset-0 z-10">
+        {iconsArray.map((icon, index) => (
+          <OrbitingCircles
+            key={index}
+            className={icon.className}
+            duration={icon.duration}
+            delay={icon.delay}
+            radius={icon.radius}
+            path={icon.path}
+            reverse={icon.reverse}
+          >
+            {icon.component()}
+          </OrbitingCircles>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+// Social Media Icons Array - Same as login page
+const iconsArray = [
+  // Inner circle - 80px radius
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.facebook}
+          alt='Facebook'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 12,
+    delay: 0,
+    radius: 80,
+    path: false,
+    reverse: false,
+  },
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.instagram}
+          alt='Instagram'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 10,
+    delay: 10, // 180 degrees apart (half of 20s)
+    radius: 80,
+    path: false,
+    reverse: false,
+  },
+  
+  // Middle circle - 130px radius
+  {
+    component: () => (
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-transparent">
+        <img
+          src={assets.twitter}
+          alt='Twitter'
+          className="w-full h-full object-cover p-1"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 25,
+    delay: 0,
+    path: false,
+    reverse: true,
+  },
+  {
+    component: () => (
+      <div className="w-16 h-16 overflow-hidden bg-transparent">
+        <img
+          src={assets.tiktok}
+          alt='TikTok'
+          className="w-full h-full object-cover"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 35,
+    delay: 12.5, // 180 degrees apart (half of 25s)
+    path: false,
+    reverse: true,
+  },
+  
+  // Outer circle - 180px radius
+
+  
+  // Far outer circle - 230px radius
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.youtube}
+          alt='YouTube Alt'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 30,
+    delay: 0, // 180 degrees apart (half of 35s)
+    radius: 230,
+    path: false,
+    reverse: true,
+  },
+
+  {
+    component: () => (
+      <div className="w-8 h-8 overflow-hidden bg-transparent">
+        <img
+          src={assets.Logo}
+          alt='TikTok'
+          className="w-full h-full object-cover"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 15,
+    delay: 12.5, // 180 degrees apart (half of 25s)
+    path: false,
+    reverse: true,
+  },
+];
 
 const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
   const [step, setStep] = useState(1); // 1: email, 2: otp + new password
@@ -105,7 +361,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
-      <div className="relative bg-white rounded-lg p-6 w-full max-w-md shadow-2xl">
+      <div className="relative bg-white/95 backdrop-blur-lg rounded-lg p-6 w-full max-w-md shadow-2xl border border-white/20">
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
             <Lock className="w-6 h-6 text-secondary" />
@@ -289,112 +545,243 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-white md:bg-gray-50">
-      {/* Mobile: full screen, Desktop: centered card */}
-      <div className="w-full h-full md:w-auto md:h-auto md:max-w-sm bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-8 flex flex-col items-center text-black">
+    <>
+      <style jsx>{`
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-none::-webkit-scrollbar { 
+          display: none;
+        }
+      `}</style>
+      <section 
+        className='flex max-lg:justify-center min-h-screen relative'
+        style={{
+          backgroundImage: `url(${assets.banner})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Background overlay for better readability */}
+        <div className="absolute inset-0 bg-black/30"></div>
         
-        {/* Logo/Icon */}
-        {/* <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary mb-6 shadow-sm">
-          <LogIn className="w-6 h-6 text-secondary" />
-        </div> */}
+        {/* Left Side - Animation (Desktop only) */}
+        <span className='flex flex-col justify-center w-1/2 lg:flex hidden relative z-10'>
+          <Ripple mainCircleSize={100} />
+          <TechOrbitDisplay iconsArray={iconsArray} />
+        </span>
 
-        {/* Logo and brand name above the form */}
-        <div className=" mb-6 flex items-center justify-center gap-2">
+        {/* Right Side - Form (Desktop) */}
+        <span className='w-1/2 h-[100dvh] lg:flex hidden flex-col justify-center items-center relative z-10'>
+          <div className="w-full max-w-lg">
+            {/* Enhanced Glass Effect Form */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 md:p-8 relative max-h-[80vh] overflow-y-auto scrollbar-none">
+              {/* Additional glass layer */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10">
+                {/* Logo and brand name above the form */}
+                <div className="mb-6 flex items-center justify-center gap-2">
+                  <img
+                    src={assets.LogoIcon}
+                    alt="Logo"
+                    className="h-16 w-16 object-contain"
+                  />
+                </div>
+                
+                {/* Header */}
+                <h2 className="text-xl font-semibold mb-2 text-center text-white">
+                  Sign in to your account
+                </h2>
+                <p className="text-white/80 text-xs mb-8 text-center max-w-xs mx-auto">
+                  Welcome back! Please enter your details to continue.
+                </p>
+                
+                {/* Login Form */}
+                <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <Mail className="w-4 h-4" />
+                    </span>
+                    <input
+                      placeholder="Email"
+                      type="email"
+                      value={email}
+                      className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <Lock className="w-4 h-4" />
+                    </span>
+                    <input
+                      placeholder="Password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={loading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  
+                  <div className="w-full flex justify-end mb-2">
+                    <button 
+                      type="button"
+                      className="text-xs text-secondary font-medium hover:underline transition-colors"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                  >
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </button>
+                </form>
+
+                {/* Sign up link */}
+                <div className="text-center pt-4 border-t border-white/20">
+                  <span className="text-xs text-white/80">Don't have an account? </span>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="text-xs text-primary font-medium hover:underline transition-colors"
+                  >
+                    Sign up
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </span>
+
+        {/* Mobile Layout - Full Screen */}
+        <div className="lg:hidden w-[95vw] h-[95vh] mx-auto my-auto flex flex-col relative z-10">
+          {/* Logo and brand name above the form - MOBILE ONLY */}
+          <div className="flex-shrink-0 mb-4 flex items-center justify-center gap-2">
             <img
               src={assets.LogoIcon}
               alt="Logo"
               className="h-16 w-16 object-contain"
             />
-            {/* <h1 className="text-md font-bold text-secondary">SOCIAL GEMS</h1> */}
+            <h1 className="text-md font-bold text-white drop-shadow-lg">SOCIAL GEMS</h1>
           </div>
-        
-        {/* Header */}
-        <h2 className="text-xl font-semibold mb-2 text-center text-gray-900">
-          Sign in to your account
-        </h2>
-        <p className="text-gray-600 text-xs mb-8 text-center max-w-xs">
-          Welcome back! Please enter your details to continue.
-        </p>
-        
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <Mail className="w-4 h-4" />
-            </span>
-            <input
-              placeholder="Email"
-              type="email"
-              value={email}
-              className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              required
-            />
-          </div>
-          
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <Lock className="w-4 h-4" />
-            </span>
-            <input
-              placeholder="Password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-          
-          <div className="w-full flex justify-end mb-2">
-            <button 
-              type="button"
-              className="text-xs text-secondary font-medium hover:underline transition-colors"
-              onClick={() => setShowForgotPassword(true)}
-            >
-              Forgot password?
-            </button>
-          </div>
-          
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
 
-        {/* Sign up link */}
-        <div className="text-center">
-          <span className="text-xs text-gray-600">Don't have an account? </span>
-          <button
-            onClick={() => navigate('/signup')}
-            className="text-xs text-secondary font-medium hover:underline transition-colors"
-          >
-            Sign up
-          </button>
+          {/* Enhanced Glass Effect Form - Mobile */}
+          <div className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 relative overflow-hidden flex flex-col">
+            {/* Additional glass layer */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
+            
+            {/* Scrollable Content */}
+            <div className="relative z-10 flex-1 overflow-y-auto scrollbar-none">
+              {/* Header */}
+              <h2 className="text-xl font-semibold mb-2 text-center text-white">
+                Sign in to your account
+              </h2>
+              <p className="text-white/80 text-xs mb-8 text-center max-w-xs mx-auto">
+                Welcome back! Please enter your details to continue.
+              </p>
+              
+              {/* Login Form */}
+              <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    placeholder="Email"
+                    type="email"
+                    value={email}
+                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <input
+                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                
+                <div className="w-full flex justify-end mb-2">
+                  <button 
+                    type="button"
+                    className="text-xs text-secondary font-medium hover:underline transition-colors"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+
+              {/* Sign up link */}
+              <div className="text-center pt-4 border-t border-white/20">
+                <span className="text-xs text-white/80">Don't have an account? </span>
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="text-xs text-primary font-medium hover:underline transition-colors"
+                >
+                  Sign up
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Forgot Password Modal */}
-      <ForgotPasswordModal 
-        isOpen={showForgotPassword}
-        onClose={() => setShowForgotPassword(false)}
-        onComplete={() => {
-          toast.success("You can now sign in with your new password");
-        }}
-      />
-    </div>
+        {/* Forgot Password Modal */}
+        <ForgotPasswordModal 
+          isOpen={showForgotPassword}
+          onClose={() => setShowForgotPassword(false)}
+          onComplete={() => {
+            toast.success("You can now sign in with your new password");
+          }}
+        />
+      </section>
+    </>
   );
 };
 

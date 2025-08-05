@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@reference tailwindcss;
-
 /* Averta Font Imports */
 @font-face {
   font-family: 'Averta';
@@ -50,126 +48,51 @@
   font-display: swap;
 }
 
-:root {
-  font-family: 'Averta';
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-a {
-  text-decoration: inherit;
-  color: inherit;
-}
-
-button {
-  border: none;
-  background: none;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Scrollbar styling for webkit browsers */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(243, 244, 246, 1);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 1);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 1);
-}
-
-/* Custom utilities for glass effects */
-@layer utilities {
-  .glass {
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-  }
-  
-  .glass-strong {
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+@layer base {
+  :root {
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(0, 0%, 0%);
+    --skeleton: hsl(0, 0%, 90%);
+    --border: hsl(220, 20%, 90%);
+    --btn-border: hsl(214deg, 31.8%, 91.4%);
+    --input: hsl(220, 20%, 90%);
+    --radius: 0.5rem;
+    
+    font-family: 'Averta';
+    line-height: 1.5;
+    font-weight: 400;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Custom gradient utilities */
-  .bg-gradient-primary {
-    background: linear-gradient(135deg, #F9D769 0%, #E8C547 50%, #734D20 100%);
-  }
-  
-  .bg-gradient-primary-soft {
-    background: linear-gradient(135deg, #F9D769 0%, #E8C547 100%);
-  }
-  
-  .bg-gradient-primary-dark {
-    background: linear-gradient(135deg, #734D20 0%, #5A3C19 100%);
-  }
-  
-  .bg-gradient-radial-primary {
-    background: radial-gradient(circle, #F9D769 0%, #734D20 100%);
+  .dark {
+    --background: hsl(222, 94%, 5%);
+    --foreground: hsl(0, 0%, 100%);
+    --skeleton: hsl(218, 36%, 16%);
+    --border: hsl(220, 20%, 90%);
+    --btn-border: hsl(217deg, 32.6%, 17.5%);
+    --input: hsl(219, 63%, 16%);
+    --radius: 0.5rem;
   }
 
-  /* Averta Font Utilities */
-  .font-averta {
-    font-family: 'Averta', sans-serif;
-  }
-  
-  .font-averta-light {
-    font-family: 'Averta', sans-serif;
-    font-weight: 300;
-  }
-  
-  .font-averta-regular {
-    font-family: 'Averta', sans-serif;
-    font-weight: normal;
-  }
-  
-  .font-averta-semibold {
-    font-family: 'Averta', sans-serif;
-    font-weight: 600;
-  }
-  
-  .font-averta-bold {
-    font-family: 'Averta', sans-serif;
-    font-weight: bold;
-  }
-  
-  .font-averta-extrabold-italic {
-    font-family: 'Averta', sans-serif;
-    font-weight: bold;
-    font-style: italic;
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 }
 
 @layer components {
+  .g-button {
+    @apply rounded-[var(--radius)] border;
+    border-color: var(--btn-border);
+  }
+
   .text-responsive {
     @apply text-sm;
   }
@@ -240,6 +163,135 @@ img {
     .text-responsive-xl {
       @apply text-5xl;
     }
+  }
+}
+
+@layer utilities {
+  .glass {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  
+  .glass-strong {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Custom gradient utilities */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #F9D769 0%, #E8C547 50%, #734D20 100%);
+  }
+  
+  .bg-gradient-primary-soft {
+    background: linear-gradient(135deg, #F9D769 0%, #E8C547 100%);
+  }
+  
+  .bg-gradient-primary-dark {
+    background: linear-gradient(135deg, #734D20 0%, #5A3C19 100%);
+  }
+  
+  .bg-gradient-radial-primary {
+    background: radial-gradient(circle, #F9D769 0%, #734D20 100%);
+  }
+
+  /* Averta Font Utilities */
+  .font-averta {
+    font-family: 'Averta', sans-serif;
+  }
+  
+  .font-averta-light {
+    font-family: 'Averta', sans-serif;
+    font-weight: 300;
+  }
+  
+  .font-averta-regular {
+    font-family: 'Averta', sans-serif;
+    font-weight: normal;
+  }
+  
+  .font-averta-semibold {
+    font-family: 'Averta', sans-serif;
+    font-weight: 600;
+  }
+  
+  .font-averta-bold {
+    font-family: 'Averta', sans-serif;
+    font-weight: bold;
+  }
+  
+  .font-averta-extrabold-italic {
+    font-family: 'Averta', sans-serif;
+    font-weight: bold;
+    font-style: italic;
+  }
+
+  /* Animation utilities */
+  .size-full {
+    width: 100%;
+    height: 100%;
+  }
+
+  .transform-gpu {
+    transform: translateZ(0);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: inherit;
+  color: inherit;
+}
+
+button {
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Scrollbar styling for webkit browsers */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(243, 244, 246, 1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 1);
+}
+
+/* Keyframe animations */
+@keyframes ripple {
+  0%, 100% { 
+    transform: translate(-50%, -50%) scale(1); 
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(0.9); 
+  }
+}
+
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateY(calc(var(--radius) * 1px)) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateY(calc(var(--radius) * 1px)) rotate(-360deg);
   }
 }
 
@@ -395,6 +447,15 @@ img {
   100% { transform: translateX(200%) skewX(-12deg); }
 }
 
+@keyframes shake {
+  0%, 20%, 40%, 60%, 80% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-10px);
+  }
+}
+
 /* Apply animations with different speeds */
 .animate-crazy-spin {
   animation: crazy-spin 3s linear infinite;
@@ -427,6 +488,14 @@ img {
   animation: shimmer-fast 1s linear infinite;
 }
 
+.animate-ripple {
+  animation: ripple 2s ease calc(var(--i, 0) * 0.2s) infinite;
+}
+
+.animate-orbit {
+  animation: orbit calc(var(--duration) * 1s) linear infinite;
+}
+
 /* Skew scroll animation for 3D tilted effect */
 @keyframes skew-scroll {
   0% {
@@ -439,15 +508,6 @@ img {
 
 .animate-skew-scroll {
   animation: skew-scroll 20s linear infinite;
-}
-
-@keyframes shake {
-  0%, 20%, 40%, 60%, 80% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-10px);
-  }
 }
 
 .animate-shake {

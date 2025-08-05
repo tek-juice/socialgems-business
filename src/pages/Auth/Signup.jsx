@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, memo, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { post, get, patch } from "../../utils/service";
@@ -20,6 +20,7 @@ import {
   Globe,
   ChevronDown,
   Search,
+  X,
 } from "lucide-react";
 import {
   InputOTP,
@@ -27,10 +28,441 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from "../../components/ui/input-otp";
+import {
+  motion,
+  useAnimation,
+  useInView,
+  useMotionTemplate,
+  useMotionValue,
+} from "framer-motion";
 
 import { TiBusinessCard } from "react-icons/ti";
 import { CiAt } from "react-icons/ci";
 import { assets } from "../../assets/assets";
+
+// Animation Components
+const cn = (...classes) => {
+  return classes.filter(Boolean).join(' ');
+};
+
+// Ripple Component
+const Ripple = memo(function Ripple({
+  mainCircleSize = 210,
+  mainCircleOpacity = 0.24,
+  numCircles = 8, // Reduced from 11 to 8
+  className = '',
+}) {
+  return (
+    <section
+      className={`max-w-[50%] absolute inset-0 flex items-center justify-center
+        dark:bg-white/5 bg-neutral-50
+        [mask-image:linear-gradient(to_bottom,black,transparent)]
+        dark:[mask-image:linear-gradient(to_bottom,white,transparent)] ${className}`}
+    >
+      {Array.from({ length: numCircles }, (_, i) => {
+        const size = mainCircleSize + i * 70;
+        const opacity = mainCircleOpacity - i * 0.03;
+        const animationDelay = `${i * 0.1}s`; // Increased delay
+        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
+        const borderOpacity = 5 + i * 5;
+
+        return (
+          <span
+            key={i}
+            className='absolute animate-ripple rounded-full bg-foreground/15 border'
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              opacity: opacity,
+              animationDelay: animationDelay,
+              borderStyle: borderStyle,
+              borderWidth: '1px',
+              borderColor: `var(--foreground) dark:var(--background) / ${
+                borderOpacity / 100
+              })`,
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+            }}
+          />
+        );
+      })}
+    </section>
+  );
+});
+
+// OrbitingCircles Component - Optimized
+const OrbitingCircles = memo(function OrbitingCircles({
+  className,
+  children,
+  reverse = false,
+  duration = 25, // Slower animation
+  delay = 10,
+  radius = 50,
+  path = true,
+}) {
+  return (
+    <>
+      {path && (
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          version='1.1'
+          className='pointer-events-none absolute inset-0 size-full'
+        >
+          <circle
+            className='stroke-black/5 stroke-1 dark:stroke-white/5' // Reduced opacity
+            cx='50%'
+            cy='50%'
+            r={radius}
+            fill='none'
+          />
+        </svg>
+      )}
+      <section
+        style={
+          {
+            '--duration': duration,
+            '--radius': radius,
+            '--delay': -delay,
+          }
+        }
+        className={cn(
+          'absolute flex size-full transform-gpu animate-orbit items-center justify-center rounded-full border-0 bg-transparent [animation-delay:calc(var(--delay)*1000ms)]',
+          { '[animation-direction:reverse]': reverse },
+          className
+        )}
+        css={{
+          willChange: 'transform',
+          backfaceVisibility: 'hidden',
+          transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
+        }}
+      >
+        {children}
+      </section>
+    </>
+  );
+});
+
+// TechOrbitDisplay Component
+const TechOrbitDisplay = memo(function TechOrbitDisplay({
+  iconsArray,
+  text = 'SOCIAL GEMS',
+}) {
+  return (
+    <section className='relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg'>
+      <div className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-primary to-secondary bg-clip-text text-center text-4xl lg:text-7xl font-semibold leading-none text-transparent z-20 relative flex items-center gap-3'>
+        <img
+          src={assets.LogoIcon}
+          alt="Logo"
+          className="h-8 w-8 lg:h-12 lg:w-12 object-contain"
+        />
+        <span>{text}</span>
+      </div>
+
+      <div className="absolute inset-0 z-10">
+        {iconsArray.map((icon, index) => (
+          <OrbitingCircles
+            key={index}
+            className={icon.className}
+            duration={icon.duration}
+            delay={icon.delay}
+            radius={icon.radius}
+            path={icon.path}
+            reverse={icon.reverse}
+          >
+            {icon.component()}
+          </OrbitingCircles>
+        ))}
+      </div>
+    </section>
+  );
+});
+
+// Social Media Icons Array - Same as login page
+const iconsArray = [
+  // Inner circle - 80px radius
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.facebook}
+          alt='Facebook'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 12,
+    delay: 0,
+    radius: 80,
+    path: false,
+    reverse: false,
+  },
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.instagram}
+          alt='Instagram'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 10,
+    delay: 10, // 180 degrees apart (half of 20s)
+    radius: 80,
+    path: false,
+    reverse: false,
+  },
+  
+  // Middle circle - 130px radius
+  {
+    component: () => (
+      <div className="w-8 h-8 rounded-full overflow-hidden bg-transparent">
+        <img
+          src={assets.twitter}
+          alt='Twitter'
+          className="w-full h-full object-cover p-1"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 25,
+    delay: 0,
+    path: false,
+    reverse: true,
+  },
+  {
+    component: () => (
+      <div className="w-16 h-16 overflow-hidden bg-transparent">
+        <img
+          src={assets.tiktok}
+          alt='TikTok'
+          className="w-full h-full object-cover"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 35,
+    delay: 12.5, // 180 degrees apart (half of 25s)
+    path: false,
+    reverse: true,
+  },
+  
+  // Outer circle - 180px radius
+
+  
+  // Far outer circle - 230px radius
+  {
+    component: () => (
+      <div className="h-8 overflow-hidden">
+        <img
+          src={assets.youtube}
+          alt='YouTube Alt'
+          className="h-full w-auto object-contain"
+        />
+      </div>
+    ),
+    className: 'border-none bg-transparent',
+    duration: 30,
+    delay: 0, // 180 degrees apart (half of 35s)
+    radius: 230,
+    path: false,
+    reverse: true,
+  },
+
+  {
+    component: () => (
+      <div className="w-8 h-8 overflow-hidden bg-transparent">
+        <img
+          src={assets.Logo}
+          alt='TikTok'
+          className="w-full h-full object-cover"
+        />
+      </div>
+    ),
+    className: 'size-[32px] border-none bg-transparent',
+    radius: 130,
+    duration: 15,
+    delay: 12.5, // 180 degrees apart (half of 25s)
+    path: false,
+    reverse: true,
+  },
+];
+
+// Industries Selection Modal Component
+const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, selectedIndustries, onToggleIndustry, loading }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Mobile Drawer
+  if (isMobile) {
+    return isOpen ? (
+      <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+        <div className="relative z-50 w-full bg-white/95 backdrop-blur-lg rounded-t-lg max-h-[80vh] flex flex-col border border-white/20">
+          <div className="flex-shrink-0 p-4 border-b border-white/20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Choose Your Industries</h2>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 text-sm mt-1">
+              Select the industries your brand operates in. You can skip this step and add them later.
+            </p>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
+            <div className="grid gap-3">
+              {industries.map((industry) => (
+                <button
+                  key={industry.id}
+                  type="button"
+                  onClick={() => onToggleIndustry(industry.id)}
+                  className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                    selectedIndustries.includes(industry.id)
+                      ? "border-primary bg-primary/10"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="text-sm text-gray-700 font-medium">
+                    {industry.name}
+                  </span>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      selectedIndustries.includes(industry.id)
+                        ? "border-primary bg-primary"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {selectedIndustries.includes(industry.id) ? (
+                      <Check className="w-3 h-3 text-secondary" />
+                    ) : (
+                      <Plus className="w-3 h-3 text-gray-300" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex-shrink-0 p-4 border-t border-white/20">
+            <div className="flex gap-3">
+              <button
+                onClick={onSkip}
+                className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
+                disabled={loading}
+              >
+                Skip for now
+              </button>
+              <button
+                onClick={onContinue}
+                disabled={selectedIndustries.length === 0 || loading}
+                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ) : null;
+  }
+
+  // Desktop Modal
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-labelledby="industries-title">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-lg rounded-lg shadow-lg border border-white/20 scrollbar-none">
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
+          <h2 id="industries-title" className="text-xl font-semibold">Choose Your Industries</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+              <Building className="w-6 h-6 text-secondary" />
+            </div>
+            <p className="text-gray-600 text-sm max-w-sm mx-auto">
+              Select the industries your brand operates in. You can skip this step and add them later.
+            </p>
+          </div>
+
+          <div className="max-h-64 overflow-y-auto mb-6 scrollbar-none">
+            <div className="grid gap-3">
+              {industries.map((industry) => (
+                <button
+                  key={industry.id}
+                  type="button"
+                  onClick={() => onToggleIndustry(industry.id)}
+                  className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                    selectedIndustries.includes(industry.id)
+                      ? "border-primary bg-primary/10"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="text-sm text-gray-700 font-medium">
+                    {industry.name}
+                  </span>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      selectedIndustries.includes(industry.id)
+                        ? "border-primary bg-primary"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    {selectedIndustries.includes(industry.id) ? (
+                      <Check className="w-3 h-3 text-secondary" />
+                    ) : (
+                      <Plus className="w-3 h-3 text-gray-300" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onSkip}
+              className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
+              disabled={loading}
+            >
+              Skip for now
+            </button>
+            <button
+              onClick={onContinue}
+              disabled={selectedIndustries.length === 0 || loading}
+              className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Searchable Dropdown Component
 const SearchableDropdown = ({
@@ -92,7 +524,7 @@ const SearchableDropdown = ({
               />
             </div>
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto scrollbar-none">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <div
@@ -250,7 +682,7 @@ const UsernameSuggestionsDropdown = ({
               Select or customize Username
             </div>
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto scrollbar-none">
             {filteredSuggestions.length > 0 ? (
               filteredSuggestions.map((suggestion) => (
                 <div
@@ -275,7 +707,7 @@ const UsernameSuggestionsDropdown = ({
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1); // Start from step 1 (Details)
   const [loading, setLoading] = useState(false);
   const [industries, setIndustries] = useState([]);
   const [countries, setCountries] = useState([]);
@@ -284,6 +716,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
+  const [isIndustriesModalOpen, setIsIndustriesModalOpen] = useState(false);
 
   const [signupData, setSignupData] = useState({
     email: "",
@@ -305,46 +738,13 @@ const Signup = () => {
     confirm_password: "",
   });
 
-  // Steps definition
-  const steps = [
-    {
-      id: 0,
-      title: "Industries",
-      subtitle: "Choose your focus",
-      icon: Building,
-      description: "Select industries your brand operates in",
-      color: "from-primary to-primary-scale-600",
-    },
-    {
-      id: 1,
-      title: "Details",
-      subtitle: "Business information",
-      icon: UserPlus,
-      description: "Create your brand account",
-      color: "from-secondary to-secondary-scale-600",
-    },
-    {
-      id: 2,
-      title: "Verify",
-      subtitle: "Email verification",
-      icon: Mail,
-      description: "Confirm your email address",
-      color: "from-primary to-primary-scale-600",
-    },
-    {
-      id: 3,
-      title: "Secure",
-      subtitle: "Set password",
-      icon: Lock,
-      description: "Protect your account",
-      color: "from-secondary to-secondary-scale-600",
-    },
-  ];
 
   // Fetch industries and countries on component mount
   useEffect(() => {
     fetchIndustries();
     fetchCountries();
+    // Show industries modal when component mounts
+    setIsIndustriesModalOpen(true);
   }, []);
 
   // Set default country when countries are loaded
@@ -499,7 +899,13 @@ const Signup = () => {
     }
   };
 
-  const handleStepOne = async () => {
+  const handleIndustriesSkip = () => {
+    setIsIndustriesModalOpen(false);
+    setCurrentStep(1);
+  };
+
+  const handleIndustriesContinue = () => {
+    setIsIndustriesModalOpen(false);
     setCurrentStep(1);
   };
 
@@ -629,7 +1035,7 @@ const Signup = () => {
 
       if (!token) {
         toast.error("Session expired. Please restart the signup process");
-        setCurrentStep(0);
+        setCurrentStep(1);
         return;
       }
 
@@ -734,9 +1140,6 @@ const Signup = () => {
 
   const nextStep = () => {
     switch (currentStep) {
-      case 0:
-        handleStepOne();
-        break;
       case 1:
         handleStepTwo();
         break;
@@ -752,100 +1155,24 @@ const Signup = () => {
   };
 
   const prevStep = () => {
-    if (currentStep > 0) {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 0:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Building className="w-6 h-6 text-secondary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">
-                Choose Your Industries
-              </h2>
-              <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
-                Select the industries your brand operates in. You can skip this
-                step and add them later.
-              </p>
-            </div>
-
-            <div className="max-h-64 overflow-y-auto">
-              <div className="grid gap-3">
-                {industries.map((industry) => (
-                  <button
-                    key={industry.id}
-                    type="button"
-                    onClick={() => handleIndustryToggle(industry.id)}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                      selectedIndustries.includes(industry.id)
-                        ? "border-primary bg-primary/10"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <span className="text-xs text-gray-700 font-medium">
-                      {industry.name}
-                    </span>
-                    <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        selectedIndustries.includes(industry.id)
-                          ? "border-primary bg-primary"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {selectedIndustries.includes(industry.id) ? (
-                        <Check className="w-3 h-3 text-secondary" />
-                      ) : (
-                        <Plus className="w-3 h-3 text-gray-300" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setCurrentStep(1)}
-                className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-xs"
-              >
-                Skip for now
-              </button>
-              <button
-                onClick={handleStepOne}
-                disabled={selectedIndustries.length === 0}
-                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        );
-
       case 1:
         return (
           <div className="space-y-6">
-            <div className="flex justify-start mb-2 border-b border-b-secondary/20 pb-3">
-              <button
-                onClick={prevStep}
-                className="flex items-center justify-center h-fit p-3 rounded-full border border-gray-200 bg-primary text-secondary hover:bg-secondary hover:text-white transition"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-            </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">
+              <h2 className="text-xl font-semibold mb-2 text-white">
                 Create Your Account
               </h2>
-              <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
+              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
                 Enter your business details to get started with your brand account.
               </p>
             </div>
@@ -940,6 +1267,19 @@ const Signup = () => {
                 {loading ? "Creating Account..." : "Create Account"}
               </button>
             </div>
+
+            {/* Already have account section moved inside */}
+            <div className="text-center pt-4 border-t border-white/20">
+              <span className="text-xs text-white/80">
+                Already have an account?{" "}
+              </span>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-xs text-primary hover:text-primary-scale-600 font-medium hover:underline transition-colors"
+              >
+                Sign in
+              </button>
+            </div>
           </div>
         );
 
@@ -950,8 +1290,8 @@ const Signup = () => {
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Mail className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Verify Your Email</h2>
-              <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
+              <h2 className="text-xl font-semibold mb-2 text-white">Verify Your Email</h2>
+              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
                 We've sent a 4-digit verification code to {signupData.email}.
                 Please enter it below.
               </p>
@@ -983,7 +1323,7 @@ const Signup = () => {
             </div>
 
             <div className="text-center">
-              <span className="text-xs text-gray-600">
+              <span className="text-xs text-white/80">
                 Didn't receive the code?{" "}
               </span>
               <button
@@ -1002,6 +1342,19 @@ const Signup = () => {
             >
               {loading ? "Verifying..." : "Verify Email"}
             </button>
+
+            {/* Already have account section moved inside */}
+            <div className="text-center pt-4 border-t border-white/20">
+              <span className="text-xs text-white/80">
+                Already have an account?{" "}
+              </span>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-xs text-primary hover:text-primary-scale-600 font-medium hover:underline transition-colors"
+              >
+                Sign in
+              </button>
+            </div>
           </div>
         );
 
@@ -1012,10 +1365,10 @@ const Signup = () => {
               <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-6 h-6 text-secondary" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">
+              <h2 className="text-xl font-semibold mb-2 text-white">
                 Secure Your Account
               </h2>
-              <p className="text-gray-600 text-xs mb-6 max-w-sm mx-auto">
+              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
                 Create a strong password to protect your account.
               </p>
             </div>
@@ -1089,6 +1442,19 @@ const Signup = () => {
             >
               {loading ? "Completing Setup..." : "Complete Setup"}
             </button>
+
+            {/* Already have account section moved inside */}
+            <div className="text-center pt-4 border-t border-white/20">
+              <span className="text-xs text-white/80">
+                Already have an account?{" "}
+              </span>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-xs text-primary hover:text-primary-scale-600 font-medium hover:underline transition-colors"
+              >
+                Sign in
+              </button>
+            </div>
           </div>
         );
 
@@ -1098,55 +1464,87 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white md:bg-gray-50">
-      <div className="flex-1 flex items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-lg">
-          {/* Logo and brand name above the form */}
-          <div className=" mb-6 flex items-center justify-center gap-2">
+    <>
+      <style jsx>{`
+        .scrollbar-none {
+          -ms-overflow-style: none;  /* Internet Explorer 10+ */
+          scrollbar-width: none;  /* Firefox */
+        }
+        .scrollbar-none::-webkit-scrollbar { 
+          display: none;  /* Safari and Chrome */
+        }
+      `}</style>
+      <section 
+        className='flex max-lg:justify-center min-h-screen relative'
+        style={{
+          backgroundImage: `url(${assets.banner})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
+      >
+        {/* Background overlay for better readability */}
+        <div className="absolute inset-0 bg-black/30"></div>
+        
+        {/* Left Side - Animation (Desktop only) */}
+        <span className='flex flex-col justify-center w-1/2 lg:flex hidden relative z-10'>
+          <Ripple mainCircleSize={100} />
+          <TechOrbitDisplay iconsArray={iconsArray} />
+        </span>
+
+        {/* Right Side - Form (Desktop) */}
+        <span className='w-1/2 h-[100dvh] lg:flex hidden flex-col justify-center items-center relative z-10'>
+          <div className="w-full max-w-lg">
+            {/* Enhanced Glass Effect Form */}
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 md:p-8 relative max-h-[80vh] overflow-y-auto scrollbar-none">
+              {/* Additional glass layer */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
+              
+              {/* Content */}
+              <div className="relative z-10">
+                {renderStepContent()}
+              </div>
+            </div>
+          </div>
+        </span>
+
+        {/* Mobile Layout - Full Screen */}
+        <div className="lg:hidden w-[95vw] h-[95vh] mx-auto my-auto flex flex-col relative z-10">
+          {/* Logo and brand name above the form - MOBILE ONLY */}
+          <div className="flex-shrink-0 mb-4 flex items-center justify-center gap-2">
             <img
               src={assets.LogoIcon}
               alt="Logo"
               className="h-16 w-16 object-contain"
             />
-            <h1 className="text-md font-bold text-secondary">SOCIAL GEMS</h1>
+            <h1 className="text-md font-bold text-white drop-shadow-lg">SOCIAL GEMS</h1>
           </div>
 
-          <div className="bg-white md:rounded-lg md:shadow-xl md:border border-gray-100 p-6 md:p-8">
-            <div className="md:hidden mb-6">
-              <div className="flex justify-center space-x-2">
-                {steps.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      index <= currentStep ? "bg-primary" : "bg-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="text-center mt-3">
-                <div className="text-xs font-medium text-gray-700">
-                  Step {currentStep + 1} of {steps.length}
-                </div>
-              </div>
+          {/* Enhanced Glass Effect Form - Mobile */}
+          <div className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 relative overflow-hidden flex flex-col">
+            {/* Additional glass layer */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
+            
+            {/* Scrollable Content */}
+            <div className="relative z-10 flex-1 overflow-y-auto scrollbar-none">
+              {renderStepContent()}
             </div>
-
-            {renderStepContent()}
-          </div>
-
-          <div className="text-center mt-6">
-            <span className="text-xs text-gray-600">
-              Already have an account?{" "}
-            </span>
-            <button
-              onClick={() => navigate("/login")}
-              className="text-xs text-secondary hover:text-secondary-scale-600 font-medium hover:underline transition-colors"
-            >
-              Sign in
-            </button>
           </div>
         </div>
-      </div>
-    </div>
+
+        {/* Industries Selection Modal */}
+        <IndustriesModal
+          isOpen={isIndustriesModalOpen}
+          onClose={() => setIsIndustriesModalOpen(false)}
+          onSkip={handleIndustriesSkip}
+          onContinue={handleIndustriesContinue}
+          industries={industries}
+          selectedIndustries={selectedIndustries}
+          onToggleIndustry={handleIndustryToggle}
+          loading={loading}
+        />
+      </section>
+    </>
   );
 };
 
