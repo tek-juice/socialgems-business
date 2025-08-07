@@ -11,7 +11,6 @@ import {
   Mail,
   User,
   Phone,
-  Building,
   Plus,
   Check,
   ArrowLeft,
@@ -21,6 +20,7 @@ import {
   ChevronDown,
   Search,
   X,
+  ExternalLink,
 } from "lucide-react";
 import {
   InputOTP,
@@ -28,274 +28,13 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from "../../components/ui/input-otp";
-import {
-  motion,
-  useAnimation,
-  useInView,
-  useMotionTemplate,
-  useMotionValue,
-} from "framer-motion";
 
 import { TiBusinessCard } from "react-icons/ti";
 import { CiAt } from "react-icons/ci";
 import { assets } from "../../assets/assets";
 
-// Animation Components
-const cn = (...classes) => {
-  return classes.filter(Boolean).join(' ');
-};
-
-// Ripple Component
-const Ripple = memo(function Ripple({
-  mainCircleSize = 210,
-  mainCircleOpacity = 0.24,
-  numCircles = 8, // Reduced from 11 to 8
-  className = '',
-}) {
-  return (
-    <section
-      className={`max-w-[50%] absolute inset-0 flex items-center justify-center
-        [mask-image:linear-gradient(to_bottom,black,transparent)]
-        dark:[mask-image:linear-gradient(to_bottom,white,transparent)] ${className}`}
-    >
-      {Array.from({ length: numCircles }, (_, i) => {
-        const size = mainCircleSize + i * 70;
-        const opacity = mainCircleOpacity - i * 0.03;
-        const animationDelay = `${i * 0.1}s`; // Increased delay
-        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
-        const borderOpacity = 5 + i * 5;
-
-        return (
-          <span
-            key={i}
-            className='absolute animate-ripple rounded-full bg-foreground/15 border'
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              opacity: opacity,
-              animationDelay: animationDelay,
-              borderStyle: borderStyle,
-              borderWidth: '1px',
-              borderColor: `var(--foreground) dark:var(--background) / ${
-                borderOpacity / 100
-              })`,
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              willChange: 'transform',
-              backfaceVisibility: 'hidden',
-            }}
-          />
-        );
-      })}
-    </section>
-  );
-});
-
-// OrbitingCircles Component - Optimized
-const OrbitingCircles = memo(function OrbitingCircles({
-  className,
-  children,
-  reverse = false,
-  duration = 25, // Slower animation
-  delay = 10,
-  radius = 50,
-  path = true,
-}) {
-  return (
-    <>
-      {path && (
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          version='1.1'
-          className='pointer-events-none absolute inset-0 size-full'
-        >
-          <circle
-            className='stroke-black/5 stroke-1 dark:stroke-white/5' // Reduced opacity
-            cx='50%'
-            cy='50%'
-            r={radius}
-            fill='none'
-          />
-        </svg>
-      )}
-      <section
-        style={
-          {
-            '--duration': duration,
-            '--radius': radius,
-            '--delay': -delay,
-          }
-        }
-        className={cn(
-          'absolute flex size-full transform-gpu animate-orbit items-center justify-center rounded-full border-0 bg-transparent [animation-delay:calc(var(--delay)*1000ms)]',
-          { '[animation-direction:reverse]': reverse },
-          className
-        )}
-        css={{
-          willChange: 'transform',
-          backfaceVisibility: 'hidden',
-          transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
-        }}
-      >
-        {children}
-      </section>
-    </>
-  );
-});
-
-// TechOrbitDisplay Component
-const TechOrbitDisplay = memo(function TechOrbitDisplay({
-  iconsArray,
-  text = 'SOCIAL GEMS',
-}) {
-  return (
-    <section className='relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg'>
-      <div className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-primary to-secondary bg-clip-text text-center text-4xl lg:text-7xl font-semibold leading-none text-transparent z-20 relative flex items-center gap-3'>
-        <img
-          src={assets.LogoIcon}
-          alt="Logo"
-          className="h-8 w-8 lg:h-12 lg:w-12 object-contain"
-        />
-        <span>{text}</span>
-      </div>
-
-      <div className="absolute inset-0 z-10">
-        {iconsArray.map((icon, index) => (
-          <OrbitingCircles
-            key={index}
-            className={icon.className}
-            duration={icon.duration}
-            delay={icon.delay}
-            radius={icon.radius}
-            path={icon.path}
-            reverse={icon.reverse}
-          >
-            {icon.component()}
-          </OrbitingCircles>
-        ))}
-      </div>
-    </section>
-  );
-});
-
-// Social Media Icons Array - Same as login page
-const iconsArray = [
-  // Inner circle - 80px radius
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.facebook}
-          alt='Facebook'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 12,
-    delay: 0,
-    radius: 80,
-    path: false,
-    reverse: false,
-  },
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.instagram}
-          alt='Instagram'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 10,
-    delay: 10, // 180 degrees apart (half of 20s)
-    radius: 80,
-    path: false,
-    reverse: false,
-  },
-  
-  // Middle circle - 130px radius
-  {
-    component: () => (
-      <div className="w-8 h-8 rounded-full overflow-hidden bg-transparent">
-        <img
-          src={assets.twitter}
-          alt='Twitter'
-          className="w-full h-full object-cover p-1"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 25,
-    delay: 0,
-    path: false,
-    reverse: true,
-  },
-  {
-    component: () => (
-      <div className="w-16 h-16 overflow-hidden bg-transparent">
-        <img
-          src={assets.tiktok}
-          alt='TikTok'
-          className="w-full h-full object-cover"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 35,
-    delay: 12.5, // 180 degrees apart (half of 25s)
-    path: false,
-    reverse: true,
-  },
-  
-  // Outer circle - 180px radius
-
-  
-  // Far outer circle - 230px radius
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.youtube}
-          alt='YouTube Alt'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 30,
-    delay: 0, // 180 degrees apart (half of 35s)
-    radius: 230,
-    path: false,
-    reverse: true,
-  },
-
-  {
-    component: () => (
-      <div className="w-8 h-8 overflow-hidden bg-transparent">
-        <img
-          src={assets.Logo}
-          alt='TikTok'
-          className="w-full h-full object-cover"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 15,
-    delay: 12.5, // 180 degrees apart (half of 25s)
-    path: false,
-    reverse: true,
-  },
-];
-
-// Industries Selection Modal Component
-const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, selectedIndustries, onToggleIndustry, loading }) => {
+// Terms and Privacy Modal Component
+const TermsPrivacyModal = ({ isOpen, onClose }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -304,6 +43,171 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  if (!isOpen) return null;
+
+  // Mobile Drawer
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end">
+        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+        <div className="relative z-50 w-full bg-white/95 backdrop-blur-lg rounded-t-lg max-h-[80vh] flex flex-col border border-white/20">
+          <div className="flex-shrink-0 p-4 border-b border-white/20">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Terms & Privacy</h2>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                By creating an account, you agree to our terms and policies:
+              </p>
+              <div className="space-y-3">
+                <a
+                  href="https://www.socialgems.me/terms-of-use"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm font-medium text-gray-700">Terms of Use</span>
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                </a>
+                <a
+                  href="https://www.socialgems.me/privacypolicy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <span className="text-sm font-medium text-gray-700">Privacy Policy</span>
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="flex-shrink-0 p-4 border-t border-white/20">
+            <button
+              onClick={onClose}
+              className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Modal
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-labelledby="terms-title">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="relative z-50 w-full max-w-md max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-lg rounded-lg shadow-lg border border-white/20 scrollbar-none">
+        <div className="flex items-center justify-between p-6 border-b border-white/20">
+          <h2 id="terms-title" className="text-xl font-semibold">Terms & Privacy</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              By creating an account, you agree to our terms and policies:
+            </p>
+            <div className="space-y-3">
+              <a
+                href="https://www.socialgems.me/terms-of-use"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-sm font-medium text-gray-700">Terms of Use</span>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </a>
+              <a
+                href="https://www.socialgems.me/privacypolicy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-sm font-medium text-gray-700">Privacy Policy</span>
+                <ExternalLink className="w-4 h-4 text-gray-400" />
+              </a>
+            </div>
+          </div>
+          <div className="mt-6">
+            <button
+              onClick={onClose}
+              className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Industries Selection Modal Component
+const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, selectedIndustries, onToggleIndustry, loading }) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [selectionCount, setSelectionCount] = useState(0);
+
+  // Group industries by category
+  const groupedIndustries = industries.reduce((acc, industry) => {
+    if (!acc[industry.category]) {
+      acc[industry.category] = [];
+    }
+    acc[industry.category].push(industry);
+    return acc;
+  }, {});
+
+  // Update selection count when selectedIndustries changes
+  useEffect(() => {
+    setSelectionCount(selectedIndustries.length);
+  }, [selectedIndustries]);
+
+  const handleIndustryToggle = (industryId) => {
+    if (selectedIndustries.includes(industryId) || selectionCount < 5) {
+      onToggleIndustry(industryId);
+    } else {
+      toast.error("You can select a maximum of 5 industries");
+    }
+  };
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Skeleton loader for categories
+  const renderSkeletonLoader = () => {
+    return (
+      <div className="animate-pulse space-y-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="space-y-3">
+            <div className="h-4 w-1/4 bg-gray-200 rounded"></div>
+            <div className="flex flex-wrap gap-2">
+              {[...Array(5)].map((_, j) => (
+                <div key={j} className="h-8 w-20 bg-gray-200 rounded-md"></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   // Mobile Drawer
   if (isMobile) {
@@ -321,42 +225,33 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-gray-600 text-sm mt-1">
-              Select the industries your brand operates in. You can skip this step and add them later.
-            </p>
           </div>
           <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
-            <div className="grid gap-3">
-              {industries.map((industry) => (
-                <button
-                  key={industry.id}
-                  type="button"
-                  onClick={() => onToggleIndustry(industry.id)}
-                  className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                    selectedIndustries.includes(industry.id)
-                      ? "border-primary bg-primary/10"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="text-sm text-gray-700 font-medium">
-                    {industry.name}
-                  </span>
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedIndustries.includes(industry.id)
-                        ? "border-primary bg-primary"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {selectedIndustries.includes(industry.id) ? (
-                      <Check className="w-3 h-3 text-secondary" />
-                    ) : (
-                      <Plus className="w-3 h-3 text-gray-300" />
-                    )}
+            {loading ? (
+              renderSkeletonLoader()
+            ) : (
+              Object.entries(groupedIndustries).map(([category, subcategories]) => (
+                <div key={category} className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3">{category}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((industry) => (
+                      <button
+                        key={industry.id}
+                        type="button"
+                        onClick={() => handleIndustryToggle(industry.id)}
+                        className={`px-3 py-1 rounded-md border transition-all text-xs ${
+                          selectedIndustries.includes(industry.id)
+                            ? "border-primary bg-primary/70 text-black"
+                            : "border-gray-200 hover:border-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {industry.name}
+                      </button>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              ))
+            )}
           </div>
           <div className="flex-shrink-0 p-4 border-t border-white/20">
             <div className="flex gap-3">
@@ -365,14 +260,14 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
                 className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
                 disabled={loading}
               >
-                Skip for now
+                {loading ? 'Loading...' : 'Skip for now'}
               </button>
               <button
                 onClick={onContinue}
-                disabled={selectedIndustries.length === 0 || loading}
+                disabled={loading}
                 className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
               >
-                Continue
+                {loading ? 'Loading...' : 'Continue'}
               </button>
             </div>
           </div>
@@ -388,7 +283,7 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-labelledby="industries-title">
       <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
       <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-lg rounded-lg shadow-lg border border-white/20 scrollbar-none">
-        <div className="flex items-center justify-between p-6 border-b border-white/20">
+        <div className="flex items-center justify-between px-6 pt-6 border-b border-white/20">
           <h2 id="industries-title" className="text-xl font-semibold">Choose Your Industries</h2>
           <button
             onClick={onClose}
@@ -398,47 +293,32 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
           </button>
         </div>
         <div className="p-6">
-          <div className="text-center mb-6">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Building className="w-6 h-6 text-secondary" />
-            </div>
-            <p className="text-gray-600 text-sm max-w-sm mx-auto">
-              Select the industries your brand operates in. You can skip this step and add them later.
-            </p>
-          </div>
-
           <div className="max-h-64 overflow-y-auto mb-6 scrollbar-none">
-            <div className="grid gap-3">
-              {industries.map((industry) => (
-                <button
-                  key={industry.id}
-                  type="button"
-                  onClick={() => onToggleIndustry(industry.id)}
-                  className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
-                    selectedIndustries.includes(industry.id)
-                      ? "border-primary bg-primary/10"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="text-sm text-gray-700 font-medium">
-                    {industry.name}
-                  </span>
-                  <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedIndustries.includes(industry.id)
-                        ? "border-primary bg-primary"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {selectedIndustries.includes(industry.id) ? (
-                      <Check className="w-3 h-3 text-secondary" />
-                    ) : (
-                      <Plus className="w-3 h-3 text-gray-300" />
-                    )}
+            {loading ? (
+              renderSkeletonLoader()
+            ) : (
+              Object.entries(groupedIndustries).map(([category, subcategories]) => (
+                <div key={category} className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3">{category}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((industry) => (
+                      <button
+                        key={industry.id}
+                        type="button"
+                        onClick={() => handleIndustryToggle(industry.id)}
+                        className={`px-3 py-1 rounded-md border transition-all text-xs ${
+                          selectedIndustries.includes(industry.id)
+                            ? "border-primary bg-primary/70 text-black"
+                            : "border-gray-200 hover:border-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {industry.name}
+                      </button>
+                    ))}
                   </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="flex gap-3">
@@ -447,101 +327,18 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
               className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
               disabled={loading}
             >
-              Skip for now
+              {loading ? 'Loading...' : 'Skip for now'}
             </button>
             <button
               onClick={onContinue}
-              disabled={selectedIndustries.length === 0 || loading}
+              disabled={loading}
               className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
             >
-              Continue
+              {loading ? 'Loading...' : 'Continue'}
             </button>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// Searchable Dropdown Component
-const SearchableDropdown = ({
-  options,
-  value,
-  onChange,
-  placeholder,
-  disabled,
-  displayField = "name",
-  valueField = "id",
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredOptions = options.filter((option) =>
-    option[displayField].toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const selectedOption = options.find((option) => option[valueField] === value);
-
-  const handleSelect = (option) => {
-    onChange(option[valueField]);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  return (
-    <div className="relative">
-      <div
-        className={`w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs cursor-pointer flex items-center justify-between ${
-          disabled ? "opacity-50 cursor-not-allowed" : ""
-        }`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-      >
-        <span className={selectedOption ? "text-black" : "text-gray-500"}>
-          {selectedOption
-            ? `${selectedOption[displayField]} (+${selectedOption.phone_code})`
-            : placeholder}
-        </span>
-        <ChevronDown
-          className={`w-4 h-4 text-gray-400 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </div>
-
-      {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
-          <div className="p-2 border-b border-gray-100">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search countries..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
-                onClick={(e) => e.stopPropagation()}
-              />
-            </div>
-          </div>
-          <div className="max-h-48 overflow-y-auto scrollbar-none">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <div
-                  key={option[valueField]}
-                  className="px-3 py-2 text-xs hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-b-0"
-                  onClick={() => handleSelect(option)}
-                >
-                  {option[displayField]} (+{option.phone_code})
-                </div>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-xs text-gray-500">
-                No countries found
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -660,7 +457,7 @@ const UsernameSuggestionsDropdown = ({
         onChange={handleInputChange}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
-        placeholder="Display Business As (Username)"
+        placeholder="Username"
         disabled={disabled}
         className={`w-full pl-10 pr-8 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs ${
           disabled ? "opacity-50 cursor-not-allowed" : ""
@@ -716,13 +513,17 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
   const [isIndustriesModalOpen, setIsIndustriesModalOpen] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchTerm, setCountrySearchTerm] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [username, setUsername] = useState("");
 
   const [signupData, setSignupData] = useState({
     email: "",
     phone_number: "",
     business_name: "",
     first_name: "",
-    username: "",
     country_id: "256",
     user_type: "brand",
   });
@@ -736,7 +537,6 @@ const Signup = () => {
     password: "",
     confirm_password: "",
   });
-
 
   // Fetch industries and countries on component mount
   useEffect(() => {
@@ -872,24 +672,29 @@ const Signup = () => {
     });
   };
 
-  const handleCountryChange = (countryId) => {
-    const country = countries.find((c) => c.id === parseInt(countryId));
+  const handleCountryChange = (country) => {
     setSelectedCountry(country);
     setSignupData((prev) => ({ ...prev, country_id: country.phone_code }));
+    setIsCountryDropdownOpen(false);
+    setCountrySearchTerm("");
 
+    // Clear the phone number when country changes
     setLocalPhoneNumber("");
     setSignupData((prev) => ({ ...prev, phone_number: "" }));
   };
 
   const handlePhoneChange = (value) => {
+    // Remove any non-digit characters except the '+' at the beginning
     let cleanValue = value.replace(/[^\d]/g, "");
 
+    // Remove leading zero if present
     if (cleanValue.startsWith("0")) {
       cleanValue = cleanValue.substring(1);
     }
 
     setLocalPhoneNumber(cleanValue);
 
+    // Update the full phone number with country code
     if (selectedCountry && cleanValue) {
       const fullNumber = `+${selectedCountry.phone_code}${cleanValue}`;
       setSignupData((prev) => ({ ...prev, phone_number: fullNumber }));
@@ -897,6 +702,10 @@ const Signup = () => {
       setSignupData((prev) => ({ ...prev, phone_number: "" }));
     }
   };
+
+  const filteredCountries = countries.filter((country) =>
+    country.name.toLowerCase().includes(countrySearchTerm.toLowerCase())
+  );
 
   const handleIndustriesSkip = () => {
     setIsIndustriesModalOpen(false);
@@ -913,16 +722,19 @@ const Signup = () => {
       email,
       phone_number,
       business_name,
-      username,
     } = signupData;
 
     if (
       !email.trim() ||
       !phone_number.trim() ||
-      !business_name.trim() ||
-      !username.trim()
+      !business_name.trim()
     ) {
       toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (!agreedToTerms) {
+      toast.error("Please agree to our Terms of Use and Privacy Policy");
       return;
     }
 
@@ -976,18 +788,18 @@ const Signup = () => {
       const response = await post("users/verifyEmail", {
         user_id: otpData.user_id,
         email: signupData.email,
-        username: signupData.username,
+        username: username,
         otp: otpData.otp,
       });
 
       if (response.status === 200) {
         const token = response.data?.token;
-        const username = response.data?.username;
+        const responseUsername = response.data?.username;
         
         if (token) {
           localStorage.setItem("jwt", token);
           localStorage.setItem("user_id", response.data.user_id);
-          localStorage.setItem("username", username);
+          localStorage.setItem("username", responseUsername || username);
           localStorage.setItem("status", response.data.status);
         }
 
@@ -1011,6 +823,11 @@ const Signup = () => {
 
   const handleStepFour = async () => {
     const { password, confirm_password } = passwordData;
+
+    if (!username.trim()) {
+      toast.error("Please enter a username");
+      return;
+    }
 
     if (!password || !confirm_password) {
       toast.error("Please enter both password and confirmation");
@@ -1046,7 +863,7 @@ const Signup = () => {
       // Include the user's selected username in the secure account request
       const secureAccountData = {
         ...passwordData,
-        username: signupData.username,
+        username: username,
       };
 
       const response = await post("users/secureAccount", secureAccountData, headers);
@@ -1059,13 +876,13 @@ const Signup = () => {
 
         if (loginResponse.status === 200) {
           const {
-            username,
+            username: loginUsername,
             user_type: role,
             email: userEmail,
             jwt,
           } = loginResponse.data;
 
-          localStorage.setItem("name", username);
+          localStorage.setItem("name", loginUsername);
           localStorage.setItem("email", userEmail);
           localStorage.setItem("role", role);
           localStorage.setItem("jwt", jwt);
@@ -1078,7 +895,8 @@ const Signup = () => {
                 "users/updateProfile",
                 {
                   industry_ids: selectedIndustries,
-                  username: signupData.username || username,
+                  username: username || loginUsername,
+                  first_name: signupData.business_name,
                 },
                 {
                   headers: {
@@ -1095,7 +913,26 @@ const Signup = () => {
               );
             }
           } else {
-            toast.success("Account setup completed successfully!");
+            // Even if no industries selected, still update with business name as last name
+            try {
+              await patch(
+                "users/updateProfile",
+                {
+                  username: username || loginUsername,
+                  first_name: signupData.business_name,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${jwt}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              toast.success("Account setup completed successfully!");
+            } catch (profileError) {
+              console.warn("Failed to update profile:", profileError);
+              toast.success("Account setup completed successfully!");
+            }
           }
 
           navigate("/dashboard");
@@ -1159,25 +996,37 @@ const Signup = () => {
     }
   };
 
+  const handleAppStoreDownload = () => {
+    window.open('https://apps.apple.com/app/socialgems', '_blank');
+  };
+
+  const handlePlayStoreDownload = () => {
+    window.open('https://play.google.com/store/apps/details?id=com.socialgems.app', '_blank');
+  };
+
+  const stepTitles = {
+    1: {
+      title: "Get Started",
+      description: "Enter your business details to get started with your brand account."
+    },
+    2: {
+      title: "Verify Email",
+      description: "Enter the 4-digit code sent to your email address."
+    },
+    3: {
+      title: "Secure Account",
+      description: "Create a unique username and password for your account."
+    }
+  };
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <UserPlus className="w-6 h-6 text-secondary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2 text-white">
-                Create Your Account
-              </h2>
-              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
-                Enter your business details to get started with your brand account.
-              </p>
-            </div>
-
+          <div className="space-y-6 mt-2">
             <div className="space-y-4">
-              <div className="relative flex-1">
+              {/* BUSINESS NAME ONLY */}
+              <div className="relative">
                 <TiBusinessCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   placeholder="Business Name"
@@ -1190,16 +1039,6 @@ const Signup = () => {
                       business_name: e.target.value,
                     }))
                   }
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="relative flex-1">
-                <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-                <UsernameSuggestionsDropdown
-                  businessName={signupData.business_name}
-                  value={signupData.username}
-                  onChange={(username) => setSignupData(prev => ({...prev, username}))}
                   disabled={loading}
                 />
               </div>
@@ -1221,39 +1060,106 @@ const Signup = () => {
                 />
               </div>
 
+              {/* COMBINED PHONE AND COUNTRY FIELD */}
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
-                <SearchableDropdown
-                  options={countries}
-                  value={selectedCountry?.id || ""}
-                  onChange={handleCountryChange}
-                  placeholder="Select Country"
-                  disabled={loading}
-                  displayField="name"
-                  valueField="id"
-                />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                
+                <div className="flex w-full border border-gray-200 rounded-lg focus-within:ring-2 focus-within:ring-primary focus-within:border-primary bg-gray-50 focus-within:bg-white">
+                  {/* Country Selector */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                      disabled={loading}
+                      className="pl-10 pr-3 py-3 text-xs text-black border-r border-gray-200 bg-transparent focus:outline-none flex items-center gap-1 hover:bg-gray-100 transition-colors"
+                    >
+                      <span>
+                        {selectedCountry ? `${selectedCountry.name} +${selectedCountry.phone_code}` : "Select"}
+                      </span>
+                      <ChevronDown
+                        className={`w-3 h-3 text-gray-400 transition-transform ${
+                          isCountryDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {isCountryDropdownOpen && (
+                      <div className="absolute z-50 left-0 top-full mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                        <div className="p-2 border-b border-gray-100">
+                          <div className="relative">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="Search countries..."
+                              value={countrySearchTerm}
+                              onChange={(e) => setCountrySearchTerm(e.target.value)}
+                              className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto scrollbar-none">
+                          {filteredCountries.length > 0 ? (
+                            filteredCountries.map((country) => (
+                              <button
+                                key={country.id}
+                                type="button"
+                                className="w-full px-3 py-2 text-xs hover:bg-gray-50 text-left border-b border-gray-50 last:border-b-0 flex items-center justify-between"
+                                onClick={() => handleCountryChange(country)}
+                              >
+                                <span>{country.name}</span>
+                                <span className="text-gray-500">+{country.phone_code}</span>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-xs text-gray-500">
+                              No countries found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Phone Number Input */}
+                  <input
+                    placeholder="Phone Number"
+                    type="tel"
+                    value={localPhoneNumber}
+                    className="flex-1 px-3 py-3 border-none text-black bg-transparent text-xs focus:outline-none"
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    disabled={loading || !selectedCountry}
+                  />
+                </div>
               </div>
 
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  placeholder={
-                    selectedCountry
-                      ? `Phone Number (without leading 0)`
-                      : "Phone Number"
-                  }
-                  type="tel"
-                  value={localPhoneNumber}
-                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  disabled={loading}
-                />
-                {selectedCountry && localPhoneNumber && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                    +{selectedCountry.phone_code}
-                    {localPhoneNumber}
-                  </div>
-                )}
+              {/* Terms and Privacy Agreement */}
+              <div className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                id="terms-agreement"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="w-4 h-4 rounded border-secondary text-secondary focus:ring-primary focus:ring-2 checked:bg-secondary checked:border-secondary checked:text-white hover:none"
+                disabled={loading}
+              />
+                <label htmlFor="terms-agreement" className="text-xs text-gray-700 cursor-pointer">
+                  I agree to Social Gems'{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsTermsModalOpen(true)}
+                    className="text-secondary hover:underline font-semibold"
+                  >
+                    Terms of Use
+                  </button>{" "}
+                  and{" "}
+                  <button
+                    type="button"
+                    onClick={() => setIsTermsModalOpen(true)}
+                    className="text-secondary hover:underline font-semibold"
+                  >
+                    Privacy Policy
+                  </button>
+                </label>
               </div>
             </div>
 
@@ -1268,8 +1174,8 @@ const Signup = () => {
             </div>
 
             {/* Already have account section moved inside */}
-            <div className="text-center pt-4 border-t border-white/20">
-              <span className="text-xs text-white/80">
+            <div className="text-center pt-4 border-t border-gray-200">
+              <span className="text-xs text-black/80">
                 Already have an account?{" "}
               </span>
               <button
@@ -1284,18 +1190,7 @@ const Signup = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-6 h-6 text-secondary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2 text-white">Verify Your Email</h2>
-              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
-                We've sent a 4-digit verification code to {signupData.email}.
-                Please enter it below.
-              </p>
-            </div>
-
+          <div className="space-y-6 mt-2">
             <div className="flex justify-center">
               <InputOTP
                 maxLength={4}
@@ -1322,13 +1217,13 @@ const Signup = () => {
             </div>
 
             <div className="text-center">
-              <span className="text-xs text-white/80">
+              <span className="text-xs text-black/80">
                 Didn't receive the code?{" "}
               </span>
               <button
                 onClick={resendOTP}
                 disabled={loading}
-                className="text-xs text-secondary hover:text-secondary-scale-600 font-medium hover:underline disabled:opacity-50 transition-colors"
+                className="text-xs text-primary hover:text-primary-scale-600 font-medium hover:underline disabled:opacity-50 transition-colors"
               >
                 Resend
               </button>
@@ -1343,8 +1238,8 @@ const Signup = () => {
             </button>
 
             {/* Already have account section moved inside */}
-            <div className="text-center pt-4 border-t border-white/20">
-              <span className="text-xs text-white/80">
+            <div className="text-center pt-4 border-t border-gray-200">
+              <span className="text-xs text-black/80">
                 Already have an account?{" "}
               </span>
               <button
@@ -1359,20 +1254,19 @@ const Signup = () => {
 
       case 3:
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-6 h-6 text-secondary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2 text-white">
-                Secure Your Account
-              </h2>
-              <p className="text-white/80 text-xs mb-6 max-w-sm mx-auto">
-                Create a strong password to protect your account.
-              </p>
-            </div>
+          <div className="space-y-6 mt-2">
 
             <div className="space-y-4">
+              <div className="relative">
+                <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <UsernameSuggestionsDropdown
+                  businessName={signupData.business_name}
+                  value={username}
+                  onChange={setUsername}
+                  disabled={loading}
+                />
+              </div>
+
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -1434,6 +1328,7 @@ const Signup = () => {
               onClick={nextStep}
               disabled={
                 loading ||
+                !username.trim() ||
                 !passwordData.password ||
                 !passwordData.confirm_password
               }
@@ -1443,8 +1338,8 @@ const Signup = () => {
             </button>
 
             {/* Already have account section moved inside */}
-            <div className="text-center pt-4 border-t border-white/20">
-              <span className="text-xs text-white/80">
+            <div className="text-center pt-4 border-t border-gray-200">
+              <span className="text-xs text-black/80">
                 Already have an account?{" "}
               </span>
               <button
@@ -1466,83 +1361,213 @@ const Signup = () => {
     <>
       <style jsx>{`
         .scrollbar-none {
-          -ms-overflow-style: none;  /* Internet Explorer 10+ */
-          scrollbar-width: none;  /* Firefox */
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
         .scrollbar-none::-webkit-scrollbar { 
-          display: none;  /* Safari and Chrome */
+          display: none;
         }
       `}</style>
-      <section 
-        className='flex max-lg:justify-center min-h-screen relative'
-        style={{
-          backgroundImage: `url(${assets.banner})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Background overlay for better readability */}
-        <div className="absolute inset-0 bg-black/30"></div>
-        
-        {/* Left Side - Animation (Desktop only) */}
-        <span className='flex flex-col justify-center w-1/2 lg:flex hidden relative z-10'>
-          <Ripple mainCircleSize={100} />
-          <TechOrbitDisplay iconsArray={iconsArray} />
-        </span>
 
-        {/* Right Side - Form (Desktop) */}
-        <span className='w-1/2 h-[100dvh] lg:flex hidden flex-col justify-center items-center relative z-10'>
-          <div className="w-full max-w-lg">
-            {/* Enhanced Glass Effect Form */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 md:p-8 relative max-h-[80vh] overflow-y-auto scrollbar-none">
-              {/* Additional glass layer */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
-              
-              {/* Content */}
-              <div className="relative z-10">
-                {renderStepContent()}
+      {/* Desktop Layout */}
+      <div className="min-h-screen lg:flex items-center justify-center overflow-hidden p-4 hidden">
+        {/* FIXED HEIGHT CONTAINER */}
+        <div className="w-full relative max-w-5xl h-[600px] overflow-hidden flex flex-col md:flex-row shadow-xl">
+          <div className="w-full h-full z-0 absolute bg-linear-to-t from-transparent to-black pointer-events-none"></div>
+          <div className="flex absolute z-0 overflow-hidden backdrop-blur-2xl pointer-events-none">
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+          </div>
+          <div className="w-[15rem] h-[15rem] bg-primary absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
+          <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
+          <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
+
+          {/* LEFT CARD - FIXED HEIGHT */}
+          <div className="bg-white backdrop-blur-xl text-white p-8 md:p-12 md:w-1/2 relative rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between h-full">
+            <div className="absolute inset-0 bg-black/20 rounded-bl-3xl"></div>
+            
+            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4">
+              <img
+                src={assets.MainLogo}
+                alt="Social Gems Logo"
+                className="h-fit w-44 object-contain mb-8 drop-shadow-lg"
+              />
+
+              <div className="mb-8 w-full">
+                <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
+                <div className="flex gap-3 w-full max-w-lg mx-auto">
+                  <button
+                    onClick={handleAppStoreDownload}
+                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                  >
+                    <img 
+                      src={assets.applelogo}
+                      alt="Apple Logo"
+                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300">Get it on</div>
+                      <div className="text-sm font-semibold">App Store</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={handlePlayStoreDownload}
+                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                  >
+                    <img 
+                      src={assets.playstorelogo}
+                      alt="Play Store Logo"
+                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300">Get it on</div>
+                      <div className="text-sm font-semibold">Google Play</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative z-20 w-full px-4">
+              <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
+              <div className="flex items-center justify-center gap-4">
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <span className="text-blue-400 text-sm font-bold">f</span>
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                </a>
               </div>
             </div>
           </div>
-        </span>
 
-        {/* Mobile Layout - Full Screen */}
-        <div className="lg:hidden w-[95vw] h-[95vh] mx-auto my-auto flex flex-col relative z-10">
-          {/* Logo and brand name above the form - MOBILE ONLY */}
-          <div className="flex-shrink-0 mb-4 flex items-center justify-center gap-2">
-            <img
-              src={assets.LogoIcon}
-              alt="Logo"
-              className="h-16 w-16 object-contain"
-            />
-            <h1 className="text-md font-bold text-white drop-shadow-lg">SOCIAL GEMS</h1>
-          </div>
+          {/* RIGHT CARD - FIXED HEIGHT WITH SCROLLABLE CONTENT */}
+          <div className="md:w-1/2 flex flex-col bg-white z-20 text-black relative h-full">
+            {/* HEADER - FIXED */}
+            {/* HEADER - FIXED */}
+            <div className="flex-shrink-0 p-8 md:p-8 mb-2 pb-4">
+              <div className="flex flex-col items-left">
+                <div className="text-primary mb-4">
+                  <img
+                    src={assets.LogoIcon}
+                    alt="Social Gems"
+                    className="h-10 w-10 object-contain"
+                  />
+                </div>
+                <h2 className="text-3xl font-medium mb-2 tracking-tight">
+                  {stepTitles[currentStep].title}
+                </h2>
+                <p className="text-left opacity-80">
+                  {stepTitles[currentStep].description}
+                </p>
+              </div>
+            </div>
 
-          {/* Enhanced Glass Effect Form - Mobile */}
-          <div className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 relative overflow-hidden flex flex-col">
-            {/* Additional glass layer */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
-            
-            {/* Scrollable Content */}
-            <div className="relative z-10 flex-1 overflow-y-auto scrollbar-none">
+            {/* SCROLLABLE FORM CONTENT */}
+            <div className="flex-1 overflow-y-auto px-8 md:px-12 pb-8 scrollbar-none">
               {renderStepContent()}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Industries Selection Modal */}
-        <IndustriesModal
-          isOpen={isIndustriesModalOpen}
-          onClose={() => setIsIndustriesModalOpen(false)}
-          onSkip={handleIndustriesSkip}
-          onContinue={handleIndustriesContinue}
-          industries={industries}
-          selectedIndustries={selectedIndustries}
-          onToggleIndustry={handleIndustryToggle}
-          loading={loading}
-        />
-      </section>
+      {/* Mobile Layout - FIXED HEIGHT */}
+      <div className="min-h-screen flex flex-col lg:hidden bg-gray-50">
+        <div className="h-screen flex flex-col max-w-md mx-auto w-full">
+          {/* Mobile Logo Section - FIXED HEIGHT */}
+          <div className="flex-shrink-0 bg-secondary/90 py-6 px-4 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10">
+              <img
+                src={assets.MainLogo}
+                alt="Social Gems Logo"
+                className="h-fit w-24 object-contain mx-auto drop-shadow-lg"
+              />
+            </div>
+          </div>
+
+          {/* Mobile Form Section - SCROLLABLE */}
+          <div className="flex-1 bg-white overflow-hidden flex flex-col">
+            {/* HEADER - FIXED */}
+            <div className="flex-shrink-0 p-6 pb-4">
+              <div className="flex flex-col items-left">
+                <div className="text-primary mb-4">
+                  <img
+                    src={assets.LogoIcon}
+                    alt="Social Gems"
+                    className="h-10 w-10 object-contain"
+                  />
+                </div>
+                <h2 className="text-2xl font-medium mb-2 tracking-tight">
+                  {stepTitles[currentStep].title}
+                </h2>
+                <p className="text-left opacity-80">
+                  {stepTitles[currentStep].description}
+                </p>
+              </div>
+            </div>
+
+            {/* SCROLLABLE CONTENT */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6 scrollbar-none">
+              {renderStepContent()}
+
+              {/* Mobile Social Media Links */}
+              <div className="text-center mt-8">
+                <p className="text-sm opacity-80 mb-4 text-gray-600">Follow us on social media</p>
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <span className="text-blue-500 text-sm font-bold">f</span>
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                    <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Industries Selection Modal */}
+      <IndustriesModal
+        isOpen={isIndustriesModalOpen}
+        onClose={() => setIsIndustriesModalOpen(false)}
+        onSkip={handleIndustriesSkip}
+        onContinue={handleIndustriesContinue}
+        industries={industries}
+        selectedIndustries={selectedIndustries}
+        onToggleIndustry={handleIndustryToggle}
+        loading={loading}
+      />
+
+      {/* Terms and Privacy Modal */}
+      <TermsPrivacyModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+      />
     </>
   );
 };

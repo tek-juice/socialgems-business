@@ -107,5 +107,15 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'), 
+  ],
+  variants: {
+    extend: {
+      backgroundColor: ['checked', 'hover', 'checked:hover'],
+      borderColor: ['checked', 'hover', 'checked:hover'],
+      textColor: ['checked', 'hover', 'checked:hover'],
+    },
+  }
+
 }

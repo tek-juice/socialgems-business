@@ -1582,14 +1582,14 @@ const GroupsWithWebSocket = () => {
             <div className="p-4 bg-white border-t border-primary/20">
               <form onSubmit={handleSendMessage} className="flex items-end gap-3">
                 {/* Button for file uploads  */}
-                {/* <button
+                <button
                   type="button"
                   onClick={handleFileSelect}
                   disabled={uploadingFile || editingMessage}
                   className="p-3 text-secondary/60 hover:text-secondary hover:bg-secondary/10 rounded-full transition-all duration-200 disabled:opacity-50"
                 >
                   <FiPaperclip className="w-4 h-4" />
-                </button> */}
+                </button>
 
                 <input
                   ref={fileInputRef}

@@ -513,3 +513,12 @@ img {
 .animate-shake {
   animation: shake 0.5s ease-in-out;
 }
+
+/* Add to your global CSS */
+input[type="checkbox"]:checked:hover {
+  background-color: #734D20 !important;
+  border-color: #734D20 !important;
+}
+input[type="checkbox"]:checked:hover::before {
+  color: white !important;
+}

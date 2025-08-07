@@ -949,8 +949,8 @@ export default function Dashboard() {
           {/* Header Section */}
           <div className="flex gap-4 flex-col items-start">
             <div className="flex gap-2 flex-col">
-              <h2 className="text-3xl md:text-5xl tracking-tighter max-w-4xl font-regular text-left text-gray-900">
-                Welcome back, {displayName}! 👋
+              <h2 className="text-2xl md:text-4xl tracking-tighter max-w-4xl font-regular text-left text-gray-900">
+                Welcome back, {displayName} 👋
               </h2>
               <p className="text-lg max-w-xl lg:max-w-2xl leading-relaxed tracking-tight text-gray-600 text-left">
                 Here's your campaign performance overview and key metrics at a glance.

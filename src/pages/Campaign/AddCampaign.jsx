@@ -21,12 +21,13 @@ import {
   FiChevronDown,
   FiRefreshCw,
   FiCreditCard,
+  FiCalendar,
+  FiX,
 } from "react-icons/fi";
 import { post, upload, get, patch } from "../../utils/service";
 import { toast } from "sonner";
 import FilterCampaigns from "./FilterCampaigns";
 import StepperComponent from "./CreateCampaign/StepperComponent";
-import CustomDatePicker from "./CreateCampaign/CustomDatePicker";
 import ImageUploadComponent from "./CreateCampaign/ImageUploadComponent";
 import RichTextEditor from "./CreateCampaign/RichTextEditor";
 import TaskDialog from "./CreateCampaign/TaskDialog";
@@ -76,8 +77,578 @@ const safeToFixed = (value, decimals = 2, fallback = 0) => {
   return num.toFixed(decimals);
 };
 
-// Constants - Updated to include company fee in minimum budget
+// Constants - Updated calculation logic
+const INFLUENCER_BASE_RATE = 15; // $15 per influencer
+const PLATFORM_FEE = 50; // $50 platform fee
 const MIN_BUDGET_PER_INFLUENCER = 65; // $65 minimum per influencer (includes company fee)
+
+// Calculate minimum budget based on number of influencers
+const calculateMinimumBudget = (numberOfInfluencers) => {
+  return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
+};
+
+// Custom Date Picker Modal Component
+const CustomDatePickerModal = ({ 
+  isOpen, 
+  onClose, 
+  label, 
+  value, 
+  onChange, 
+  minDate, 
+  maxDate, 
+  placeholder, 
+  error,
+  onPeriodSelect 
+}) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [displayDate, setDisplayDate] = useState(() => {
+    if (value) {
+      return new Date(value + 'T00:00:00');
+    }
+    if (minDate) {
+      return new Date(minDate);
+    }
+    return new Date();
+  });
+  const [selectedDate, setSelectedDate] = useState(value || "");
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    setSelectedDate(value || "");
+    if (value) {
+      setDisplayDate(new Date(value + 'T00:00:00'));
+    }
+  }, [value]);
+
+  const formatDate = (date) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const isDateDisabled = (date) => {
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    if (minDate) {
+      const minDateTime = new Date(minDate);
+      minDateTime.setHours(0, 0, 0, 0);
+      if (checkDate < minDateTime) return true;
+    }
+    
+    if (maxDate) {
+      const maxDateTime = new Date(maxDate);
+      maxDateTime.setHours(0, 0, 0, 0);
+      if (checkDate > maxDateTime) return true;
+    }
+    
+    return false;
+  };
+
+  const handleDateClick = (date) => {
+    if (isDateDisabled(date)) return;
+    
+    const formattedDate = formatDate(date);
+    setSelectedDate(formattedDate);
+  };
+
+  const handleConfirm = () => {
+    onChange(selectedDate);
+    onClose();
+  };
+
+  const getDaysInMonth = (year, month) => {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  const navigateMonth = (direction) => {
+    setDisplayDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + direction);
+      return newDate;
+    });
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Period selection functionality
+  const handlePeriodSelect = (period) => {
+    if (!onPeriodSelect) return;
+    
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() + 3); // Minimum 3 days from today
+    
+    const endDate = new Date(startDate);
+    
+    switch (period) {
+      case '2weeks':
+        endDate.setDate(startDate.getDate() + 14);
+        break;
+      case '1month':
+        endDate.setMonth(startDate.getMonth() + 1);
+        break;
+      case '2months':
+        endDate.setMonth(startDate.getMonth() + 2);
+        break;
+      case '3months':
+        endDate.setMonth(startDate.getMonth() + 3);
+        break;
+      case '6months':
+        endDate.setMonth(startDate.getMonth() + 6);
+        break;
+      default:
+        return;
+    }
+    
+    onPeriodSelect({
+      startDate: formatDate(startDate),
+      endDate: formatDate(endDate)
+    });
+    onClose();
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  if (!isOpen) return null;
+
+  // Mobile Drawer
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <div className="relative z-50 w-full bg-white rounded-t-xl max-h-[80vh] flex flex-col border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-primary-scale-400 rounded-lg flex items-center justify-center">
+                  <FiCalendar className="w-4 h-4 text-black" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <FiX className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 bg-white">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  type="button"
+                  onClick={() => navigateMonth(-1)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <FiArrowLeft className="w-4 h-4" />
+                </button>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  {monthNames[displayDate.getMonth()]} {displayDate.getFullYear()}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => navigateMonth(1)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <FiArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {weekDays.map(day => (
+                  <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {getDaysInMonth(displayDate.getFullYear(), displayDate.getMonth()).map((date, index) => {
+                  if (!date) {
+                    return <div key={index} className="p-2"></div>;
+                  }
+
+                  const isSelected = selectedDate && formatDate(date) === selectedDate;
+                  const isDisabled = isDateDisabled(date);
+                  const isTodayDate = isToday(date);
+
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleDateClick(date)}
+                      disabled={isDisabled}
+                      className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
+                        isSelected
+                          ? 'bg-primary-scale-400 text-black font-semibold'
+                          : isDisabled
+                          ? 'text-gray-300 cursor-not-allowed'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {date.getDate()}
+                      {isTodayDate && !isSelected && (
+                        <div className="absolute top-1 right-1 w-1 h-1 bg-green-500 rounded-full"></div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Period Selection */}
+              {onPeriodSelect && (
+                <div className="border-t pt-4">
+                  <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handlePeriodSelect('2weeks')}
+                      className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                    >
+                      2 Weeks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePeriodSelect('1month')}
+                      className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                    >
+                      1 Month
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePeriodSelect('2months')}
+                      className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                    >
+                      2 Months
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePeriodSelect('3months')}
+                      className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                    >
+                      3 Months
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-gray-50">
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={!selectedDate}
+                className="flex-1 px-4 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop Modal
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full border border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary-scale-400 rounded-lg flex items-center justify-center">
+              <FiCalendar className="w-5 h-5 text-black" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <FiX className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        
+        <div className="p-6 bg-white">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                type="button"
+                onClick={() => navigateMonth(-1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FiArrowLeft className="w-4 h-4" />
+              </button>
+              <h3 className="text-sm font-semibold text-gray-900">
+                {monthNames[displayDate.getMonth()]} {displayDate.getFullYear()}
+              </h3>
+              <button
+                type="button"
+                onClick={() => navigateMonth(1)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <FiArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekDays.map(day => (
+                <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-4">
+              {getDaysInMonth(displayDate.getFullYear(), displayDate.getMonth()).map((date, index) => {
+                if (!date) {
+                  return <div key={index} className="p-2"></div>;
+                }
+
+                const isSelected = selectedDate && formatDate(date) === selectedDate;
+                const isDisabled = isDateDisabled(date);
+                const isTodayDate = isToday(date);
+
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleDateClick(date)}
+                    disabled={isDisabled}
+                    className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
+                      isSelected
+                        ? 'bg-primary-scale-400 text-black font-semibold'
+                        : isDisabled
+                        ? 'text-gray-300 cursor-not-allowed'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {date.getDate()}
+                    {isTodayDate && !isSelected && (
+                      <div className="absolute top-1 right-1 w-1 h-1 bg-green-500 rounded-full"></div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Period Selection */}
+            {onPeriodSelect && (
+              <div className="border-t pt-4">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePeriodSelect('2weeks')}
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                  >
+                    2 Weeks
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePeriodSelect('1month')}
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                  >
+                    1 Month
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePeriodSelect('2months')}
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                  >
+                    2 Months
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handlePeriodSelect('3months')}
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                  >
+                    3 Months
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!selectedDate}
+            className="flex-1 px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Custom Date Picker Component
+const CustomDatePicker = (props) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const displayValue = props.value ? formatDisplayDate(props.value) : '';
+
+  return (
+    <>
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-2">
+          {props.label}
+        </label>
+        <div 
+          onClick={() => setIsModalOpen(true)}
+          className={`w-full px-3 py-3 border rounded-lg cursor-pointer transition-colors text-xs bg-gray-50 hover:bg-white focus:ring-2 focus:ring-primary-scale-100 ${
+            props.error 
+              ? "border-red-500" 
+              : "border-gray-300 hover:border-primary-scale-400"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span className={displayValue ? "text-gray-900" : "text-gray-500"}>
+              {displayValue || props.placeholder}
+            </span>
+            <FiCalendar className="w-4 h-4 text-gray-400" />
+          </div>
+        </div>
+        {props.error && (
+          <p className="text-xs text-red-500 mt-1">{props.error}</p>
+        )}
+      </div>
+
+      <CustomDatePickerModal
+        {...props}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
+  );
+};
+
+// Budget validation modal
+const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget, numberOfInfluencers }) => {
+  const shortfall = requiredBudget - currentBudget;
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
+      >
+        <div className="text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiAlertCircle className="w-8 h-8 text-orange-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Budget Insufficient
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Your budget does not fit the number of influencers selected. Try increasing your budget by ${shortfall}.
+          </p>
+          <div className="bg-gray-50 rounded-lg p-3 mb-6 text-left">
+            <div className="flex justify-between text-sm mb-2">
+              <span>Number of Influencers:</span>
+              <span className="font-medium">{numberOfInfluencers}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Current Budget:</span>
+              <span className="font-medium">${currentBudget}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Required Budget:</span>
+              <span className="font-medium">${requiredBudget}</span>
+            </div>
+            <div className="flex justify-between text-sm font-semibold text-orange-600 border-t border-gray-200 pt-2">
+              <span>Shortfall:</span>
+              <span>${shortfall}</span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 transition-colors text-sm font-medium"
+          >
+            Got it
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 // Enhanced NumberInput component for budget
 const BudgetInput = ({
@@ -178,10 +749,12 @@ const InfluencersInput = ({
   label,
   helperText,
   className = "",
+  currentBudget,
 }) => {
   const [displayValue, setDisplayValue] = useState(value.toString());
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
 
   useEffect(() => {
     setDisplayValue(value.toString());
@@ -228,35 +801,57 @@ const InfluencersInput = ({
       triggerShake();
       setDisplayValue("1");
       onChange(1);
-
       setTimeout(() => setError(""), 3000);
+      return;
+    }
+
+    const numInfluencers = parseInt(displayValue);
+    const requiredBudget = calculateMinimumBudget(numInfluencers);
+    
+    if (currentBudget < requiredBudget) {
+      triggerShake();
+      setShowBudgetModal(true);
     }
   };
 
   return (
-    <div>
-      <label className="block text-xs font-semibold text-gray-700 mb-2">
-        {label}
-      </label>
-      <input
-        type="text"
-        value={displayValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
-          error
-            ? "border-red-500 focus:border-red-500"
-            : "border-gray-300 focus:border-primary-scale-400"
-        } ${isShaking ? "animate-shake" : ""} ${className}`}
-        placeholder="1"
-      />
-      {error && (
-        <p className="text-xs text-red-500 mt-1 animate-pulse">{error}</p>
-      )}
-      {helperText && !error && (
-        <p className="text-xs text-gray-500 mt-1">{helperText}</p>
-      )}
-    </div>
+    <>
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 mb-2">
+          {label}
+        </label>
+        <input
+          type="text"
+          value={displayValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-all text-xs bg-gray-50 focus:bg-white ${
+            error
+              ? "border-red-500 focus:border-red-500"
+              : "border-gray-300 focus:border-primary-scale-400"
+          } ${isShaking ? "animate-shake" : ""} ${className}`}
+          placeholder="1"
+        />
+        {error && (
+          <p className="text-xs text-red-500 mt-1 animate-pulse">{error}</p>
+        )}
+        {helperText && !error && (
+          <p className="text-xs text-gray-500 mt-1">{helperText}</p>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {showBudgetModal && (
+          <BudgetValidationModal
+            isOpen={showBudgetModal}
+            onClose={() => setShowBudgetModal(false)}
+            requiredBudget={calculateMinimumBudget(parseInt(displayValue))}
+            currentBudget={currentBudget}
+            numberOfInfluencers={parseInt(displayValue)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -1617,23 +2212,6 @@ const CreateCampaign = () => {
       case 0:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex gap-10">
-              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <FiFileText className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex flex-col items-start">
-                <h2 className="text-4xl font-bold text-gray-900">
-                  {mode === 'edit' ? 'Edit Campaign Details' : 'Campaign Details'}
-                </h2>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {mode === 'edit' 
-                    ? 'Update your campaign information and requirements'
-                    : 'Create your campaign and define the requirements for your perfect influencer collaboration'
-                  }
-                </p>
-              </div>
-            </div> */}
-
             <Card className="shadow-lg border-0 pt-10">
               <CardContent className="p-6">
                 <div className="space-y-8">
@@ -1735,9 +2313,6 @@ const CreateCampaign = () => {
 
                     {/* Campaign Duration */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-700 mb-4">
-                        Campaign Duration
-                      </label>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <Card>
                           <CustomDatePicker
@@ -1780,14 +2355,13 @@ const CreateCampaign = () => {
                         value={brandBudget}
                         onChange={setBrandBudget}
                         label="Campaign Budget (USD)"
-                        // helperText={`Available: $${safeToFixed(walletBalance, 2)}`}
                       />
 
                       <InfluencersInput
                         value={numberOfInfluencers}
                         onChange={setNumberOfInfluencers}
+                        currentBudget={brandBudget}
                         label="Number of Influencers"
-                        // helperText="Number of influencers to invite"
                       />
                     </div>
                   </div>
@@ -1932,23 +2506,6 @@ const CreateCampaign = () => {
       case 1:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex flex-wrap sm:justify-start justify-center  gap-5">
-              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <FiUsers className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex flex-col items-start">
-                <h2 className="text-2xl text-center sm:text-4xl font-bold text-gray-900">
-                  {mode === 'addMembers' ? 'Add More Creators' : 'Find Your Perfect Creators'}
-                </h2>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {mode === 'addMembers' 
-                    ? 'Add more influencers to your existing campaign with refined criteria'
-                    : 'Define specific criteria to discover influencers who perfectly align with your brand values and campaign objectives'
-                  }
-                </p>
-              </div>
-            </div> */}
-
             <Card className="shadow-lg border-0 bg-white">
               <CardContent className="p-6">
                 <FilterCampaigns
@@ -1969,20 +2526,6 @@ const CreateCampaign = () => {
       case 2:
         return (
           <div className="mx-auto">
-            {/* <div className="p-10 bg-primary-scale-400 rounded-2xl text-center my-8 flex gap-10">
-              <div className="bg-secondary w-16 h-16 rounded-xl flex items-center justify-center mb-4 shadow-lg">
-                <FiDollarSign className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex flex-col items-start">
-                <h2 className="text-4xl font-bold text-gray-900">
-                  Payment Summary
-                </h2>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  Review all details and confirm payment to {mode === 'addMembers' ? 'add members to' : 'launch'} your campaign
-                </p>
-              </div>
-            </div> */}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="shadow-lg border-0">
                 <CardHeader>
@@ -2029,26 +2572,6 @@ const CreateCampaign = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* {mode !== 'addMembers' && (
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="text-xs font-medium text-gray-600 mb-1">
-                          Tasks
-                        </div>
-                        <div className="text-xs font-semibold text-gray-900">
-                          {campaignData.tasks.length} tasks configured
-                        </div>
-                      </div>
-                    )} */}
-
-                    {/* <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-xs font-medium text-gray-600 mb-2">
-                        Brief Preview
-                      </div>
-                      <div className="text-xs text-gray-700 bg-white p-3 rounded border max-h-20 overflow-y-auto">
-                        {campaignData.description.substring(0, 150)}...
-                      </div>
-                    </div> */}
                   </div>
                 </CardContent>
               </Card>
@@ -2091,8 +2614,7 @@ const CreateCampaign = () => {
                           </span>
                           <span
                             className={`text-xs font-bold ${
-                              walletBalance <
-                              safeToNumber(eligibilityData.budget)
+                              walletBalance < safeToNumber(eligibilityData.budget)
                                 ? "text-red-400"
                                 : "text-green-400"
                             }`}
@@ -2101,8 +2623,7 @@ const CreateCampaign = () => {
                           </span>
                         </div>
 
-                        {walletBalance <
-                          safeToNumber(eligibilityData.budget) && (
+                        {walletBalance < safeToNumber(eligibilityData.budget) && (
                           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
                             <div className="flex items-center gap-2 mb-2">
                               <FiAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
@@ -2335,6 +2856,18 @@ const CreateCampaign = () => {
           />
         )}
       </AnimatePresence>
+      
+      {/* Add CSS for shake animation */}
+      <style jsx>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+          animation: shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 };

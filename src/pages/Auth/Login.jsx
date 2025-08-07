@@ -1,270 +1,14 @@
 "use client";
 
-import * as React from "react";
-import { useState, memo } from "react";
+import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { post } from '../../utils/service';
-import { LogIn, Lock, Mail, EyeOff, Eye } from "lucide-react";
+import { Lock, Mail, EyeOff, Eye, Download } from "lucide-react";
 import { assets } from "../../assets/assets";
 
-// Animation Components
-const cn = (...classes) => {
-  return classes.filter(Boolean).join(' ');
-};
-
-// Ripple Component
-const Ripple = memo(function Ripple({
-  mainCircleSize = 210,
-  mainCircleOpacity = 0.24,
-  numCircles = 8,
-  className = '',
-}) {
-  return (
-    <section
-      className={`max-w-[50%] absolute inset-0 flex items-center justify-center
-        [mask-image:linear-gradient(to_bottom,black,transparent)]
-        dark:[mask-image:linear-gradient(to_bottom,white,transparent)] ${className}`}
-    >
-      {Array.from({ length: numCircles }, (_, i) => {
-        const size = mainCircleSize + i * 70;
-        const opacity = mainCircleOpacity - i * 0.03;
-        const animationDelay = `${i * 0.1}s`;
-        const borderStyle = i === numCircles - 1 ? 'dashed' : 'solid';
-        const borderOpacity = 5 + i * 5;
-
-        return (
-          <span
-            key={i}
-            className='absolute animate-ripple rounded-full bg-foreground/15 border'
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              opacity: opacity,
-              animationDelay: animationDelay,
-              borderStyle: borderStyle,
-              borderWidth: '1px',
-              borderColor: `var(--foreground) dark:var(--background) / ${
-                borderOpacity / 100
-              })`,
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              willChange: 'transform',
-              backfaceVisibility: 'hidden',
-            }}
-          />
-        );
-      })}
-    </section>
-  );
-});
-
-// OrbitingCircles Component
-const OrbitingCircles = memo(function OrbitingCircles({
-  className,
-  children,
-  reverse = false,
-  duration = 25, // Slower animation
-  delay = 10,
-  radius = 50,
-  path = true,
-}) {
-  return (
-    <>
-      {path && (
-        <svg
-          xmlns='http://www.w3.org/2000/svg'
-          version='1.1'
-          className='pointer-events-none absolute inset-0 size-full'
-        >
-          <circle
-            className='stroke-black/5 stroke-1 dark:stroke-white/5' // Reduced opacity
-            cx='50%'
-            cy='50%'
-            r={radius}
-            fill='none'
-          />
-        </svg>
-      )}
-      <section
-        style={
-          {
-            '--duration': duration,
-            '--radius': radius,
-            '--delay': -delay,
-          }
-        }
-        className={cn(
-          'absolute flex size-full transform-gpu animate-orbit items-center justify-center rounded-full border-0 bg-transparent [animation-delay:calc(var(--delay)*1000ms)]',
-          { '[animation-direction:reverse]': reverse },
-          className
-        )}
-        css={{
-          willChange: 'transform',
-          backfaceVisibility: 'hidden',
-          transform: 'translate3d(0, 0, 0)', // Force hardware acceleration
-        }}
-      >
-        {children}
-      </section>
-    </>
-  );
-});
-
-
-// TechOrbitDisplay Component
-const TechOrbitDisplay = memo(function TechOrbitDisplay({
-  iconsArray,
-  text = 'SOCIAL GEMS',
-}) {
-  return (
-    <section className='relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-lg'>
-      <div className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-primary to-secondary bg-clip-text text-center text-4xl lg:text-7xl font-semibold leading-none text-transparent z-20 relative flex items-center gap-3'>
-        <img
-          src={assets.LogoIcon}
-          alt="Logo"
-          className="h-8 w-8 lg:h-12 lg:w-12 object-contain"
-        />
-        <span>{text}</span>
-      </div>
-
-      <div className="absolute inset-0 z-10">
-        {iconsArray.map((icon, index) => (
-          <OrbitingCircles
-            key={index}
-            className={icon.className}
-            duration={icon.duration}
-            delay={icon.delay}
-            radius={icon.radius}
-            path={icon.path}
-            reverse={icon.reverse}
-          >
-            {icon.component()}
-          </OrbitingCircles>
-        ))}
-      </div>
-    </section>
-  );
-});
-
-// Social Media Icons Array - Same as login page
-const iconsArray = [
-  // Inner circle - 80px radius
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.facebook}
-          alt='Facebook'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 12,
-    delay: 0,
-    radius: 80,
-    path: false,
-    reverse: false,
-  },
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.instagram}
-          alt='Instagram'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 10,
-    delay: 10, // 180 degrees apart (half of 20s)
-    radius: 80,
-    path: false,
-    reverse: false,
-  },
-  
-  // Middle circle - 130px radius
-  {
-    component: () => (
-      <div className="w-8 h-8 rounded-full overflow-hidden bg-transparent">
-        <img
-          src={assets.twitter}
-          alt='Twitter'
-          className="w-full h-full object-cover p-1"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 25,
-    delay: 0,
-    path: false,
-    reverse: true,
-  },
-  {
-    component: () => (
-      <div className="w-16 h-16 overflow-hidden bg-transparent">
-        <img
-          src={assets.tiktok}
-          alt='TikTok'
-          className="w-full h-full object-cover"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 35,
-    delay: 12.5, // 180 degrees apart (half of 25s)
-    path: false,
-    reverse: true,
-  },
-  
-  // Outer circle - 180px radius
-
-  
-  // Far outer circle - 230px radius
-  {
-    component: () => (
-      <div className="h-8 overflow-hidden">
-        <img
-          src={assets.youtube}
-          alt='YouTube Alt'
-          className="h-full w-auto object-contain"
-        />
-      </div>
-    ),
-    className: 'border-none bg-transparent',
-    duration: 30,
-    delay: 0, // 180 degrees apart (half of 35s)
-    radius: 230,
-    path: false,
-    reverse: true,
-  },
-
-  {
-    component: () => (
-      <div className="w-8 h-8 overflow-hidden bg-transparent">
-        <img
-          src={assets.Logo}
-          alt='TikTok'
-          className="w-full h-full object-cover"
-        />
-      </div>
-    ),
-    className: 'size-[32px] border-none bg-transparent',
-    radius: 130,
-    duration: 15,
-    delay: 12.5, // 180 degrees apart (half of 25s)
-    path: false,
-    reverse: true,
-  },
-];
-
 const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
-  const [step, setStep] = useState(1); // 1: email, 2: otp + new password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -327,7 +71,6 @@ const ForgotPasswordModal = ({ isOpen, onClose, onComplete }) => {
         toast.success("Password reset successfully!");
         onComplete();
         onClose();
-        // Reset form
         setStep(1);
         setEmail("");
         setOtp("");
@@ -488,246 +231,248 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const validatePassword = (value) => {
+    return value.length >= 6;
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast.error("Please enter both email and password");
-      return;
-    }
+    let valid = true;
+
     if (!validateEmail(email)) {
-      toast.error("Please enter a valid email address");
-      return;
+      setEmailError("Please enter a valid email address.");
+      valid = false;
+    } else {
+      setEmailError("");
     }
 
-    setLoading(true);
-    
-    try {
-      const response = await post('users/login', { email, password });
-      
-      if (response.status === 200) {
-        const { username, user_type: role, email: userEmail, jwt } = response.data;
-        
-        localStorage.setItem('name', username);
-        localStorage.setItem('email', userEmail);
-        localStorage.setItem('role', role);
-        localStorage.setItem('jwt', jwt);
-        localStorage.setItem('isLoggedIn', 'true');
-        
-        toast.success('Login successful!');
-        navigate('/dashboard');
-      } else {
-        toast.error(response.message || 'Login failed. Please check your credentials.');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      
-      if (error.response) {
-        const errorMessage = error.response.data?.message || 'Invalid credentials';
-        toast.error(errorMessage);
-      } else if (error.request) {
-        toast.error('No response from server. Please check your connection.');
-      } else {
-        toast.error('An error occurred while logging in. Please try again.');
-      }
-    } finally {
-      setLoading(false);
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 6 characters.");
+      valid = false;
+    } else {
+      setPasswordError("");
     }
+
+    setSubmitted(true);
+
+    if (valid) {
+      setLoading(true);
+      
+      try {
+        const response = await post('users/login', { email, password });
+        
+        if (response.status === 200) {
+          const { username, user_type: role, email: userEmail, jwt } = response.data;
+          
+          localStorage.setItem('name', username);
+          localStorage.setItem('email', userEmail);
+          localStorage.setItem('role', role);
+          localStorage.setItem('jwt', jwt);
+          localStorage.setItem('isLoggedIn', 'true');
+          
+          toast.success('Login successful!');
+          navigate('/dashboard');
+          
+          setEmail("");
+          setPassword("");
+          setSubmitted(false);
+        } else {
+          toast.error(response.message || 'Login failed. Please check your credentials.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        
+        if (error.response) {
+          const errorMessage = error.response.data?.message || 'Invalid credentials';
+          toast.error(errorMessage);
+        } else if (error.request) {
+          toast.error('No response from server. Please check your connection.');
+        } else {
+          toast.error('An error occurred while logging in. Please try again.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleAppStoreDownload = () => {
+    window.open('https://apps.apple.com/app/socialgems', '_blank');
+  };
+
+  const handlePlayStoreDownload = () => {
+    window.open('https://play.google.com/store/apps/details?id=com.socialgems.app', '_blank');
   };
 
   return (
     <>
-      <style jsx>{`
-        .scrollbar-none {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .scrollbar-none::-webkit-scrollbar { 
-          display: none;
-        }
-      `}</style>
-      <section 
-        className='flex max-lg:justify-center min-h-screen relative'
-        style={{
-          backgroundImage: `url(${assets.banner})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Background overlay for better readability */}
-        <div className="absolute inset-0 bg-black/30"></div>
-        
-        {/* Left Side - Animation (Desktop only) */}
-        <span className='flex flex-col justify-center w-1/2 lg:flex hidden relative z-10'>
-          <Ripple mainCircleSize={100} />
-          <TechOrbitDisplay iconsArray={iconsArray} />
-        </span>
+      {/* Desktop Layout */}
+      <div className="min-h-screen lg:flex items-center justify-center overflow-hidden p-4 hidden">
+        <div className="w-full relative max-w-5xl overflow-hidden flex flex-col md:flex-row shadow-xl">
+          <div className="w-full h-full z-0 absolute bg-linear-to-t from-transparent to-black pointer-events-none"></div>
+          <div className="flex absolute z-0 overflow-hidden backdrop-blur-2xl pointer-events-none">
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+            <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
+          </div>
+          <div className="w-[15rem] h-[15rem] bg-primary absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
+          <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
+          <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
 
-        {/* Right Side - Form (Desktop) */}
-        <span className='w-1/2 h-[100dvh] lg:flex hidden flex-col justify-center items-center relative z-10'>
-          <div className="w-full max-w-lg">
-            {/* Enhanced Glass Effect Form */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 md:p-8 relative max-h-[80vh] overflow-y-auto scrollbar-none">
-              {/* Additional glass layer */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
-              
-              {/* Content */}
-              <div className="relative z-10">
-                {/* Logo and brand name above the form */}
-                <div className="mb-6 flex items-center justify-center gap-2">
-                  <img
-                    src={assets.LogoIcon}
-                    alt="Logo"
-                    className="h-16 w-16 object-contain"
-                  />
-                </div>
-                
-                {/* Header */}
-                <h2 className="text-xl font-semibold mb-2 text-center text-white">
-                  Sign in to your account
-                </h2>
-                <p className="text-white/80 text-xs mb-8 text-center max-w-xs mx-auto">
-                  Welcome back! Please enter your details to continue.
-                </p>
-                
-                {/* Login Form */}
-                <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Mail className="w-4 h-4" />
-                    </span>
-                    <input
-                      placeholder="Email"
-                      type="email"
-                      value={email}
-                      className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <Lock className="w-4 h-4" />
-                    </span>
-                    <input
-                      placeholder="Password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  
-                  <div className="w-full flex justify-end mb-2">
-                    <button 
-                      type="button"
-                      className="text-xs text-secondary font-medium hover:underline transition-colors"
-                      onClick={() => setShowForgotPassword(true)}
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                  
+          {/* LEFT CARD - Change color here: Replace 'bg-secondary/90' with your desired color */}
+          <div className="bg-white backdrop-blur-xl text-white p-8 md:p-12 md:w-1/2 relative rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between">
+            {/* LEFT CARD OVERLAY - Change overlay color here: Replace 'bg-black/20' with your desired overlay */}
+            <div className="absolute inset-0 bg-black/20 rounded-bl-3xl"></div>
+            
+            {/* INCREASED CONTENT WIDTH - Removed max-w constraint for wider content */}
+            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4">
+              <img
+                src={assets.MainLogo}
+                alt="Social Gems Logo"
+                className="h-fit w-44 object-contain mb-8 drop-shadow-lg"
+              />
+
+              {/* App Download Buttons - Full width */}
+              <div className="mb-8 w-full">
+                <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
+                <div className="flex gap-3 w-full max-w-lg mx-auto">
                   <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                    onClick={handleAppStoreDownload}
+                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
                   >
-                    {loading ? 'Signing in...' : 'Sign In'}
+                    <img 
+                      src={assets.applelogo}
+                      alt="Apple Logo"
+                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300">Get it on</div>
+                      <div className="text-sm font-semibold">App Store</div>
+                    </div>
                   </button>
-                </form>
-
-                {/* Sign up link */}
-                <div className="text-center pt-4 border-t border-white/20">
-                  <span className="text-xs text-white/80">Don't have an account? </span>
+                  
                   <button
-                    onClick={() => navigate('/signup')}
-                    className="text-xs text-primary font-medium hover:underline transition-colors"
+                    onClick={handlePlayStoreDownload}
+                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
                   >
-                    Sign up
+                    <img 
+                      src={assets.playstorelogo}
+                      alt="Play Store Logo"
+                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                    />
+                    <div className="text-left">
+                      <div className="text-xs text-gray-300">Get it on</div>
+                      <div className="text-sm font-semibold">Google Play</div>
+                    </div>
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        </span>
-
-        {/* Mobile Layout - Full Screen */}
-        <div className="lg:hidden w-[95vw] h-[95vh] mx-auto my-auto flex flex-col relative z-10">
-          {/* Logo and brand name above the form - MOBILE ONLY */}
-          <div className="flex-shrink-0 mb-4 flex items-center justify-center gap-2">
-            <img
-              src={assets.LogoIcon}
-              alt="Logo"
-              className="h-16 w-16 object-contain"
-            />
-            <h1 className="text-md font-bold text-white drop-shadow-lg">SOCIAL GEMS</h1>
-          </div>
-
-          {/* Enhanced Glass Effect Form - Mobile */}
-          <div className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-6 relative overflow-hidden flex flex-col">
-            {/* Additional glass layer */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/5 rounded-2xl"></div>
             
-            {/* Scrollable Content */}
-            <div className="relative z-10 flex-1 overflow-y-auto scrollbar-none">
-              {/* Header */}
-              <h2 className="text-xl font-semibold mb-2 text-center text-white">
-                Sign in to your account
+            {/* Social Media Links - Full width */}
+            <div className="relative z-20 w-full px-4">
+              <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
+              <div className="flex items-center justify-center gap-4">
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <span className="text-blue-400 text-sm font-bold">f</span>
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                  <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 md:p-12 md:w-1/2 flex flex-col bg-white z-20 text-black relative">
+            <div className="flex flex-col items-left mb-8">
+              <div className="text-primary mb-4">
+                <img
+                  src={assets.LogoIcon}
+                  alt="Social Gems"
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
+              <h2 className="text-3xl font-medium mb-2 tracking-tight">
+                Welcome Back
               </h2>
-              <p className="text-white/80 text-xs mb-8 text-center max-w-xs mx-auto">
-                Welcome back! Please enter your details to continue.
+              <p className="text-left opacity-80">
+                Sign in to your Social Gems account
               </p>
-              
-              {/* Login Form */}
-              <form onSubmit={handleLogin} className="w-full flex flex-col gap-4 mb-2">
+            </div>
+
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={handleLogin}
+              noValidate
+            >
+              <div>
+                <label htmlFor="email" className="block text-sm mb-2">
+                  Your email
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Mail className="w-4 h-4" />
-                  </span>
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
-                    placeholder="Email"
                     type="email"
+                    id="email"
+                    placeholder="hi@socialgems.com"
+                    className={`text-sm w-full pl-10 pr-3 py-2 px-3 border rounded-lg focus:outline-none focus:ring-1 bg-white text-black focus:ring-primary ${
+                      emailError ? "border-red-500" : "border-gray-300"
+                    }`}
                     value={email}
-                    className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
                     onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={!!emailError}
+                    aria-describedby="email-error"
                     disabled={loading}
-                    required
                   />
                 </div>
-                
+                {emailError && (
+                  <p id="email-error" className="text-red-500 text-xs mt-1">
+                    {emailError}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm mb-2">
+                  Your password
+                </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Lock className="w-4 h-4" />
-                  </span>
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
-                    placeholder="Password"
                     type={showPassword ? "text" : "password"}
+                    id="password"
+                    placeholder="Enter your password"
+                    className={`text-sm w-full pl-10 pr-10 py-2 px-3 border rounded-lg focus:outline-none focus:ring-1 bg-white text-black focus:ring-primary ${
+                      passwordError ? "border-red-500" : "border-gray-300"
+                    }`}
                     value={password}
-                    className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs transition-all"
                     onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={!!passwordError}
+                    aria-describedby="password-error"
                     disabled={loading}
-                    required
                   />
                   <button
                     type="button"
@@ -737,49 +482,209 @@ const Login = () => {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                
-                <div className="w-full flex justify-end mb-2">
-                  <button 
-                    type="button"
-                    className="text-xs text-secondary font-medium hover:underline transition-colors"
-                    onClick={() => setShowForgotPassword(true)}
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md cursor-pointer transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </button>
-              </form>
+                {passwordError && (
+                  <p id="password-error" className="text-red-500 text-xs mt-1">
+                    {passwordError}
+                  </p>
+                )}
+              </div>
 
-              {/* Sign up link */}
-              <div className="text-center pt-4 border-t border-white/20">
-                <span className="text-xs text-white/80">Don't have an account? </span>
-                <button
-                  onClick={() => navigate('/signup')}
+              <div className="w-full flex justify-end mb-2">
+                <button 
+                  type="button"
                   className="text-xs text-primary font-medium hover:underline transition-colors"
+                  onClick={() => setShowForgotPassword(true)}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-secondary font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Signing in...' : 'Sign in to your account'}
+              </button>
+
+              <div className="text-center text-gray-600 text-sm">
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate('/signup')}
+                  className="text-black font-medium underline cursor-pointer"
                 >
                   Sign up
                 </button>
               </div>
-            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="min-h-screen flex flex-col lg:hidden bg-gray-50">
+        {/* Mobile Logo Section - Change mobile left card color here */}
+        <div className="flex-shrink-0 bg-secondary/90 py-8 px-4 text-center relative overflow-hidden">
+          {/* Mobile overlay color - Change here */}
+          <div className="absolute inset-0 bg-black/20"></div>
+          <div className="relative z-10">
+            <img
+              src={assets.MainLogo}
+              alt="Social Gems Logo"
+              className="h-fit w-32 object-contain mx-auto mb-4 drop-shadow-lg"
+            />
           </div>
         </div>
 
-        {/* Forgot Password Modal */}
-        <ForgotPasswordModal 
-          isOpen={showForgotPassword}
-          onClose={() => setShowForgotPassword(false)}
-          onComplete={() => {
-            toast.success("You can now sign in with your new password");
-          }}
-        />
-      </section>
+        {/* Mobile Form Section */}
+        <div className="flex-1 bg-white p-6">
+          <div className="max-w-md mx-auto">
+            <div className="flex flex-col items-left mb-8">
+              <div className="text-primary mb-4">
+                <img
+                  src={assets.LogoIcon}
+                  alt="Social Gems"
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
+              <h2 className="text-2xl font-medium mb-2 tracking-tight">
+                Welcome Back
+              </h2>
+              <p className="text-left opacity-80">
+                Sign in to your Social Gems account
+              </p>
+            </div>
+
+            <form
+              className="flex flex-col gap-4 mb-8"
+              onSubmit={handleLogin}
+              noValidate
+            >
+              <div>
+                <label htmlFor="email-mobile" className="block text-sm mb-2">
+                  Your email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="email"
+                    id="email-mobile"
+                    placeholder="hi@socialgems.com"
+                    className={`text-sm w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-1 bg-white text-black focus:ring-primary ${
+                      emailError ? "border-red-500" : "border-gray-300"
+                    }`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={!!emailError}
+                    aria-describedby="email-error-mobile"
+                    disabled={loading}
+                  />
+                </div>
+                {emailError && (
+                  <p id="email-error-mobile" className="text-red-500 text-xs mt-1">
+                    {emailError}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="password-mobile" className="block text-sm mb-2">
+                  Your password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password-mobile"
+                    placeholder="Enter your password"
+                    className={`text-sm w-full pl-10 pr-10 py-3 border rounded-lg focus:outline-none focus:ring-1 bg-white text-black focus:ring-primary ${
+                      passwordError ? "border-red-500" : "border-gray-300"
+                    }`}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={!!passwordError}
+                    aria-describedby="password-error-mobile"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p id="password-error-mobile" className="text-red-500 text-xs mt-1">
+                    {passwordError}
+                  </p>
+                )}
+              </div>
+
+              <div className="w-full flex justify-end mb-2">
+                <button 
+                  type="button"
+                  className="text-xs text-primary font-medium hover:underline transition-colors"
+                  onClick={() => setShowForgotPassword(true)}
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-primary text-secondary font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Signing in...' : 'Sign in to your account'}
+              </button>
+
+              <div className="text-center text-gray-600 text-sm">
+                Don't have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate('/signup')}
+                  className="text-black font-medium underline cursor-pointer"
+                >
+                  Sign up
+                </button>
+              </div>
+            </form>
+
+            {/* Mobile Social Media Links */}
+            <div className="text-center">
+              <p className="text-sm opacity-80 mb-4 text-gray-600">Follow us on social media</p>
+              <div className="flex items-center justify-center gap-4 mb-6">
+                <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <span className="text-blue-500 text-sm font-bold">f</span>
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                </a>
+                <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
+                  <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal 
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        onComplete={() => {
+          toast.success("You can now sign in with your new password");
+        }}
+      />
     </>
   );
 };
