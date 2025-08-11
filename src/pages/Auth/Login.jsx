@@ -319,7 +319,7 @@ const Login = () => {
     <>
       {/* Desktop Layout */}
       <div className="min-h-screen lg:flex items-center justify-center overflow-hidden p-4 hidden">
-        <div className="w-full relative max-w-5xl overflow-hidden flex flex-col md:flex-row shadow-xl">
+        <div className="w-full relative max-w-5xl h-[600px] overflow-hidden flex flex-col md:flex-row shadow-xl">
           <div className="w-full h-full z-0 absolute bg-linear-to-t from-transparent to-black pointer-events-none"></div>
           <div className="flex absolute z-0 overflow-hidden backdrop-blur-2xl pointer-events-none">
             <div className="h-[40rem] z-0 w-[4rem] bg-linear-90 from-[#ffffff00] via-[#000000] via-[69%] to-[#ffffff30] opacity-30 overflow-hidden"></div>
@@ -333,75 +333,77 @@ const Login = () => {
           <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
           <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
 
-          {/* LEFT CARD - Change color here: Replace 'bg-secondary/90' with your desired color */}
-          <div className="bg-white backdrop-blur-xl text-white p-8 md:p-12 md:w-1/2 relative rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between">
-            {/* LEFT CARD OVERLAY - Change overlay color here: Replace 'bg-black/20' with your desired overlay */}
-            <div className="absolute inset-0 bg-black/20 rounded-bl-3xl"></div>
+          {/* LEFT CARD - EXACT COPY FROM SIGNUP */}
+          <div className="relative md:w-1/2 rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between h-full">
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-bl-3xl"
+              style={{ backgroundImage: `url(${assets.banner})` }}
+            />
+            {/* Lighter Dark Overlay for text visibility */}
+            <div className="absolute inset-0 bg-black/30 rounded-bl-3xl"></div>
             
-            {/* INCREASED CONTENT WIDTH - Removed max-w constraint for wider content */}
-            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4">
+            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4 text-white p-8 md:p-12">
               <img
                 src={assets.MainLogo}
                 alt="Social Gems Logo"
-                className="h-fit w-44 object-contain mb-8 drop-shadow-lg"
+                className="h-fit w-60 object-contain mb-8 drop-shadow-lg"
               />
 
-              {/* App Download Buttons - Full width */}
-              <div className="mb-8 w-full">
-                <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
-                <div className="flex gap-3 w-full max-w-lg mx-auto">
-                  <button
-                    onClick={handleAppStoreDownload}
-                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
-                  >
-                    <img 
-                      src={assets.applelogo}
-                      alt="Apple Logo"
-                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
-                    />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-300">Get it on</div>
-                      <div className="text-sm font-semibold">App Store</div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={handlePlayStoreDownload}
-                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
-                  >
-                    <img 
-                      src={assets.playstorelogo}
-                      alt="Play Store Logo"
-                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
-                    />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-300">Get it on</div>
-                      <div className="text-sm font-semibold">Google Play</div>
-                    </div>
-                  </button>
+              <div className="relative z-20 w-full px-4 text-white">
+                <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
+                <div className="flex items-center justify-center gap-4 mb-8">
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <span className="text-blue-400 text-sm font-bold">f</span>
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                  </a>
                 </div>
               </div>
             </div>
             
-            {/* Social Media Links - Full width */}
-            <div className="relative z-20 w-full px-4">
-              <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
-              <div className="flex items-center justify-center gap-4">
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <span className="text-blue-400 text-sm font-bold">f</span>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
-                </a>
+            <div className="relative z-20 w-full px-4 text-white p-8">
+              <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
+              <div className="flex gap-3 w-full max-w-lg mx-auto">
+                <button
+                  onClick={handleAppStoreDownload}
+                  className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                >
+                  <img 
+                    src={assets.applelogo}
+                    alt="Apple Logo"
+                    className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-sm font-semibold">App Store</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={handlePlayStoreDownload}
+                  className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                >
+                  <img 
+                    src={assets.playstorelogo}
+                    alt="Play Store Logo"
+                    className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-sm font-semibold">Google Play</div>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -524,9 +526,8 @@ const Login = () => {
 
       {/* Mobile Layout */}
       <div className="min-h-screen flex flex-col lg:hidden bg-gray-50">
-        {/* Mobile Logo Section - Change mobile left card color here */}
+        {/* Mobile Logo Section */}
         <div className="flex-shrink-0 bg-secondary/90 py-8 px-4 text-center relative overflow-hidden">
-          {/* Mobile overlay color - Change here */}
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative z-10">
             <img

@@ -33,6 +33,8 @@ import {
   FiArrowDownLeft,
   FiAlertCircle,
   FiInfo,
+  FiLock,
+  FiLoader,
 } from "react-icons/fi";
 
 import { HiArrowsRightLeft } from "react-icons/hi2";
@@ -190,6 +192,16 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
     </div>
   );
 };
+
+const Label = ({ className, ...props }) => (
+  <label
+    className={cn(
+      "text-xs font-medium text-gray-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      className
+    )}
+    {...props}
+  />
+);
 
 // Pagination Components
 const Pagination = ({ className, ...props }) => (
@@ -882,6 +894,107 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
   );
 };
 
+// PIN Verification Modal
+const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
+  const [pin, setPin] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (pin.length !== 5) {
+      toast.error('PIN must be 5 digits');
+      return;
+    }
+
+    setVerifyLoading(true);
+    try {
+      const response = await post('wallet/pinlogin', {
+        pin: pin
+      });
+      
+      if (response?.status === 200) {
+        toast.success('PIN verified successfully!');
+        onSuccess();
+        setPin('');
+      }
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+      toast.error('Invalid PIN. Please try again.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setPin('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <FiLock className="w-5 h-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Verify Wallet PIN</h3>
+              <p className="text-xs text-gray-600">Enter your 5-digit PIN to continue</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="verify-pin">Enter PIN</Label>
+              <Input
+                id="verify-pin"
+                type="password"
+                placeholder="12345"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+                disabled={verifyLoading}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={handleCancel} disabled={verifyLoading} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={verifyLoading || pin.length !== 5} className="flex-1">
+                {verifyLoading ? (
+                  <>
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 mr-2"
+                    >
+                      <FiLoader className="w-4 h-4" />
+                    </motion.div>
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify PIN'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // Add Funds Modal
 const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
   const [amount, setAmount] = useState("");
@@ -995,6 +1108,123 @@ const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
   );
 };
 
+// PIN Setup Modal
+const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (pin !== confirmPin) {
+      toast.error('PINs do not match');
+      return;
+    }
+    
+    if (pin.length !== 5) {
+      toast.error('PIN must be 5 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await post('wallet/setTransactionPin', {
+        pin: pin,
+        confirm_pin: confirmPin
+      });
+      
+      if (response?.status === 200) {
+        toast.success('Wallet PIN set successfully!');
+        onSuccess();
+        onClose();
+        setPin('');
+        setConfirmPin('');
+      }
+    } catch (error) {
+      console.error('Error setting PIN:', error);
+      toast.error('Failed to set PIN');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <FiLock className="w-5 h-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Set Wallet PIN</h3>
+              <p className="text-xs text-gray-600">Secure your wallet with a 5-digit PIN</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pin">Enter PIN</Label>
+              <Input
+                id="pin"
+                type="password"
+                placeholder="12345"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-pin">Confirm PIN</Label>
+              <Input
+                id="confirm-pin"
+                type="password"
+                placeholder="12345"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading} className="flex-1">
+                {loading ? (
+                  <>
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 mr-2"
+                    >
+                      <FiLoader className="w-4 h-4" />
+                    </motion.div>
+                    Setting PIN...
+                  </>
+                ) : (
+                  'Set PIN'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -1034,6 +1264,9 @@ export default function WalletPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddFunds, setShowAddFunds] = useState(false);
   const [addingFunds, setAddingFunds] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [showPinVerification, setShowPinVerification] = useState(false);
 
   // Transaction detail modal state
   const [transactionDetailModal, setTransactionDetailModal] = useState({
@@ -1062,6 +1295,12 @@ export default function WalletPage() {
     const fetchWalletData = async () => {
       try {
         setLoading(true);
+
+        // Fetch user profile to check PIN status
+        const userProfileResponse = await get("users/getUserProfile");
+        if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+          setUserData(userProfileResponse.data);
+        }
 
         const walletResponse = await get("wallet/getWallets");
         if (walletResponse?.status === 200 && walletResponse?.data) {
@@ -1093,6 +1332,12 @@ export default function WalletPage() {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
+      // Refresh user profile as well
+      const userProfileResponse = await get("users/getUserProfile");
+      if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+        setUserData(userProfileResponse.data);
+      }
+
       const walletResponse = await get("wallet/getWallets");
       if (walletResponse?.status === 200 && walletResponse?.data) {
         setWalletData(walletResponse.data);
@@ -1175,6 +1420,36 @@ export default function WalletPage() {
       details: null,
       loading: false
     });
+  };
+
+  const handlePinSuccess = async () => {
+    // Refresh user data to update PIN status
+    try {
+      const userProfileResponse = await get("users/getUserProfile");
+      if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+        setUserData(userProfileResponse.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    }
+  };
+
+  const handlePinVerificationSuccess = () => {
+    setShowPinVerification(false);
+    setShowAddFunds(true);
+  };
+
+  // Check if user has set a PIN by looking at wallet_pin data
+  const hasPinSet = userData?.wallet_pin && Object.keys(userData.wallet_pin).length > 0;
+
+  const handleAddFundsOrSetPin = () => {
+    if (hasPinSet) {
+      // Show PIN verification first
+      setShowPinVerification(true);
+    } else {
+      // Show PIN setup
+      setShowPinModal(true);
+    }
   };
 
   // Calculate tab counts
@@ -1405,11 +1680,20 @@ export default function WalletPage() {
 
                 <div className="mt-6">
                   <Button
-                    onClick={() => setShowAddFunds(true)}
+                    onClick={handleAddFundsOrSetPin}
                     className="w-full"
                   >
-                    <FiPlus className="w-4 h-4 mr-2" />
-                    Add Funds
+                    {hasPinSet ? (
+                      <>
+                        <FiPlus className="w-4 h-4 mr-2" />
+                        Add Funds
+                      </>
+                    ) : (
+                      <>
+                        <FiLock className="w-4 h-4 mr-2" />
+                        Set PIN
+                      </>
+                    )}
                   </Button>
                 </div>
               </motion.div>
@@ -1535,11 +1819,20 @@ export default function WalletPage() {
                             </p>
                           </div>
                           <Button 
-                            onClick={() => setShowAddFunds(true)}
+                            onClick={handleAddFundsOrSetPin}
                             className="mt-4"
                           >
-                            <FiPlus className="w-4 h-4 mr-2" />
-                            Add Funds
+                            {hasPinSet ? (
+                              <>
+                                <FiPlus className="w-4 h-4 mr-2" />
+                                Add Funds
+                              </>
+                            ) : (
+                              <>
+                                <FiLock className="w-4 h-4 mr-2" />
+                                Set PIN
+                              </>
+                            )}
                           </Button>
                         </div>
                       </TableCell>
@@ -1582,11 +1875,20 @@ export default function WalletPage() {
                       </p>
                     </div>
                     <Button 
-                      onClick={() => setShowAddFunds(true)}
+                      onClick={handleAddFundsOrSetPin}
                       className="mt-4"
                     >
-                      <FiPlus className="w-4 h-4 mr-2" />
-                      Add Funds
+                      {hasPinSet ? (
+                        <>
+                          <FiPlus className="w-4 h-4 mr-2" />
+                          Add Funds
+                        </>
+                      ) : (
+                        <>
+                          <FiLock className="w-4 h-4 mr-2" />
+                          Set PIN
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -1660,6 +1962,17 @@ export default function WalletPage() {
         </div>
       </div>
 
+      {/* PIN Verification Modal */}
+      <AnimatePresence>
+        {showPinVerification && (
+          <PinVerificationModal
+            isOpen={showPinVerification}
+            onClose={() => setShowPinVerification(false)}
+            onSuccess={handlePinVerificationSuccess}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Add Funds Modal */}
       <AnimatePresence>
         {showAddFunds && (
@@ -1668,6 +1981,17 @@ export default function WalletPage() {
             onClose={() => setShowAddFunds(false)}
             onSubmit={handleAddFunds}
             loading={addingFunds}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* PIN Setup Modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <PinSetupModal
+            isOpen={showPinModal}
+            onClose={() => setShowPinModal(false)}
+            onSuccess={handlePinSuccess}
           />
         )}
       </AnimatePresence>

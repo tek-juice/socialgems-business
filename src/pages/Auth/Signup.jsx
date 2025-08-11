@@ -191,16 +191,16 @@ const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, sele
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Skeleton loader for categories
+  // Skeleton loader for categories that matches the final design
   const renderSkeletonLoader = () => {
     return (
       <div className="animate-pulse space-y-6">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="space-y-3">
-            <div className="h-4 w-1/4 bg-gray-200 rounded"></div>
+          <div key={i} className="mb-6">
+            <div className="h-4 w-1/3 bg-gray-200 rounded mb-3"></div>
             <div className="flex flex-wrap gap-2">
-              {[...Array(5)].map((_, j) => (
-                <div key={j} className="h-8 w-20 bg-gray-200 rounded-md"></div>
+              {[...Array(6)].map((_, j) => (
+                <div key={j} className="px-3 py-1 h-7 w-20 bg-gray-200 rounded-md"></div>
               ))}
             </div>
           </div>
@@ -554,7 +554,7 @@ const Signup = () => {
       setSelectedCountry(defaultCountry);
       setSignupData((prev) => ({
         ...prev,
-        country_id: defaultCountry.phone_code,
+        country_id: defaultCountry.iso2 === "UG" ? "256" : defaultCountry.id.toString(),
       }));
     }
   }, [countries, selectedCountry]);
@@ -674,7 +674,10 @@ const Signup = () => {
 
   const handleCountryChange = (country) => {
     setSelectedCountry(country);
-    setSignupData((prev) => ({ ...prev, country_id: country.phone_code }));
+    setSignupData((prev) => ({ 
+      ...prev, 
+      country_id: country.iso2 === "UG" ? "256" : country.id.toString()
+    }));
     setIsCountryDropdownOpen(false);
     setCountrySearchTerm("");
 
@@ -751,7 +754,13 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await post("users/signup", signupData);
+      // Send business_name as first_name in the signup request
+      const signupPayload = {
+        ...signupData,
+        first_name: signupData.business_name,
+      };
+
+      const response = await post("users/signup", signupPayload);
 
       if (response.status === 200 || response.status === 201) {
         const userId = response.data?.user_id || response.data?.id;
@@ -1387,70 +1396,76 @@ const Signup = () => {
           <div className="w-[8rem] h-[5rem] bg-white absolute z-0 rounded-full bottom-0 pointer-events-none"></div>
 
           {/* LEFT CARD - FIXED HEIGHT */}
-          <div className="bg-white backdrop-blur-xl text-white p-8 md:p-12 md:w-1/2 relative rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between h-full">
-            <div className="absolute inset-0 bg-black/20 rounded-bl-3xl"></div>
+          <div className="relative md:w-1/2 rounded-bl-3xl overflow-hidden z-10 flex flex-col justify-between h-full">
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat rounded-bl-3xl"
+              style={{ backgroundImage: `url(${assets.banner})` }}
+            />
+            {/* Lighter Dark Overlay for text visibility */}
+            <div className="absolute inset-0 bg-black/30 rounded-bl-3xl"></div>
             
-            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4">
+            <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4 text-white p-8 md:p-12">
               <img
                 src={assets.MainLogo}
                 alt="Social Gems Logo"
-                className="h-fit w-44 object-contain mb-8 drop-shadow-lg"
+                className="h-fit w-60 object-contain mb-8 drop-shadow-lg"
               />
 
-              <div className="mb-8 w-full">
-                <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
-                <div className="flex gap-3 w-full max-w-lg mx-auto">
-                  <button
-                    onClick={handleAppStoreDownload}
-                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
-                  >
-                    <img 
-                      src={assets.applelogo}
-                      alt="Apple Logo"
-                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
-                    />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-300">Get it on</div>
-                      <div className="text-sm font-semibold">App Store</div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={handlePlayStoreDownload}
-                    className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
-                  >
-                    <img 
-                      src={assets.playstorelogo}
-                      alt="Play Store Logo"
-                      className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
-                    />
-                    <div className="text-left">
-                      <div className="text-xs text-gray-300">Get it on</div>
-                      <div className="text-sm font-semibold">Google Play</div>
-                    </div>
-                  </button>
+              <div className="relative z-20 w-full px-4 text-white">
+                <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
+                <div className="flex items-center justify-center gap-4 mb-8">
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <span className="text-blue-400 text-sm font-bold">f</span>
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
+                  </a>
+                  <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
+                    <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
+                  </a>
                 </div>
               </div>
             </div>
             
-            <div className="relative z-20 w-full px-4">
-              <p className="text-center text-sm opacity-90 mb-4">Follow us on social media</p>
-              <div className="flex items-center justify-center gap-4">
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <span className="text-blue-400 text-sm font-bold">f</span>
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.instagram} alt="Instagram" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.twitter} alt="X (Twitter)" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.youtube} alt="YouTube" className="w-4 h-4 object-contain" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm">
-                  <img src={assets.tiktok} alt="TikTok" className="w-4 h-4 object-contain" />
-                </a>
+            <div className="relative z-20 w-full px-4 text-white p-8">
+              <p className="text-center text-sm opacity-90 mb-6">📱 Download our mobile app</p>
+              <div className="flex gap-3 w-full max-w-lg mx-auto">
+                <button
+                  onClick={handleAppStoreDownload}
+                  className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                >
+                  <img 
+                    src={assets.applelogo}
+                    alt="Apple Logo"
+                    className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-sm font-semibold">App Store</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={handlePlayStoreDownload}
+                  className="bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-900 text-white rounded-xl px-4 py-3 flex items-center transition-all duration-300 w-full shadow-lg hover:shadow-xl border border-gray-800"
+                >
+                  <img 
+                    src={assets.playstorelogo}
+                    alt="Play Store Logo"
+                    className="w-5 h-5 mr-3 flex-shrink-0 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-sm font-semibold">Google Play</div>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
