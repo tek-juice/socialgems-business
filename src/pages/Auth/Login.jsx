@@ -341,7 +341,7 @@ const Login = () => {
               style={{ backgroundImage: `url(${assets.banner})` }}
             />
             {/* Lighter Dark Overlay for text visibility */}
-            <div className="absolute inset-0 bg-black/30 rounded-bl-3xl"></div>
+            <div className="absolute inset-0 bg-black/20 rounded-bl-3xl"></div>
             
             <div className="relative z-20 flex flex-col items-center justify-center flex-1 w-full px-4 text-white p-8 md:p-12">
               <img

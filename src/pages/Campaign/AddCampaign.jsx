@@ -394,148 +394,148 @@ const CustomDatePickerModal = ({
   }
 
   // Desktop Modal
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full border border-gray-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-scale-400 rounded-lg flex items-center justify-center">
-              <FiCalendar className="w-5 h-5 text-black" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
+return (
+  <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-8 pb-8">
+    <div 
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    />
+    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[calc(100vh-4rem)] border border-gray-200 overflow-hidden flex flex-col my-auto">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gray-50 rounded-t-2xl flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-scale-400 rounded-lg flex items-center justify-center">
+            <FiCalendar className="w-5 h-5 text-black" />
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            <FiX className="w-5 h-5 text-gray-500" />
-          </button>
+          <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
         </div>
-        
-        <div className="p-6 bg-white">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={() => navigateMonth(-1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <FiArrowLeft className="w-4 h-4" />
-              </button>
-              <h3 className="text-sm font-semibold text-gray-900">
-                {monthNames[displayDate.getMonth()]} {displayDate.getFullYear()}
-              </h3>
-              <button
-                type="button"
-                onClick={() => navigateMonth(1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <FiArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <FiX className="w-5 h-5 text-gray-500" />
+        </button>
+      </div>
+      
+      <div className="flex-1 overflow-y-auto p-6 bg-white">
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiArrowLeft className="w-4 h-4" />
+            </button>
+            <h3 className="text-sm font-semibold text-gray-900">
+              {monthNames[displayDate.getMonth()]} {displayDate.getFullYear()}
+            </h3>
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <FiArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {weekDays.map(day => (
-                <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1 mb-4">
-              {getDaysInMonth(displayDate.getFullYear(), displayDate.getMonth()).map((date, index) => {
-                if (!date) {
-                  return <div key={index} className="p-2"></div>;
-                }
-
-                const isSelected = selectedDate && formatDate(date) === selectedDate;
-                const isDisabled = isDateDisabled(date);
-                const isTodayDate = isToday(date);
-
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleDateClick(date)}
-                    disabled={isDisabled}
-                    className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
-                      isSelected
-                        ? 'bg-primary-scale-400 text-black font-semibold'
-                        : isDisabled
-                        ? 'text-gray-300 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {date.getDate()}
-                    {isTodayDate && !isSelected && (
-                      <div className="absolute top-1 right-1 w-1 h-1 bg-green-500 rounded-full"></div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Period Selection */}
-            {onPeriodSelect && (
-              <div className="border-t pt-4">
-                <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePeriodSelect('2weeks')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
-                  >
-                    2 Weeks
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePeriodSelect('1month')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
-                  >
-                    1 Month
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePeriodSelect('2months')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
-                  >
-                    2 Months
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePeriodSelect('3months')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
-                  >
-                    3 Months
-                  </button>
-                </div>
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {weekDays.map(day => (
+              <div key={day} className="text-xs text-gray-500 text-center py-2 font-medium">
+                {day}
               </div>
-            )}
+            ))}
           </div>
-        </div>
 
-        <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!selectedDate}
-            className="flex-1 px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-          >
-            Confirm
-          </button>
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {getDaysInMonth(displayDate.getFullYear(), displayDate.getMonth()).map((date, index) => {
+              if (!date) {
+                return <div key={index} className="p-2"></div>;
+              }
+
+              const isSelected = selectedDate && formatDate(date) === selectedDate;
+              const isDisabled = isDateDisabled(date);
+              const isTodayDate = isToday(date);
+
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleDateClick(date)}
+                  disabled={isDisabled}
+                  className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
+                    isSelected
+                      ? 'bg-primary-scale-400 text-black font-semibold'
+                      : isDisabled
+                      ? 'text-gray-300 cursor-not-allowed'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {date.getDate()}
+                  {isTodayDate && !isSelected && (
+                    <div className="absolute top-1 right-1 w-1 h-1 bg-green-500 rounded-full"></div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Period Selection */}
+          {onPeriodSelect && (
+            <div className="border-t pt-4">
+              <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handlePeriodSelect('2weeks')}
+                  className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                >
+                  2 Weeks
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePeriodSelect('1month')}
+                  className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                >
+                  1 Month
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePeriodSelect('2months')}
+                  className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                >
+                  2 Months
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handlePeriodSelect('3months')}
+                  className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                >
+                  3 Months
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      <div className="flex gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+        <button
+          onClick={onClose}
+          className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleConfirm}
+          disabled={!selectedDate}
+          className="flex-1 px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+        >
+          Confirm
+        </button>
+      </div>
     </div>
-  );
+  </div>
+);
 };
 
 // Custom Date Picker Component

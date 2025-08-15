@@ -313,15 +313,6 @@ export default function CampaignDetailsPage() {
     const remainingSlots = maxInfluencers - currentAccepted;
     const canAcceptMore = remainingSlots > 0;
     
-    console.log('🎯 getCampaignInfluencerInfo:', {
-      maxInfluencers,
-      currentAccepted,
-      remainingSlots,
-      canAcceptMore,
-      actionedMembers: actionedMembers.length,
-      acceptedMembers: actionedMembers.filter(m => m.application_status === 'accepted')
-    });
-    
     return {
       maxInfluencers,
       currentAccepted,
@@ -334,11 +325,6 @@ export default function CampaignDetailsPage() {
   const isMaxInfluencersReached = useMemo(() => {
     const influencerInfo = getCampaignInfluencerInfo();
     const maxReached = !influencerInfo.canAcceptMore && influencerInfo.maxInfluencers > 0;
-    
-    console.log('🚫 isMaxInfluencersReached:', {
-      maxReached,
-      influencerInfo
-    });
     
     return maxReached;
   }, [getCampaignInfluencerInfo]);
@@ -398,13 +384,6 @@ export default function CampaignDetailsPage() {
       return isForThisCampaign && isNotAccepted && isNotExpired;
     });
     
-    console.log('📧 sentInvites filtered:', {
-      campaignId: campaign.campaign_id,
-      allSentInvites: allSentInvites.length,
-      filteredSentInvites: filtered.length,
-      filtered
-    });
-    
     return filtered;
   }, [allSentInvites, campaign?.campaign_id]);
 
@@ -422,13 +401,6 @@ export default function CampaignDetailsPage() {
       rejectedInvites: campaignInvites.filter(invite => invite.invite_status === 'rejected').length
     };
     
-    console.log('📊 sentInvitesStats:', {
-      campaignId: campaign.campaign_id,
-      campaignInvites: campaignInvites.length,
-      stats,
-      campaignInvites
-    });
-    
     return stats;
   }, [allSentInvites, campaign?.campaign_id]);
 
@@ -437,12 +409,6 @@ export default function CampaignDetailsPage() {
     if (!campaign?.campaign_id || !allSentInvites.length) return false;
     
     const hasInvites = allSentInvites.some(invite => invite.campaign_id === campaign.campaign_id);
-    
-    console.log('✉️ campaignHasInvites:', {
-      campaignId: campaign.campaign_id,
-      hasInvites,
-      allSentInvites: allSentInvites.length
-    });
     
     return hasInvites;
   }, [allSentInvites, campaign?.campaign_id]);
@@ -491,16 +457,8 @@ export default function CampaignDetailsPage() {
 
   // Function to fetch campaign applications - MATCH API STRUCTURE EXACTLY
   const fetchCampaignApplications = useCallback(async (campaignId) => {
-    console.log('🔍 fetchCampaignApplications called with campaignId:', campaignId);
-    
     try {
       const response = await get(`campaigns/get-applications/${campaignId}`);
-      
-      console.log('📥 get-applications response:', {
-        status: response?.status,
-        dataLength: response?.data?.length,
-        data: response?.data
-      });
       
       if (response?.status === 200 && response?.data) {
         // Transform the API response to match your exact data structure
@@ -546,38 +504,21 @@ export default function CampaignDetailsPage() {
           };
         });
         
-        console.log('✅ fetchCampaignApplications transformed data:', {
-          originalLength: response.data.length,
-          transformedLength: transformedData.length,
-          transformedData
-        });
-        
         return transformedData;
       } else if (response?.status === 404) {
-        console.log('❌ fetchCampaignApplications: 404 - No applications found');
         return [];
       } else {
-        console.log('❌ fetchCampaignApplications: Unexpected response:', response);
         return [];
       }
     } catch (error) {
-      console.log('💥 fetchCampaignApplications error:', error);
       return [];
     }
   }, [getCountryName]);
 
   // Function to fetch actioned influencers with tasks
   const fetchActionedInfluencers = useCallback(async (campaignId) => {
-    console.log('🎭 fetchActionedInfluencers called with campaignId:', campaignId);
-    
     try {
       const response = await get(`campaigns/getActionedInfluencers/${campaignId}`);
-      
-      console.log('📥 getActionedInfluencers response:', {
-        status: response?.status,
-        dataLength: response?.data?.length,
-        data: response?.data
-      });
       
       if (response?.status === 200 && response?.data) {
         setActionedInfluencers(response.data);
@@ -606,20 +547,12 @@ export default function CampaignDetailsPage() {
           setCampaignTasks(uniqueTasks);
         }
         
-        console.log('✅ fetchActionedInfluencers success:', {
-          influencersCount: response.data.length,
-          tasksCount: uniqueTasks.length,
-          influencers: response.data
-        });
-        
         return response.data;
       } else {
-        console.log('❌ fetchActionedInfluencers: No data or error response');
         setActionedInfluencers([]);
         return [];
       }
     } catch (error) {
-      console.log('💥 fetchActionedInfluencers error:', error);
       setActionedInfluencers([]);
       return [];
     }
@@ -699,15 +632,6 @@ export default function CampaignDetailsPage() {
     
     const filteredPending = isMaxInfluencersReached ? [] : pending;
     
-    console.log('🔄 pendingApplications calculation:', {
-      actionedMembersTotal: actionedMembers.length,
-      pendingBeforeFilter: pending.length,
-      pendingAfterFilter: filteredPending.length,
-      isMaxInfluencersReached,
-      pending,
-      filteredPending
-    });
-    
     return filteredPending;
   }, [actionedMembers, isMaxInfluencersReached]);
 
@@ -775,28 +699,18 @@ export default function CampaignDetailsPage() {
   // CORRECTED: Fetch all sent invites using your existing get() utility
 useEffect(() => {
   const fetchSentInvites = async () => {
-    console.log('📞 fetchSentInvites called');
-    
     try {
       setSentInvitesLoading(true);
       
       // FIXED: Use your existing get() utility function instead of fetch()
       const response = await get('campaigns/sentInvites');
       
-      console.log('📧 fetchSentInvites response:', {
-        status: response?.status,
-        dataLength: response?.data?.length,
-        data: response?.data
-      });
-      
       if (response?.status === 200 && response?.data) {
         setAllSentInvites(response.data);
       } else {
-        console.log('❌ fetchSentInvites: Invalid response structure');
         setAllSentInvites([]);
       }
     } catch (error) {
-      console.log('💥 fetchSentInvites error:', error);
       setAllSentInvites([]);
     } finally {
       setSentInvitesLoading(false);
@@ -863,13 +777,6 @@ useEffect(() => {
           }
           
           if (campaignData) {
-            console.log('🎯 Campaign loaded:', {
-              campaignId: campaignData.campaign_id,
-              title: campaignData.title,
-              maxInfluencers: campaignData.number_of_influencers,
-              isDraft: isDraftCampaign
-            });
-            
             setCampaign(campaignData);
             setIsDraft(isDraftCampaign);
           }
@@ -890,34 +797,24 @@ useEffect(() => {
   useEffect(() => {
     const fetchApplicationsAndActionedInfluencers = async () => {
       if (campaign?.campaign_id) {
-        console.log('🔄 fetchApplicationsAndActionedInfluencers called for campaign:', campaign.campaign_id);
-        
         // Always fetch actioned influencers first
         await fetchActionedInfluencers(campaign.campaign_id);
         
         // ALWAYS fetch applications if campaign has invites (needed to calculate max reached)
         if (campaignHasInvites) {
-          console.log('✉️ Campaign has invites, fetching applications...');
           const applicationsData = await fetchCampaignApplications(campaign.campaign_id);
           if (applicationsData && applicationsData.length > 0) {
             setActionedMembers(applicationsData);
-            console.log('✅ Set actionedMembers:', applicationsData.length);
           } else {
             setActionedMembers([]);
-            console.log('❌ No applications data, set actionedMembers to empty');
           }
         } else {
-          console.log('📭 Campaign has no invites, setting actionedMembers to empty');
           setActionedMembers([]);
         }
       }
     };
 
     if (allSentInvites.length >= 0) { // Changed from > 0 to >= 0 to handle empty arrays
-      console.log('📧 allSentInvites loaded, triggering fetch:', {
-        invitesCount: allSentInvites.length,
-        campaignId: campaign?.campaign_id
-      });
       fetchApplicationsAndActionedInfluencers();
     }
   }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers]);
@@ -1062,16 +959,9 @@ useEffect(() => {
 
   // Handle batch process applications - USING CORRECT USER_ID
   const handleBatchProcessApplications = async (data) => {
-    console.log('⚙️ handleBatchProcessApplications called with:', data);
-    
     setIsProcessing(true);
     try {
       const response = await post('campaigns/batch-process-applications', data);
-      
-      console.log('📤 batch-process-applications response:', {
-        status: response?.status,
-        data: response?.data
-      });
       
       if (response?.status === 200 || response?.status === 204) {
         toast.success('Applications processed successfully!');
@@ -1099,7 +989,6 @@ useEffect(() => {
         toast.error('Failed to process applications');
       }
     } catch (error) {
-      console.log('💥 handleBatchProcessApplications error:', error);
       toast.error('Failed to process applications');
     } finally {
       setIsProcessing(false);
