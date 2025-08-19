@@ -26,8 +26,8 @@ import CampaignDescription from './CampaignDescription';
 import CampaignObjective from './CampaignObjective';
 import CampaignOverview from './CampaignOverview';
 import CampaignActionButtons from './CampaignActionButtons';
-import MembersSection from './MembersSection';
 import CampaignModals from './CampaignModals';
+import CampaignPreviewButtons from './CampaignPreviewButtons'; // NEW IMPORT
 
 // Import utilities
 import { formatDate, formatHtmlContent, getActionStatusBadge } from './utils';
@@ -103,7 +103,7 @@ export const TasksAccordion = ({ tasks }) => {
               >
                 <div className="space-y-3">
                   <div 
-                    className="text-xs text-gray-700"
+                    className="text-xs text-gray-700 rich-text-preview"
                     dangerouslySetInnerHTML={{
                       __html: formatHtmlContent(task.description || 'No description available')
                     }}
@@ -201,7 +201,7 @@ export const TaskCard = ({ task }) => {
           >
             <div className="pt-3 border-t border-gray-100">
               <div 
-                className="text-xs text-gray-700 mb-3"
+                className="text-xs text-gray-700 mb-3 rich-text-preview"
                 dangerouslySetInnerHTML={{
                   __html: formatHtmlContent(task.description || 'No description available')
                 }}
@@ -1152,6 +1152,55 @@ useEffect(() => {
             overflow-y: visible !important;
           }
         }
+
+        /* Rich text preview styles */
+        .rich-text-preview h {
+          font-size: 14px;
+          font-weight: 600;
+          margin: 8px 0 4px 0;
+          color: #1F2937;
+          display: block;
+        }
+        
+        .rich-text-preview p {
+          margin: 4px 0;
+          line-height: 1.5;
+          display: block;
+        }
+        
+        .rich-text-preview li {
+          margin: 2px 0 2px 16px;
+          list-style: none;
+          position: relative;
+          display: block;
+        }
+        
+        .rich-text-preview li:before {
+          content: "•";
+          color: #374151;
+          font-weight: bold;
+          position: absolute;
+          left: -16px;
+          top: 0;
+        }
+        
+        .rich-text-preview strong {
+          font-weight: 600;
+        }
+        
+        .rich-text-preview em {
+          font-style: italic;
+        }
+        
+        .rich-text-preview br {
+          display: block;
+          margin: 2px 0;
+          content: "";
+        }
+        
+        .rich-text-preview br + br {
+          margin-top: 4px;
+        }
       `}</style>
       
       <div className="w-full min-h-screen">
@@ -1256,7 +1305,7 @@ useEffect(() => {
 
               </div>
 
-              {/* Right Side (30%) - Takes 1/3 width with Professional Scroll Sync */}
+              {/* Right Side (30%) - ONLY OBJECTIVE, STATS, AND QUICK ACTIONS */}
               <div ref={rightColumnRef} className="column-right lg:col-span-1 space-y-8 h-fit">
                 
                 {/* Campaign Objective */}
@@ -1265,119 +1314,64 @@ useEffect(() => {
                 )}
 
                 {/* Campaign Overview (contains stats) */}
-                {/* <CampaignOverview campaign={campaign} stats={stats} /> */}
+                <CampaignOverview 
+                  campaign={campaign} 
+                  stats={stats} 
+                  sentInvitesStats={sentInvitesStats} 
+                />
 
-                {/* Campaign Overview (contains stats) */}
-                  <CampaignOverview 
-                    campaign={campaign} 
-                    stats={stats} 
-                    sentInvitesStats={sentInvitesStats} 
-                  />
-
-                {/* Campaign Members Section - CONDITIONALLY SHOW ONLY PENDING IF MAX NOT REACHED */}
-                {(hasActiveInfluencers || pendingApplications.length > 0) && (
-                  <MembersSection
-                    actionedMembers={pendingApplications} // Only pending applications (empty if max reached)
-                    actionedInfluencers={actionedInfluencers} // Always show accepted influencers
-                    stats={stats}
-                    isProcessing={isProcessing}
-                    canAddMembers={canAddMembers}
-                    campaign={campaign}
-                    countries={countries}
-                    getCountryName={getCountryName}
-                    getCampaignInfluencerInfo={getCampaignInfluencerInfo}
-                    multiSelectMode={multiSelectMode}
-                    setMultiSelectMode={setMultiSelectMode}
-                    selectedApplications={selectedApplications}
-                    setSelectedApplications={setSelectedApplications}
-                    isApplicationMode={true}
-                    sentInvites={sentInvites} // Pass the filtered sent invites
-                    sentInvitesStats={sentInvitesStats} // Pass the calculated stats
-                    sentInvitesLoading={sentInvitesLoading}
-                    onAddMembers={handleAddMembers}
-                    onMemberClick={(member) => {
-                      setSelectedMember(member);
-                      setUserProfileModal(true);
-                    }}
-                    onAcceptClick={(member) => {
-                      const influencerInfo = getCampaignInfluencerInfo();
-                      
-                      if (!influencerInfo.canAcceptMore) {
-                        toast.error(`Campaign has reached its limit of ${influencerInfo.maxInfluencers} influencer${influencerInfo.maxInfluencers !== 1 ? 's' : ''}`);
-                        return;
-                      }
-                      
-                      handleBatchProcessApplications({
-                        campaign_id: campaign.campaign_id,
-                        accepted_applications: [member.user_id], 
-                        rejected_applications: []
+                {/* Quick Actions Buttons */}
+                <CampaignPreviewButtons
+                  actionedInfluencers={actionedInfluencers}
+                  pendingApplications={pendingApplications}
+                  sentInvites={sentInvites}
+                  stats={stats}
+                  sentInvitesStats={sentInvitesStats}
+                  onMemberClick={(member) => {
+                    setSelectedMember(member);
+                    setUserProfileModal(true);
+                  }}
+                  onAcceptClick={handleAcceptApplicationFromModal}
+                  onRejectClick={handleRejectApplicationFromModal}
+                  onResendInvite={async (invite) => {
+                    setIsProcessing(true);
+                    try {
+                      await post('campaigns/resendInvite', {
+                        invite_id: invite.invite_id
                       });
-                    }}
-                    onRejectClick={(member) => {
-                      handleBatchProcessApplications({
-                        campaign_id: campaign.campaign_id,
-                        accepted_applications: [],
-                        rejected_applications: [member.user_id] 
+                      
+                      toast.success('Invite resent successfully!');
+                      
+                      // Refresh sent invites
+                      const response = await get('campaigns/sentInvites');
+                      if (response?.status === 200 && response?.data) {
+                        setAllSentInvites(response.data);
+                      }
+                    } catch (error) {
+                      toast.error('Failed to resend invite');
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                  onCancelInvite={async (invite) => {
+                    setIsProcessing(true);
+                    try {
+                      await post('campaigns/cancelInvite', {
+                        invite_id: invite.invite_id
                       });
-                    }}
-                    onViewTasks={(member) => {
-                      setSelectedMember(member);
-                      setUserProfileModal(true);
-                    }}
-                    onBatchProcessApplications={handleBatchProcessApplications}
-                    onResendInvite={async (invite) => {
-                      setIsProcessing(true);
-                      try {
-                        await post('campaigns/resendInvite', {
-                          invite_id: invite.invite_id
-                        });
-                        
-                        toast.success('Invite resent successfully!');
-                        
-                        // Refresh sent invites
-                        const response = await get('campaigns/sentInvites');
-                        if (response?.status === 200 && response?.data) {
-                          setAllSentInvites(response.data);
-                        }
-                      } catch (error) {
-                        toast.error('Failed to resend invite');
-                      } finally {
-                        setIsProcessing(false);
-                      }
-                    }}
-                    onCancelInvite={async (invite) => {
-                      setIsProcessing(true);
-                      try {
-                        await post('campaigns/cancelInvite', {
-                          invite_id: invite.invite_id
-                        });
-                        
-                        setAllSentInvites(prevInvites =>
-                          prevInvites.filter(inv => inv.invite_id !== invite.invite_id)
-                        );
-                        
-                        toast.success('Invite cancelled successfully!');
-                      } catch (error) {
-                        toast.error('Failed to cancel invite');
-                      } finally {
-                        setIsProcessing(false);
-                      }
-                    }}
-                  />
-                )}
-
-                {/* Show message when max influencers reached and no pending applications */}
-                {isMaxInfluencersReached && pendingApplications.length === 0 && !hasActiveInfluencers && (
-                  <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl">
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-blue-900 mb-2">Campaign Full</div>
-                      <div className="text-xs text-blue-700">
-                        This campaign has reached its maximum of {campaign.number_of_influencers} influencer{campaign.number_of_influencers !== 1 ? 's' : ''}. 
-                        No more applications will be shown.
-                      </div>
-                    </div>
-                  </div>
-                )}
+                      
+                      setAllSentInvites(prevInvites =>
+                        prevInvites.filter(inv => inv.invite_id !== invite.invite_id)
+                      );
+                      
+                      toast.success('Invite cancelled successfully!');
+                    } catch (error) {
+                      toast.error('Failed to cancel invite');
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                />
 
               </div>
 

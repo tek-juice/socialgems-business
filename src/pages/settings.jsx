@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useState, useId, useRef, useCallback, useEffect, ChangeEvent } from "react";
+import { useLocation } from "react-router-dom";
 import { get, post, patch, upload } from '../utils/service';
 import { toast } from 'sonner';
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
@@ -36,6 +37,7 @@ import {
   FiUpload as UploadIcon,
   FiTrash2 as TrashIcon,
   FiCrop as CropIcon,
+  FiMapPin as MapPinIcon,
 } from 'react-icons/fi';
 
 import { RiVerifiedBadgeFill } from "react-icons/ri";
@@ -91,6 +93,21 @@ const compressImage = (file, maxWidth = 800, maxHeight = 600, quality = 0.8) => 
     
     img.src = URL.createObjectURL(file);
   });
+};
+
+// URL validation function
+const isValidUrl = (string) => {
+  if (!string || string.trim() === '') return true; // Allow empty for optional field
+  
+  try {
+    // First try URL constructor (most reliable)
+    new URL(string);
+    return true;
+  } catch (_) {
+    // Fallback to regex for more permissive validation
+    const urlPattern = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
+    return urlPattern.test(string);
+  }
 };
 
 // Updated hooks - no immediate upload
@@ -569,14 +586,17 @@ const Textarea = ({ className, ...props }) => {
   );
 };
 
-const Label = ({ className, ...props }) => (
+const Label = ({ className, required, children, ...props }) => (
   <label
     className={cn(
-      "text-xs font-medium text-gray-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+      "text-sm font-semibold text-gray-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       className
     )}
     {...props}
-  />
+  >
+    {children}
+    {required && <span className="text-red-500 ml-1">*</span>}
+  </label>
 );
 
 const Badge = ({ className, children, variant = "default", ...props }) => {
@@ -762,7 +782,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor={`${id}-first-name`}>First name</Label>
+                  <Label htmlFor={`${id}-first-name`} required>First name</Label>
                   <Input
                     id={`${id}-first-name`}
                     placeholder="First name"
@@ -773,7 +793,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`${id}-last-name`}>Last name</Label>
+                  <Label htmlFor={`${id}-last-name`} required>Last name</Label>
                   <Input
                     id={`${id}-last-name`}
                     placeholder="Last name"
@@ -786,7 +806,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor={`${id}-username`}>Username</Label>
+                <Label htmlFor={`${id}-username`} required>Username</Label>
                 <div className="relative">
                   <Input
                     id={`${id}-username`}
@@ -805,7 +825,7 @@ const ProfileEditModal = ({ isOpen, onClose, userData, onSave, loading, onRefres
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor={`${id}-email`}>Email Address</Label>
+                  <Label htmlFor={`${id}-email`} required>Email Address</Label>
                   <Input
                     id={`${id}-email`}
                     placeholder="Email"
@@ -963,7 +983,7 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pin">Enter PIN</Label>
+              <Label htmlFor="pin" required>Enter PIN</Label>
               <Input
                 id="pin"
                 type="password"
@@ -976,7 +996,7 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-pin">Confirm PIN</Label>
+              <Label htmlFor="confirm-pin" required>Confirm PIN</Label>
               <Input
                 id="confirm-pin"
                 type="password"
@@ -1018,12 +1038,12 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
 
 // Main Settings Page Component
 export default function SettingsPage() {
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
-  const [showBusinessForm, setShowBusinessForm] = useState(false);
   const [businessLoading, setBusinessLoading] = useState(false);
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
@@ -1036,14 +1056,20 @@ export default function SettingsPage() {
   const [profileImageCropSrc, setProfileImageCropSrc] = useState(null);
   const [profileImageUploading, setProfileImageUploading] = useState(false);
   const profileImageInputRef = useRef(null);
+  const businessVerificationRef = useRef(null);
+
+  // Business form validation errors
+  const [businessFormErrors, setBusinessFormErrors] = useState({});
 
   const [businessFormData, setBusinessFormData] = useState({
     business_name: '',
-    business_address: '',
-    business_phone: '',
     business_email: '',
+    business_phone: '',
     business_website: '',
-    country: 'UG',
+    street_address: '',
+    city: '',
+    state_province: '',
+    postal_code: '',
     is_registered: 1,
     registration_number: '',
     business_description: ''
@@ -1068,6 +1094,18 @@ export default function SettingsPage() {
   useEffect(() => {
     fetchUserProfile();
   }, []);
+
+  // Handle navigation state to focus on business verification
+  useEffect(() => {
+    if (location.state?.focusBusinessVerification && businessVerificationRef.current) {
+      setTimeout(() => {
+        businessVerificationRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 500);
+    }
+  }, [location.state, userData]);
 
   // Auto-populate business form data when userData changes
   useEffect(() => {
@@ -1169,17 +1207,90 @@ export default function SettingsPage() {
       ...prev,
       [field]: value
     }));
+
+    // Clear error for this field when user starts typing
+    if (businessFormErrors[field]) {
+      setBusinessFormErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+
+    // Validate website URL in real-time
+    if (field === 'business_website' && value && !isValidUrl(value)) {
+      setBusinessFormErrors(prev => ({
+        ...prev,
+        [field]: 'Please enter a valid website URL (e.g., https://example.com)'
+      }));
+    }
+  };
+
+  const validateBusinessForm = () => {
+    const errors = {};
+    const requiredFields = [
+      'business_name', 
+      'business_email', 
+      'business_phone', 
+      'street_address', 
+      'city', 
+      'business_description'
+    ];
+
+    requiredFields.forEach(field => {
+      if (!businessFormData[field] || businessFormData[field].trim() === '') {
+        errors[field] = 'This field is required';
+      }
+    });
+
+    // Validate email format
+    if (businessFormData.business_email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(businessFormData.business_email)) {
+        errors.business_email = 'Please enter a valid email address';
+      }
+    }
+
+    // Validate website URL if provided
+    if (businessFormData.business_website && !isValidUrl(businessFormData.business_website)) {
+      errors.business_website = 'Please enter a valid website URL (e.g., https://example.com)';
+    }
+
+    // Validate registration number if business is registered
+    if (businessFormData.is_registered === 1 && (!businessFormData.registration_number || businessFormData.registration_number.trim() === '')) {
+      errors.registration_number = 'Registration number is required for registered businesses';
+    }
+
+    setBusinessFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleBusinessSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateBusinessForm()) {
+      toast.error('Please fix the errors in the form');
+      return;
+    }
+
     setBusinessLoading(true);
     
     try {
-      const response = await post('users/verifyBusiness', businessFormData);
+      // Combine address fields into business_address
+      const addressParts = [
+        businessFormData.street_address,
+        businessFormData.city,
+        businessFormData.state_province,
+        businessFormData.postal_code
+      ].filter(Boolean);
+      
+      const submitData = {
+        ...businessFormData,
+        business_address: addressParts.join(', ')
+      };
+
+      const response = await post('users/verifyBusiness', submitData);
       if (response?.status === 200) {
         toast.success('Business verification submitted successfully!');
-        setShowBusinessForm(false);
         await fetchUserProfile();
       }
     } catch (error) {
@@ -1402,14 +1513,14 @@ export default function SettingsPage() {
             <ShieldIcon className="w-5 h-5 text-gray-700" />
             <h2 className="text-lg font-semibold text-gray-900">Account Verification</h2>
           </div>
-          
-          <div className="space-y-4">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Email Verification */}
             <div className="flex items-center justify-between py-4 px-5 bg-gray-50 rounded-lg border border-gray-200">
               <div className="flex items-center gap-4">
                 <MailIcon className="w-5 h-5 text-gray-600" />
                 <div>
-                  <p className="text-xs font-medium text-gray-900">Email Address</p>
+                  <p className="text-sm font-semibold text-gray-900">Email Address</p>
                   <p className="text-xs text-gray-600">{userData?.email}</p>
                 </div>
               </div>
@@ -1448,7 +1559,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <PhoneIcon className="w-5 h-5 text-gray-600" />
                 <div>
-                  <p className="text-xs font-medium text-gray-900">Phone Number</p>
+                  <p className="text-sm font-semibold text-gray-900">Phone Number</p>
                   <p className="text-xs text-gray-600">{userData?.phone}</p>
                 </div>
               </div>
@@ -1484,9 +1595,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Business Verification - Only show for brand users */}
+        {/* Business Verification - Always show for brand users */}
         {userData?.user_type === "brand" && (
-          <div>
+          <div ref={businessVerificationRef}>
             <div className="flex items-center gap-3 mb-6">
               <BriefcaseIcon className="w-5 h-5 text-gray-700" />
               <h2 className="text-lg font-semibold text-gray-900">Business Verification</h2>
@@ -1496,94 +1607,236 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <businessStatus.icon className={`w-5 h-5 ${businessStatus.color}`} />
                 <div>
-                  <p className={`text-xs font-medium ${businessStatus.color}`}>{businessStatus.title}</p>
+                  <p className={`text-sm font-semibold ${businessStatus.color}`}>{businessStatus.title}</p>
                   <p className="text-xs text-gray-600">{businessStatus.description}</p>
                 </div>
               </div>
             </div>
 
-            {(businessStatus.status === 'none' || businessStatus.status === 'rejected') && (
-              <div>
-                {!showBusinessForm ? (
-                  <Button onClick={() => setShowBusinessForm(true)} className='font-semibold'>
-                    {businessStatus.status === 'rejected' ? 'Resubmit Verification' : 'Start Business Verification'}
-                  </Button>
-                ) : (
-                  <form onSubmit={handleBusinessSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="business-name">Business Name</Label>
-                        <Input 
-                          id="business-name" 
-                          placeholder="Your Business Name"
-                          value={businessFormData.business_name}
-                          onChange={(e) => handleBusinessInputChange('business_name', e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="business-email">Business Email</Label>
-                        <Input 
-                          id="business-email" 
-                          type="email" 
-                          placeholder="business@company.com"
-                          value={businessFormData.business_email}
-                          onChange={(e) => handleBusinessInputChange('business_email', e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="business-website">Website (Optional)</Label>
-                        <Input 
-                          id="business-website" 
-                          placeholder="https://yourwebsite.com"
-                          value={businessFormData.business_website}
-                          onChange={(e) => handleBusinessInputChange('business_website', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="business-phone">Business Phone</Label>
-                        <Input 
-                          id="business-phone" 
-                          placeholder="+256-772-123456"
-                          value={businessFormData.business_phone}
-                          onChange={(e) => handleBusinessInputChange('business_phone', e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="business-address">Business Address</Label>
-                      <Textarea 
-                        id="business-address" 
-                        placeholder="Full business address"
-                        value={businessFormData.business_address}
-                        onChange={(e) => handleBusinessInputChange('business_address', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="business-description">Business Description</Label>
-                      <Textarea 
-                        id="business-description" 
-                        placeholder="Describe your business and services"
-                        value={businessFormData.business_description}
-                        onChange={(e) => handleBusinessInputChange('business_description', e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex gap-3 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setShowBusinessForm(false)} disabled={businessLoading}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={businessLoading}>
-                        {businessLoading ? 'Submitting...' : 'Submit for Review'}
-                      </Button>
-                    </div>
-                  </form>
+            {/* Business Verification Form - Always visible */}
+            <form onSubmit={handleBusinessSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Basic Information</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="business-name" required>Business Name</Label>
+                    <Input 
+                      id="business-name" 
+                      placeholder="Your Business Name"
+                      value={businessFormData.business_name}
+                      onChange={(e) => handleBusinessInputChange('business_name', e.target.value)}
+                      required
+                      className={businessFormErrors.business_name ? 'border-red-500' : ''}
+                    />
+                    {businessFormErrors.business_name && (
+                      <p className="text-xs text-red-500 mt-1">{businessFormErrors.business_name}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-registration" required>Is your business registered?</Label>
+                    <select
+                      id="business-registration"
+                      value={businessFormData.is_registered}
+                      onChange={(e) => handleBusinessInputChange('is_registered', parseInt(e.target.value))}
+                      className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs text-gray-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      required
+                    >
+                      <option value={1}>Yes, it's registered</option>
+                      <option value={0}>No, not registered</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Registration Number - Only show if business is registered */}
+                {businessFormData.is_registered === 1 && (
+                  <div>
+                    <Label htmlFor="registration-number" required>Registration Number</Label>
+                    <Input 
+                      id="registration-number" 
+                      placeholder="Business Registration Number"
+                      value={businessFormData.registration_number}
+                      onChange={(e) => handleBusinessInputChange('registration_number', e.target.value)}
+                      required
+                      className={businessFormErrors.registration_number ? 'border-red-500' : ''}
+                    />
+                    {businessFormErrors.registration_number && (
+                      <p className="text-xs text-red-500 mt-1">{businessFormErrors.registration_number}</p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="business-description" required>Business Description</Label>
+                  <Textarea 
+                    id="business-description" 
+                    placeholder="Describe your business and services"
+                    value={businessFormData.business_description}
+                    onChange={(e) => handleBusinessInputChange('business_description', e.target.value)}
+                    required
+                    rows={4}
+                    className={businessFormErrors.business_description ? 'border-red-500' : ''}
+                  />
+                  {businessFormErrors.business_description && (
+                    <p className="text-xs text-red-500 mt-1">{businessFormErrors.business_description}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Contact Information</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="business-email" required>Business Email</Label>
+                    <Input 
+                      id="business-email" 
+                      type="email" 
+                      placeholder="business@company.com"
+                      value={businessFormData.business_email}
+                      onChange={(e) => handleBusinessInputChange('business_email', e.target.value)}
+                      required
+                      className={businessFormErrors.business_email ? 'border-red-500' : ''}
+                    />
+                    {businessFormErrors.business_email && (
+                      <p className="text-xs text-red-500 mt-1">{businessFormErrors.business_email}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="business-phone" required>Business Phone</Label>
+                    <Input 
+                      id="business-phone" 
+                      placeholder="+256-772-123456"
+                      value={businessFormData.business_phone}
+                      onChange={(e) => handleBusinessInputChange('business_phone', e.target.value)}
+                      required
+                      className={businessFormErrors.business_phone ? 'border-red-500' : ''}
+                    />
+                    {businessFormErrors.business_phone && (
+                      <p className="text-xs text-red-500 mt-1">{businessFormErrors.business_phone}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="business-website">Website</Label>
+                  <Input 
+                    id="business-website" 
+                    placeholder="https://yourwebsite.com"
+                    value={businessFormData.business_website}
+                    onChange={(e) => handleBusinessInputChange('business_website', e.target.value)}
+                    className={businessFormErrors.business_website ? 'border-red-500' : ''}
+                  />
+                  {businessFormErrors.business_website && (
+                    <p className="text-xs text-red-500 mt-1">{businessFormErrors.business_website}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Optional - Include protocol (https://) for proper validation
+                  </p>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2 flex items-center gap-2">
+                  <MapPinIcon className="w-4 h-4" />
+                  Business Address
+                </h3>
+                
+                <div>
+                  <Label htmlFor="street-address" required>Street Address</Label>
+                  <Input 
+                    id="street-address" 
+                    placeholder="123 Main Street"
+                    value={businessFormData.street_address}
+                    onChange={(e) => handleBusinessInputChange('street_address', e.target.value)}
+                    required
+                    className={businessFormErrors.street_address ? 'border-red-500' : ''}
+                  />
+                  {businessFormErrors.street_address && (
+                    <p className="text-xs text-red-500 mt-1">{businessFormErrors.street_address}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="city" required>City</Label>
+                    <Input 
+                      id="city" 
+                      placeholder="Kampala"
+                      value={businessFormData.city}
+                      onChange={(e) => handleBusinessInputChange('city', e.target.value)}
+                      required
+                      className={businessFormErrors.city ? 'border-red-500' : ''}
+                    />
+                    {businessFormErrors.city && (
+                      <p className="text-xs text-red-500 mt-1">{businessFormErrors.city}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="state-province">State/Province</Label>
+                    <Input 
+                      id="state-province" 
+                      placeholder="Central Region"
+                      value={businessFormData.state_province}
+                      onChange={(e) => handleBusinessInputChange('state_province', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="postal-code">Postal Code</Label>
+                  <Input 
+                    id="postal-code" 
+                    placeholder="256000"
+                    value={businessFormData.postal_code}
+                    onChange={(e) => handleBusinessInputChange('postal_code', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t border-gray-200">
+                <Button 
+                  type="submit" 
+                  disabled={businessLoading} 
+                  className='font-semibold flex-1 sm:flex-none sm:px-8'
+                >
+                  {businessLoading ? (
+                    <>
+                      <motion.div 
+                        animate={{ rotate: 360 }} 
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 mr-2"
+                      >
+                        <LoadingIcon className="w-4 h-4" />
+                      </motion.div>
+                      {businessStatus.status === 'rejected' ? 'Resubmitting...' : 'Submitting...'}
+                    </>
+                  ) : (
+                    businessStatus.status === 'rejected' ? 'Resubmit for Review' : 'Submit for Review'
+                  )}
+                </Button>
+                
+                {businessStatus.status === 'pending' && (
+                  <div className="flex items-center text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
+                    <ClockIcon className="w-4 h-4 mr-2" />
+                    Under Review
+                  </div>
+                )}
+                
+                {businessStatus.status === 'approved' && (
+                  <div className="flex items-center text-xs text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                    <CheckCircleIcon className="w-4 h-4 mr-2" />
+                    Verified
+                  </div>
                 )}
               </div>
-            )}
+            </form>
           </div>
         )}
       </div>

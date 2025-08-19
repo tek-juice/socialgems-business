@@ -1,5 +1,14 @@
+// CustomDatePicker.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { FiArrowLeft, FiArrowRight, FiCalendar } from "react-icons/fi";
+import { 
+  createLocalDate, 
+  formatDateString, 
+  formatDisplayDate, 
+  isDateDisabled, 
+  isToday,
+  getMinimumDate 
+} from "../utils/dateUtils";
 
 const CustomDatePicker = ({ 
   label, 
@@ -14,10 +23,10 @@ const CustomDatePicker = ({
   const [isOpen, setIsOpen] = useState(false);
   const [displayDate, setDisplayDate] = useState(() => {
     if (value) {
-      return new Date(value + 'T00:00:00');
+      return createLocalDate(value);
     }
     if (minDate) {
-      return new Date(minDate);
+      return typeof minDate === 'string' ? createLocalDate(minDate) : new Date(minDate);
     }
     return new Date();
   });
@@ -34,47 +43,13 @@ const CustomDatePicker = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const formatDate = (date) => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const formatDisplayDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const isDateDisabled = (date) => {
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    
-    if (minDate) {
-      const minDateTime = new Date(minDate);
-      minDateTime.setHours(0, 0, 0, 0);
-      if (checkDate < minDateTime) return true;
-    }
-    
-    if (maxDate) {
-      const maxDateTime = new Date(maxDate);
-      maxDateTime.setHours(0, 0, 0, 0);
-      if (checkDate > maxDateTime) return true;
-    }
-    
-    return false;
-  };
-
   const handleDateClick = (date) => {
-    if (isDateDisabled(date)) return;
+    const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
+    const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
     
-    const formattedDate = formatDate(date);
+    if (isDateDisabled(date, minDateTime, maxDateTime)) return;
+    
+    const formattedDate = formatDateString(date);
     onChange(formattedDate);
     setIsOpen(false);
   };
@@ -87,10 +62,12 @@ const CustomDatePicker = ({
     
     const days = [];
     
+    // Add empty cells for days before the first day of the month
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
     
+    // Add all days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
@@ -115,17 +92,18 @@ const CustomDatePicker = ({
 
   useEffect(() => {
     if (value) {
-      setDisplayDate(new Date(value + 'T00:00:00'));
+      setDisplayDate(createLocalDate(value));
     }
   }, [value]);
 
-  // Period selection functionality
+  // Period selection functionality with timezone awareness
   const handlePeriodSelect = (period) => {
     if (!onPeriodSelect) return;
     
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() + 3); // Minimum 3 days from today
+    startDate.setDate(startDate.getDate() + 4); // Minimum 3 days from today
     
     const endDate = new Date(startDate);
     
@@ -150,15 +128,10 @@ const CustomDatePicker = ({
     }
     
     onPeriodSelect({
-      startDate: formatDate(startDate),
-      endDate: formatDate(endDate)
+      startDate: formatDateString(startDate),
+      endDate: formatDateString(endDate)
     });
     setIsOpen(false);
-  };
-
-  const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
   };
 
   return (
@@ -185,7 +158,7 @@ const CustomDatePicker = ({
       )}
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-scale-500 rounded-lg shadow-xs z-50 max-w-[300px]">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-scale-500 rounded-lg shadow-lg z-50 max-w-[300px]">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
               <button
@@ -221,8 +194,10 @@ const CustomDatePicker = ({
                   return <div key={index} className="p-2"></div>;
                 }
 
-                const isSelected = value && formatDate(date) === value;
-                const isDisabled = isDateDisabled(date);
+                const isSelected = value && formatDateString(date) === value;
+                const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
+                const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
+                const isDisabled = isDateDisabled(date, minDateTime, maxDateTime);
                 const isTodayDate = isToday(date);
 
                 return (
@@ -250,7 +225,7 @@ const CustomDatePicker = ({
 
             {/* Period Selection */}
             {onPeriodSelect && (
-              <div className="mt-4 border-b pb-4">
+              <div className="mt-4 border-t pt-4">
                 <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <button

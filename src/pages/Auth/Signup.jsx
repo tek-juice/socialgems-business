@@ -21,6 +21,7 @@ import {
   Search,
   X,
   ExternalLink,
+  Gift,
 } from "lucide-react";
 import {
   InputOTP,
@@ -149,192 +150,6 @@ const TermsPrivacyModal = ({ isOpen, onClose }) => {
               className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition text-sm"
             >
               Close
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Industries Selection Modal Component
-const IndustriesModal = ({ isOpen, onClose, onSkip, onContinue, industries, selectedIndustries, onToggleIndustry, loading }) => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [selectionCount, setSelectionCount] = useState(0);
-
-  // Group industries by category
-  const groupedIndustries = industries.reduce((acc, industry) => {
-    if (!acc[industry.category]) {
-      acc[industry.category] = [];
-    }
-    acc[industry.category].push(industry);
-    return acc;
-  }, {});
-
-  // Update selection count when selectedIndustries changes
-  useEffect(() => {
-    setSelectionCount(selectedIndustries.length);
-  }, [selectedIndustries]);
-
-  const handleIndustryToggle = (industryId) => {
-    if (selectedIndustries.includes(industryId) || selectionCount < 5) {
-      onToggleIndustry(industryId);
-    } else {
-      toast.error("You can select a maximum of 5 industries");
-    }
-  };
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Skeleton loader for categories that matches the final design
-  const renderSkeletonLoader = () => {
-    return (
-      <div className="animate-pulse space-y-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="mb-6">
-            <div className="h-4 w-1/3 bg-gray-200 rounded mb-3"></div>
-            <div className="flex flex-wrap gap-2">
-              {[...Array(6)].map((_, j) => (
-                <div key={j} className="px-3 py-1 h-7 w-20 bg-gray-200 rounded-md"></div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  // Mobile Drawer
-  if (isMobile) {
-    return isOpen ? (
-      <div className="fixed inset-0 z-50 flex items-end">
-        <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-        <div className="relative z-50 w-full bg-white/95 backdrop-blur-lg rounded-t-lg max-h-[80vh] flex flex-col border border-white/20">
-          <div className="flex-shrink-0 p-4 border-b border-white/20">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Choose Your Industries</h2>
-              <button
-                onClick={onClose}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 scrollbar-none">
-            {loading ? (
-              renderSkeletonLoader()
-            ) : (
-              Object.entries(groupedIndustries).map(([category, subcategories]) => (
-                <div key={category} className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3">{category}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {subcategories.map((industry) => (
-                      <button
-                        key={industry.id}
-                        type="button"
-                        onClick={() => handleIndustryToggle(industry.id)}
-                        className={`px-3 py-1 rounded-md border transition-all text-xs ${
-                          selectedIndustries.includes(industry.id)
-                            ? "border-primary bg-primary/70 text-black"
-                            : "border-gray-200 hover:border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {industry.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex-shrink-0 p-4 border-t border-white/20">
-            <div className="flex gap-3">
-              <button
-                onClick={onSkip}
-                className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
-                disabled={loading}
-              >
-                {loading ? 'Loading...' : 'Skip for now'}
-              </button>
-              <button
-                onClick={onContinue}
-                disabled={loading}
-                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
-              >
-                {loading ? 'Loading...' : 'Continue'}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    ) : null;
-  }
-
-  // Desktop Modal
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-labelledby="industries-title">
-      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-lg rounded-lg shadow-lg border border-white/20 scrollbar-none">
-        <div className="flex items-center justify-between px-6 pt-6 border-b border-white/20">
-          <h2 id="industries-title" className="text-xl font-semibold">Choose Your Industries</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="p-6">
-          <div className="max-h-64 overflow-y-auto mb-6 scrollbar-none">
-            {loading ? (
-              renderSkeletonLoader()
-            ) : (
-              Object.entries(groupedIndustries).map(([category, subcategories]) => (
-                <div key={category} className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-3">{category}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {subcategories.map((industry) => (
-                      <button
-                        key={industry.id}
-                        type="button"
-                        onClick={() => handleIndustryToggle(industry.id)}
-                        className={`px-3 py-1 rounded-md border transition-all text-xs ${
-                          selectedIndustries.includes(industry.id)
-                            ? "border-primary bg-primary/70 text-black"
-                            : "border-gray-200 hover:border-gray-300 text-gray-700"
-                        }`}
-                      >
-                        {industry.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onSkip}
-              className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-sm"
-              disabled={loading}
-            >
-              {loading ? 'Loading...' : 'Skip for now'}
-            </button>
-            <button
-              onClick={onContinue}
-              disabled={loading}
-              className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-sm"
-            >
-              {loading ? 'Loading...' : 'Continue'}
             </button>
           </div>
         </div>
@@ -508,16 +323,19 @@ const Signup = () => {
   const [industries, setIndustries] = useState([]);
   const [countries, setCountries] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedBusinessCountry, setSelectedBusinessCountry] = useState(null);
   const [selectedIndustries, setSelectedIndustries] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [localPhoneNumber, setLocalPhoneNumber] = useState("");
-  const [isIndustriesModalOpen, setIsIndustriesModalOpen] = useState(false);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [isBusinessCountryDropdownOpen, setIsBusinessCountryDropdownOpen] = useState(false);
   const [countrySearchTerm, setCountrySearchTerm] = useState("");
+  const [businessCountrySearchTerm, setBusinessCountrySearchTerm] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [username, setUsername] = useState("");
+  const [referralCode, setReferralCode] = useState("");
 
   const [signupData, setSignupData] = useState({
     email: "",
@@ -538,12 +356,26 @@ const Signup = () => {
     confirm_password: "",
   });
 
+  // Password validation
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    return {
+      isValid: password.length >= minLength && hasNumber && hasSpecialChar,
+      errors: {
+        minLength: password.length < minLength,
+        hasNumber: !hasNumber,
+        hasSpecialChar: !hasSpecialChar,
+      }
+    };
+  };
+
   // Fetch industries and countries on component mount
   useEffect(() => {
     fetchIndustries();
     fetchCountries();
-    // Show industries modal when component mounts
-    setIsIndustriesModalOpen(true);
   }, []);
 
   // Set default country when countries are loaded
@@ -552,6 +384,7 @@ const Signup = () => {
       const defaultCountry =
         countries.find((country) => country.iso2 === "UG") || countries[0];
       setSelectedCountry(defaultCountry);
+      setSelectedBusinessCountry(defaultCountry);
       setSignupData((prev) => ({
         ...prev,
         country_id: defaultCountry.iso2 === "UG" ? "256" : defaultCountry.id.toString(),
@@ -569,15 +402,15 @@ const Signup = () => {
       console.error("Error fetching industries:", error);
       toast.error("Failed to load industries");
       setIndustries([
-        { id: 1, name: "Technology" },
-        { id: 2, name: "Fashion" },
-        { id: 3, name: "Food & Beverage" },
-        { id: 4, name: "Travel" },
-        { id: 5, name: "Health & Fitness" },
-        { id: 6, name: "Beauty" },
-        { id: 7, name: "Automotive" },
-        { id: 8, name: "Education" },
-        { id: 9, name: "Entertainment" },
+        { id: 1, name: "Technology", category: "Tech" },
+        { id: 2, name: "Fashion", category: "Retail" },
+        { id: 3, name: "Food & Beverage", category: "Food" },
+        { id: 4, name: "Travel", category: "Travel" },
+        { id: 5, name: "Health & Fitness", category: "Health" },
+        { id: 6, name: "Beauty", category: "Beauty" },
+        { id: 7, name: "Automotive", category: "Automotive" },
+        { id: 8, name: "Education", category: "Education" },
+        { id: 9, name: "Entertainment", category: "Entertainment" },
       ]);
     }
   };
@@ -666,8 +499,11 @@ const Signup = () => {
     setSelectedIndustries((prev) => {
       if (prev.includes(industryId)) {
         return prev.filter((id) => id !== industryId);
-      } else {
+      } else if (prev.length < 200) {
         return [...prev, industryId];
+      } else {
+        toast.error("You can select a maximum of 200 industries");
+        return prev;
       }
     });
   };
@@ -684,6 +520,12 @@ const Signup = () => {
     // Clear the phone number when country changes
     setLocalPhoneNumber("");
     setSignupData((prev) => ({ ...prev, phone_number: "" }));
+  };
+
+  const handleBusinessCountryChange = (country) => {
+    setSelectedBusinessCountry(country);
+    setIsBusinessCountryDropdownOpen(false);
+    setBusinessCountrySearchTerm("");
   };
 
   const handlePhoneChange = (value) => {
@@ -710,15 +552,9 @@ const Signup = () => {
     country.name.toLowerCase().includes(countrySearchTerm.toLowerCase())
   );
 
-  const handleIndustriesSkip = () => {
-    setIsIndustriesModalOpen(false);
-    setCurrentStep(1);
-  };
-
-  const handleIndustriesContinue = () => {
-    setIsIndustriesModalOpen(false);
-    setCurrentStep(1);
-  };
+  const filteredBusinessCountries = countries.filter((country) =>
+    country.name.toLowerCase().includes(businessCountrySearchTerm.toLowerCase())
+  );
 
   const handleStepTwo = async () => {
     const {
@@ -732,7 +568,7 @@ const Signup = () => {
       !phone_number.trim() ||
       !business_name.trim()
     ) {
-      toast.error("Please fill in all fields");
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -758,6 +594,7 @@ const Signup = () => {
       const signupPayload = {
         ...signupData,
         first_name: signupData.business_name,
+        referral_code: referralCode || undefined,
       };
 
       const response = await post("users/signup", signupPayload);
@@ -848,8 +685,9 @@ const Signup = () => {
       return;
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      toast.error("Password must be at least 8 characters long and contain at least 1 number and 1 special character");
       return;
     }
 
@@ -878,79 +716,8 @@ const Signup = () => {
       const response = await post("users/secureAccount", secureAccountData, headers);
 
       if (response.status === 200) {
-        const loginResponse = await post("users/login", {
-          email: signupData.email,
-          password: passwordData.password,
-        });
-
-        if (loginResponse.status === 200) {
-          const {
-            username: loginUsername,
-            user_type: role,
-            email: userEmail,
-            jwt,
-          } = loginResponse.data;
-
-          localStorage.setItem("name", loginUsername);
-          localStorage.setItem("email", userEmail);
-          localStorage.setItem("role", role);
-          localStorage.setItem("jwt", jwt);
-          localStorage.setItem("isLoggedIn", "true");
-
-          // Update industries if selected
-          if (selectedIndustries.length > 0) {
-            try {
-              await patch(
-                "users/updateProfile",
-                {
-                  industry_ids: selectedIndustries,
-                  username: username || loginUsername,
-                  first_name: signupData.business_name,
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${jwt}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-              toast.success("Account setup completed successfully!");
-            } catch (industryError) {
-              console.warn("Failed to update industries:", industryError);
-              toast.success(
-                "Account setup completed! You can update industries later in your profile."
-              );
-            }
-          } else {
-            // Even if no industries selected, still update with business name as last name
-            try {
-              await patch(
-                "users/updateProfile",
-                {
-                  username: username || loginUsername,
-                  first_name: signupData.business_name,
-                },
-                {
-                  headers: {
-                    Authorization: `Bearer ${jwt}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-              toast.success("Account setup completed successfully!");
-            } catch (profileError) {
-              console.warn("Failed to update profile:", profileError);
-              toast.success("Account setup completed successfully!");
-            }
-          }
-
-          navigate("/dashboard");
-        } else {
-          toast.error(
-            "Account created but login failed. Please login manually."
-          );
-          navigate("/login");
-        }
+        toast.success("Password set successfully!");
+        setCurrentStep(4);
       } else {
         toast.error(response.message || "Failed to secure account");
       }
@@ -963,6 +730,98 @@ const Signup = () => {
       } else {
         toast.error("An error occurred while securing your account");
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStepFive = async () => {
+    setLoading(true);
+
+    try {
+      // Login the user
+      const loginResponse = await post("users/login", {
+        email: signupData.email,
+        password: passwordData.password,
+      });
+
+      if (loginResponse.status === 200) {
+        const {
+          username: loginUsername,
+          user_type: role,
+          email: userEmail,
+          jwt,
+        } = loginResponse.data;
+
+        localStorage.setItem("name", loginUsername);
+        localStorage.setItem("email", userEmail);
+        localStorage.setItem("role", role);
+        localStorage.setItem("jwt", jwt);
+        localStorage.setItem("isLoggedIn", "true");
+
+        // Update industries if selected
+        if (selectedIndustries.length > 0) {
+          try {
+            await patch(
+              "users/updateProfile",
+              {
+                industry_ids: selectedIndustries,
+                username: username || loginUsername,
+                first_name: signupData.business_name,
+                country_id: selectedBusinessCountry?.id || selectedCountry?.id,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${jwt}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            toast.success("Account setup completed successfully!");
+          } catch (industryError) {
+            console.warn("Failed to update industries:", industryError);
+            toast.success(
+              "Account setup completed! You can update industries later in your profile."
+            );
+          }
+        } else {
+          // Even if no industries selected, still update with business name
+          try {
+            await patch(
+              "users/updateProfile",
+              {
+                username: username || loginUsername,
+                first_name: signupData.business_name,
+                country_id: selectedBusinessCountry?.id || selectedCountry?.id,
+              },
+              {
+                headers: {
+                  Authorization: `Bearer ${jwt}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+            toast.success("Account setup completed successfully!");
+          } catch (profileError) {
+            console.warn("Failed to update profile:", profileError);
+            toast.success("Account setup completed successfully!");
+          }
+        }
+
+        navigate("/dashboard");
+      } else {
+        toast.error("Login failed. Please login manually.");
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error.response) {
+        const errorMessage = error.response.data?.message || "Login failed";
+        toast.error(errorMessage);
+      } else {
+        toast.error("An error occurred during login");
+      }
+      navigate("/login");
     } finally {
       setLoading(false);
     }
@@ -993,6 +852,9 @@ const Signup = () => {
         break;
       case 3:
         handleStepFour();
+        break;
+      case 4:
+        handleStepFive();
         break;
       default:
         break;
@@ -1025,8 +887,21 @@ const Signup = () => {
     3: {
       title: "Secure Account",
       description: "Create a unique username and password for your account."
+    },
+    4: {
+      title: "Choose Industries",
+      description: "Select the industries that best describe your business (optional)."
     }
   };
+
+  // Group industries by category
+  const groupedIndustries = industries.reduce((acc, industry) => {
+    if (!acc[industry.category]) {
+      acc[industry.category] = [];
+    }
+    acc[industry.category].push(industry);
+    return acc;
+  }, {});
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -1034,7 +909,7 @@ const Signup = () => {
         return (
           <div className="space-y-6 mt-2">
             <div className="space-y-4">
-              {/* BUSINESS NAME ONLY */}
+              {/* BUSINESS NAME */}
               <div className="relative">
                 <TiBusinessCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -1052,6 +927,7 @@ const Signup = () => {
                 />
               </div>
 
+              {/* EMAIL */}
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
@@ -1141,16 +1017,82 @@ const Signup = () => {
                 </div>
               </div>
 
+              {/* BUSINESS COUNTRY FIELD */}
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <button
+                  type="button"
+                  onClick={() => setIsBusinessCountryDropdownOpen(!isBusinessCountryDropdownOpen)}
+                  disabled={loading}
+                  className="w-full pl-10 pr-8 py-3 text-xs text-black bg-gray-50 focus:bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-left"
+                >
+                  {selectedBusinessCountry ? selectedBusinessCountry.name : "Select Business Country"}
+                </button>
+                <ChevronDown
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 transition-transform ${
+                    isBusinessCountryDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+
+                {isBusinessCountryDropdownOpen && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="p-2 border-b border-gray-100">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Search countries..."
+                          value={businessCountrySearchTerm}
+                          onChange={(e) => setBusinessCountrySearchTerm(e.target.value)}
+                          className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto scrollbar-none">
+                      {filteredBusinessCountries.length > 0 ? (
+                        filteredBusinessCountries.map((country) => (
+                          <button
+                            key={country.id}
+                            type="button"
+                            className="w-full px-3 py-2 text-xs hover:bg-gray-50 text-left border-b border-gray-50 last:border-b-0"
+                            onClick={() => handleBusinessCountryChange(country)}
+                          >
+                            {country.name}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-gray-500">
+                          No countries found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* REFERRAL CODE (OPTIONAL) */}
+              <div className="relative">
+                <Gift className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  placeholder="Referral Code (Optional)"
+                  type="text"
+                  value={referralCode}
+                  className="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+
               {/* Terms and Privacy Agreement */}
               <div className="flex items-center gap-1.5">
-              <input
-                type="checkbox"
-                id="terms-agreement"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-4 h-4 rounded border-secondary text-secondary focus:ring-primary focus:ring-2 checked:bg-secondary checked:border-secondary checked:text-white hover:none"
-                disabled={loading}
-              />
+                <input
+                  type="checkbox"
+                  id="terms-agreement"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="w-4 h-4 rounded border-secondary text-secondary focus:ring-primary focus:ring-2 checked:bg-secondary checked:border-secondary checked:text-white hover:none"
+                  disabled={loading}
+                />
                 <label htmlFor="terms-agreement" className="text-xs text-gray-700 cursor-pointer">
                   I agree to Social Gems'{" "}
                   <button
@@ -1262,9 +1204,10 @@ const Signup = () => {
         );
 
       case 3:
+        const passwordValidation = validatePassword(passwordData.password);
+        
         return (
           <div className="space-y-6 mt-2">
-
             <div className="space-y-4">
               <div className="relative">
                 <CiAt className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
@@ -1276,32 +1219,52 @@ const Signup = () => {
                 />
               </div>
 
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  placeholder="Password"
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.password}
-                  className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
-                  onChange={(e) =>
-                    setPasswordData((prev) => ({
-                      ...prev,
-                      password: e.target.value,
-                    }))
-                  }
-                  disabled={loading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
+              <div className="space-y-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    placeholder="Password"
+                    type={showPassword ? "text" : "password"}
+                    value={passwordData.password}
+                    className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary bg-gray-50 focus:bg-white text-black text-xs"
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                
+                {/* Password requirements */}
+                {passwordData.password && (
+                  <div className="text-xs space-y-1">
+                    <div className={`flex items-center gap-1 ${passwordData.password.length >= 8 ? 'text-green-600' : 'text-red-500'}`}>
+                      <div className={`w-1 h-1 rounded-full ${passwordData.password.length >= 8 ? 'bg-green-600' : 'bg-red-500'}`}></div>
+                      At least 8 characters
+                    </div>
+                    <div className={`flex items-center gap-1 ${/\d/.test(passwordData.password) ? 'text-green-600' : 'text-red-500'}`}>
+                      <div className={`w-1 h-1 rounded-full ${/\d/.test(passwordData.password) ? 'bg-green-600' : 'bg-red-500'}`}></div>
+                      At least 1 number
+                    </div>
+                    <div className={`flex items-center gap-1 ${/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.password) ? 'text-green-600' : 'text-red-500'}`}>
+                      <div className={`w-1 h-1 rounded-full ${/[!@#$%^&*(),.?":{}|<>]/.test(passwordData.password) ? 'bg-green-600' : 'bg-red-500'}`}></div>
+                      At least 1 special character
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="relative">
@@ -1339,12 +1302,73 @@ const Signup = () => {
                 loading ||
                 !username.trim() ||
                 !passwordData.password ||
-                !passwordData.confirm_password
+                !passwordData.confirm_password ||
+                !passwordValidation.isValid ||
+                passwordData.password !== passwordData.confirm_password
               }
               className="w-full bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
             >
-              {loading ? "Completing Setup..." : "Complete Setup"}
+              {loading ? "Setting Password..." : "Set Password"}
             </button>
+
+            {/* Already have account section moved inside */}
+            <div className="text-center pt-4 border-t border-gray-200">
+              <span className="text-xs text-black/80">
+                Already have an account?{" "}
+              </span>
+              <button
+                onClick={() => navigate("/login")}
+                className="text-xs text-primary hover:text-primary-scale-600 font-medium hover:underline transition-colors"
+              >
+                Sign in
+              </button>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6 mt-2">
+            <div className="max-h-64 overflow-y-auto scrollbar-none">
+              {Object.entries(groupedIndustries).map(([category, subcategories]) => (
+                <div key={category} className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3">{category}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((industry) => (
+                      <button
+                        key={industry.id}
+                        type="button"
+                        onClick={() => handleIndustryToggle(industry.id)}
+                        className={`px-3 py-1 rounded-md border transition-all text-xs ${
+                          selectedIndustries.includes(industry.id)
+                            ? "border-primary bg-primary/70 text-black"
+                            : "border-gray-200 hover:border-gray-300 text-gray-700"
+                        }`}
+                      >
+                        {industry.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={nextStep}
+                className="flex-1 bg-gray-200 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-300 transition text-xs"
+                disabled={loading}
+              >
+                {loading ? 'Completing...' : 'Skip for now'}
+              </button>
+              <button
+                onClick={nextStep}
+                disabled={loading}
+                className="flex-1 bg-primary text-secondary font-medium py-3 rounded-lg shadow hover:shadow-md transition disabled:opacity-50 text-xs"
+              >
+                {loading ? 'Completing...' : 'Complete Setup'}
+              </button>
+            </div>
 
             {/* Already have account section moved inside */}
             <div className="text-center pt-4 border-t border-gray-200">
@@ -1473,7 +1497,6 @@ const Signup = () => {
           {/* RIGHT CARD - FIXED HEIGHT WITH SCROLLABLE CONTENT */}
           <div className="md:w-1/2 flex flex-col bg-white z-20 text-black relative h-full">
             {/* HEADER - FIXED */}
-            {/* HEADER - FIXED */}
             <div className="flex-shrink-0 p-8 md:p-8 mb-2 pb-4">
               <div className="flex flex-col items-left">
                 <div className="text-primary mb-4">
@@ -1565,18 +1588,6 @@ const Signup = () => {
           </div>
         </div>
       </div>
-
-      {/* Industries Selection Modal */}
-      <IndustriesModal
-        isOpen={isIndustriesModalOpen}
-        onClose={() => setIsIndustriesModalOpen(false)}
-        onSkip={handleIndustriesSkip}
-        onContinue={handleIndustriesContinue}
-        industries={industries}
-        selectedIndustries={selectedIndustries}
-        onToggleIndustry={handleIndustryToggle}
-        loading={loading}
-      />
 
       {/* Terms and Privacy Modal */}
       <TermsPrivacyModal

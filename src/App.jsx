@@ -37,6 +37,16 @@ const queryClient = new QueryClient({
   },
 });
 
+// Payment Route Component - redirects to wallet with same query params
+function PaymentRoute() {
+  const [searchParams] = new URLSearchParams(window.location.search);
+  
+  // Construct the wallet URL with all query parameters
+  const walletUrl = `/wallet${window.location.search}`;
+  
+  return <Navigate to={walletUrl} replace />;
+}
+
 function ProtectedRoute({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -116,6 +126,16 @@ function App() {
                 <AuthRoute>
                   <Signup />
                 </AuthRoute>
+              } 
+            />
+
+            {/* Payment redirect route - redirects to wallet with same params */}
+            <Route 
+              path="/payment" 
+              element={
+                <ProtectedRoute>
+                  <PaymentRoute />
+                </ProtectedRoute>
               } 
             />
             

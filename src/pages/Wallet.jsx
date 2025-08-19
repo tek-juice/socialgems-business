@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { get, post } from "../utils/service";
@@ -47,6 +47,110 @@ import { MdAccessTimeFilled, MdError } from "react-icons/md";
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
+
+// Payment Status Banner Component
+const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => {
+  const getStatusConfig = () => {
+    switch (status?.toLowerCase()) {
+      case 'success':
+        return {
+          icon: FiCheckCircle,
+          iconColor: 'text-green-600',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          title: 'Payment Successful!',
+          description: 'Your wallet has been funded successfully.',
+          showRetry: false
+        };
+      case 'failed':
+      case 'error':
+      case 'cancelled':
+        return {
+          icon: FiX,
+          iconColor: 'text-red-600',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-200',
+          title: 'Payment Failed',
+          description: 'Your payment could not be processed. Please try again.',
+          showRetry: true
+        };
+      case 'pending':
+        return {
+          icon: FiClock,
+          iconColor: 'text-yellow-600',
+          bgColor: 'bg-yellow-50',
+          borderColor: 'border-yellow-200',
+          title: 'Payment Pending',
+          description: 'Your payment is being processed. This may take a few minutes.',
+          showRetry: false
+        };
+      default:
+        return {
+          icon: FiInfo,
+          iconColor: 'text-green-500',
+          bgColor: 'bg-green-100/20',
+          borderColor: 'border-green-200',
+          title: 'Payment Status: Success',
+          description: 'We are verifying your payment status.',
+          showRetry: false
+        };
+    }
+  };
+
+  const config = getStatusConfig();
+  const StatusIcon = config.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`w-full ${config.bgColor} ${config.borderColor} border rounded-xl p-4 mb-6`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 ${config.bgColor} rounded-full flex items-center justify-center border ${config.borderColor}`}>
+            <StatusIcon className={`w-5 h-5 ${config.iconColor}`} />
+          </div>
+          <div className="flex-1">
+            <h3 className={`font-semibold text-sm ${config.iconColor} mb-1`}>
+              {config.title}
+            </h3>
+            <p className="text-xs text-gray-600 mb-2">
+              {config.description}
+            </p>
+            {refId && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">Reference ID:</span> {refId}
+              </div>
+            )}
+            {sessionId && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">Session ID:</span> {sessionId.substring(0, 20)}...
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {config.showRetry && (
+            <button
+              onClick={onRetry}
+              className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 // Skeleton Components
 const SkeletonCard = ({ className, children }) => (
@@ -1258,6 +1362,7 @@ const formatBalance = (balance) => {
 
 export default function WalletPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [walletData, setWalletData] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1267,6 +1372,14 @@ export default function WalletPage() {
   const [userData, setUserData] = useState(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
+
+  // Payment status state
+  const [paymentStatus, setPaymentStatus] = useState({
+    show: false,
+    status: null,
+    refId: null,
+    sessionId: null
+  });
 
   // Transaction detail modal state
   const [transactionDetailModal, setTransactionDetailModal] = useState({
@@ -1288,6 +1401,47 @@ export default function WalletPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  // Handle payment redirect parameters
+  useEffect(() => {
+    const refId = searchParams.get('refId');
+    const status = searchParams.get('status');
+    const sessionId = searchParams.get('session_id');
+
+    if (refId || status || sessionId) {
+      // Clean up status value (remove quotes if present)
+      const cleanStatus = status?.replace(/['"]/g, '');
+      
+      setPaymentStatus({
+        show: true,
+        status: cleanStatus,
+        refId: refId,
+        sessionId: sessionId
+      });
+
+      // Show appropriate toast based on status
+      switch (cleanStatus?.toLowerCase()) {
+        case 'success':
+          toast.success('Payment completed successfully!');
+          break;
+        case 'failed':
+        case 'error':
+        case 'cancelled':
+          toast.error('Payment failed or was cancelled.');
+          break;
+        case 'pending':
+          toast.info('Payment is being processed.');
+          break;
+        default:
+          toast.info('Payment status received.');
+      }
+
+      // Clear URL parameters after 100ms to avoid repeated triggers
+      setTimeout(() => {
+        setSearchParams({});
+      }, 100);
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     document.title = "Your Wallet | Social Gems";
@@ -1317,7 +1471,10 @@ export default function WalletPage() {
           setTransactions(transactionsResponse.data);
         }
 
-        toast.success("Wallet data loaded successfully");
+        // Only show success toast if not coming from payment redirect
+        if (!searchParams.get('refId') && !searchParams.get('status')) {
+          toast.success("Wallet data loaded successfully");
+        }
       } catch (error) {
         toast.error("Failed to load wallet data");
         console.error("Error fetching wallet data:", error);
@@ -1327,7 +1484,18 @@ export default function WalletPage() {
     };
 
     fetchWalletData();
-  }, []);
+  }, [searchParams]);
+
+  // Auto-refresh wallet data after successful payment
+  useEffect(() => {
+    if (paymentStatus.show && paymentStatus.status?.toLowerCase() === 'success') {
+      const timer = setTimeout(() => {
+        handleRefresh();
+      }, 2000); // Refresh after 2 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [paymentStatus]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -1437,6 +1605,19 @@ export default function WalletPage() {
   const handlePinVerificationSuccess = () => {
     setShowPinVerification(false);
     setShowAddFunds(true);
+  };
+
+  const handleClosePaymentStatus = () => {
+    setPaymentStatus(prev => ({ ...prev, show: false }));
+  };
+
+  const handleRetryPayment = () => {
+    setPaymentStatus(prev => ({ ...prev, show: false }));
+    if (hasPinSet) {
+      setShowPinVerification(true);
+    } else {
+      setShowPinModal(true);
+    }
   };
 
   // Check if user has set a PIN by looking at wallet_pin data
@@ -1637,6 +1818,19 @@ export default function WalletPage() {
     <div className="w-full min-h-screen">
       <div className="container mx-auto">
         <div className="flex flex-col gap-8">
+          {/* Payment Status Banner */}
+          <AnimatePresence>
+            {paymentStatus.show && (
+              <PaymentStatusBanner
+                status={paymentStatus.status}
+                refId={paymentStatus.refId}
+                sessionId={paymentStatus.sessionId}
+                onClose={handleClosePaymentStatus}
+                onRetry={handleRetryPayment}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Header Section */}
           <div className="flex gap-4 flex-col items-start">
             <div>
@@ -1668,6 +1862,20 @@ export default function WalletPage() {
                       <p className="text-sm text-gray-600">Digital wallet card</p>
                     </div>
                   </div>
+                  <Button
+                    onClick={handleRefresh}
+                    variant="ghost"
+                    size="sm"
+                    disabled={refreshing}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    <motion.div
+                      animate={refreshing ? { rotate: 360 } : {}}
+                      transition={refreshing ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+                    >
+                      <FiRefreshCw className="w-4 h-4" />
+                    </motion.div>
+                  </Button>
                 </div>
 
                 <CreditCard

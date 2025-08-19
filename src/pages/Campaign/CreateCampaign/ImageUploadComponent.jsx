@@ -542,7 +542,7 @@ const ImageUploadComponent = ({ onFileChange, currentFile, existingImageUrl }) =
               PNG, JPG, WebP up to 5MB
             </p>
             <p className="text-xs text-primary-scale-600 mt-1 font-medium">
-              Will be cropped to 1080×720 format
+              Please Upload: 1080×720 format
             </p>
           </div>
         </div>

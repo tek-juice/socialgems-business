@@ -174,7 +174,6 @@ const MainLayout = ({ userType = "client" }) => {
   const [manuallyToggled, setManuallyToggled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [showVerificationCard, setShowVerificationCard] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -407,27 +406,6 @@ const MainLayout = ({ userType = "client" }) => {
     }
   }, [location, isMobile, isGroupsPage]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formattedDate = currentTime.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  const formattedTime = currentTime.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
   // Content class based on groups page or sidebar state
   const contentClass = isGroupsPage
     ? ""
@@ -534,40 +512,6 @@ const MainLayout = ({ userType = "client" }) => {
               />
             </motion.div>
           )}
-
-          {/* Date and time display - hide on groups page for clean look */}
-          <AnimatePresence>
-            {(sidebarOpen || isMobile) && !isGroupsPage && (
-              <motion.div
-                className="hidden md:flex items-center ml-6"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center text-secondary/80">
-                  <motion.div
-                    className="flex items-center mr-6"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <FiCalendar className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm font-semibold">
-                      {formattedDate}
-                    </span>
-                  </motion.div>
-                  <motion.div
-                    className="flex items-center"
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    <FiClock className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm font-semibold">
-                      {formattedTime}
-                    </span>
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Right side controls */}

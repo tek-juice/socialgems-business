@@ -11,6 +11,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "./drawer";
+import RichTextEditor from "./RichTextEditor"; // Add this import
 
 const TaskDialog = ({
   isOpen,
@@ -65,7 +66,7 @@ const TaskDialog = ({
                     onChange={(e) =>
                       setNewTask((prev) => ({ ...prev, task: e.target.value }))
                     }
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs"
                     placeholder="e.g., Create Instagram post showcasing our product"
                   />
                 </div>
@@ -74,17 +75,17 @@ const TaskDialog = ({
                   <label className="block text-xs font-semibold text-gray-700 mb-2">
                     Task Description *
                   </label>
-                  <textarea
+                  <RichTextEditor
                     value={newTask.description}
-                    onChange={(e) =>
+                    onChange={(newValue) =>
                       setNewTask((prev) => ({
                         ...prev,
-                        description: e.target.value,
+                        description: newValue,
                       }))
                     }
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors resize-none text-xs"
-                    rows="4"
                     placeholder="Provide detailed instructions for what the creator needs to do..."
+                    minWords={0}
+                    showTemplate={false}
                   />
                 </div>
 
@@ -106,7 +107,7 @@ const TaskDialog = ({
                           site_id: e.target.value,
                         }))
                       }
-                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                       required
                     >
                       <option value="">Select Platform</option>
@@ -132,7 +133,7 @@ const TaskDialog = ({
                           repeats_after: e.target.value === "one_time" ? "" : prev.repeats_after
                         }))
                       }
-                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                       required
                     >
                       <option value="">Select Type</option>
@@ -165,7 +166,7 @@ const TaskDialog = ({
                               repeats_after: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                          className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                           required={isRepetitive}
                         >
                           <option value="">Select Frequency</option>
@@ -189,7 +190,7 @@ const TaskDialog = ({
                         requires_url: e.target.checked,
                       }))
                     }
-                    className="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
+                    className="w-4 h-4 rounded border-gray-300 text-primary-scale-400 focus:ring-primary-scale-400 accent-primary-scale-400"
                   />
                   <label htmlFor="requires_url" className="text-xs text-gray-700">
                     Requires URL submission (post link, story link, etc.)
@@ -235,7 +236,7 @@ const TaskDialog = ({
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-gray-900">
-            {editingTaskIndex !== null ? "Edit Task" : "Add New Task"}
+            {editingTaskIndex !== null ? "Edit Task" : "Add Task"}
           </h3>
           <button
             onClick={onClose}
@@ -256,7 +257,7 @@ const TaskDialog = ({
               onChange={(e) =>
                 setNewTask((prev) => ({ ...prev, task: e.target.value }))
               }
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs"
+              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs"
               placeholder="e.g., Create Instagram post showcasing our product"
             />
           </div>
@@ -265,17 +266,17 @@ const TaskDialog = ({
             <label className="block text-xs font-semibold text-gray-700 mb-2">
               Task Description *
             </label>
-            <textarea
+            <RichTextEditor
               value={newTask.description}
-              onChange={(e) =>
+              onChange={(newValue) =>
                 setNewTask((prev) => ({
                   ...prev,
-                  description: e.target.value,
+                  description: newValue,
                 }))
               }
-              className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors resize-none text-xs"
-              rows="4"
               placeholder="Provide detailed instructions for what the creator needs to do..."
+              minWords={0}
+              showTemplate={false}
             />
           </div>
 
@@ -297,7 +298,7 @@ const TaskDialog = ({
                     site_id: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                 required
               >
                 <option value="">Select Platform</option>
@@ -323,7 +324,7 @@ const TaskDialog = ({
                     repeats_after: e.target.value === "one_time" ? "" : prev.repeats_after
                   }))
                 }
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                 required
               >
                 <option value="">Select Type</option>
@@ -356,7 +357,7 @@ const TaskDialog = ({
                         repeats_after: e.target.value,
                       }))
                     }
-                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors text-xs bg-white"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs bg-white"
                     required={isRepetitive}
                   >
                     <option value="">Select Frequency</option>
@@ -380,7 +381,7 @@ const TaskDialog = ({
                   requires_url: e.target.checked,
                 }))
               }
-              className="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
+              className="w-4 h-4 rounded border-gray-300 text-primary-scale-400 focus:ring-primary-scale-400 accent-primary-scale-400"
             />
             <label htmlFor="requires_url" className="text-xs text-gray-700">
               Requires URL submission (post link, story link, etc.)

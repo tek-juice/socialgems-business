@@ -51,8 +51,9 @@ export const TaskCard = ({ task }) => {
             className="overflow-hidden"
           >
             <div className="pt-3 border-t border-gray-100">
+              {/* ENHANCED: Rich text preview with proper styling */}
               <div 
-                className="text-xs text-gray-700 mb-3"
+                className="text-xs text-gray-700 mb-3 rich-text-preview"
                 dangerouslySetInnerHTML={{
                   __html: formatHtmlContent(task.description)
                 }}
@@ -100,6 +101,57 @@ export const TaskCard = ({ task }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ADDED: Rich text preview styles */}
+      <style jsx>{`
+        .rich-text-preview h {
+          font-size: 14px;
+          font-weight: 600;
+          margin: 8px 0 4px 0;
+          color: #1F2937;
+          display: block;
+        }
+        
+        .rich-text-preview p {
+          margin: 4px 0;
+          line-height: 1.5;
+          display: block;
+        }
+        
+        .rich-text-preview li {
+          margin: 2px 0 2px 16px;
+          list-style: none;
+          position: relative;
+          display: block;
+        }
+        
+        .rich-text-preview li:before {
+          content: "•";
+          color: #374151;
+          font-weight: bold;
+          position: absolute;
+          left: -16px;
+          top: 0;
+        }
+        
+        .rich-text-preview strong {
+          font-weight: 600;
+        }
+        
+        .rich-text-preview em {
+          font-style: italic;
+        }
+        
+        .rich-text-preview br {
+          display: block;
+          margin: 2px 0;
+          content: "";
+        }
+        
+        .rich-text-preview br + br {
+          margin-top: 4px;
+        }
+      `}</style>
     </motion.div>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { FiBold, FiItalic, FiList, FiType } from "react-icons/fi";
 import { toast } from "sonner";
 
-const RichTextEditor = ({ value, onChange, placeholder, minWords = 200 }) => {
+const RichTextEditor = ({ value, onChange, placeholder, minWords = 200, showTemplate = true }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const editorRef = useRef(null);
@@ -189,14 +189,16 @@ const RichTextEditor = ({ value, onChange, placeholder, minWords = 200 }) => {
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={insertTemplate}
-          className="flex items-center gap-2 px-3 py-1.5 bg-primary-scale-400 text-black rounded text-xs font-medium hover:bg-primary-scale-500 transition-colors"
-        >
-          <FiType className="w-3 h-3" />
-          Insert Template
-        </button>
+        {showTemplate && (
+          <button
+            type="button"
+            onClick={insertTemplate}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary-scale-400 text-black rounded text-xs font-medium hover:bg-primary-scale-500 transition-colors"
+          >
+            <FiType className="w-3 h-3" />
+            Insert Template
+          </button>
+        )}
       </div>
 
       <div
@@ -237,7 +239,7 @@ const RichTextEditor = ({ value, onChange, placeholder, minWords = 200 }) => {
       </div>
 
       <div className="text-xs text-gray-500">
-        💡 Pro tip: Select text to format it, use H for headings, P for paragraphs, or insert our professional template
+        💡 Pro tip: Select text to format it, use H for headings, P for paragraphs{showTemplate && ', or insert our professional template'}
       </div>
 
       <style jsx>{`

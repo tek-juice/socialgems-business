@@ -1,30 +1,4 @@
 import { FiChevronRight, FiCheck, FiX, FiXCircle, FiCheckSquare, FiSquare, FiUserPlus, FiUser } from 'react-icons/fi';
-
-// import { 
-//   FiEye, 
-//   FiEdit, 
-//   FiTrash2, 
-//   FiCalendar,
-//   FiClock,
-//   FiTarget,
-//   FiDollarSign,
-//   FiLoader,
-//   FiGrid,
-//   FiList,
-//   FiSearch,
-//   FiFilter,
-//   FiMoreHorizontal,
-//   FiChevronDown,
-//   FiPlus,
-//   FiBriefcase,
-//   FiChevronLeft,
-//   FiChevronRight,
-//   FiMapPin,
-//   FiUsers,
-//   FiBarChart,
-//   FiCheck,
-//   FiUserPlus
-// } from 'react-icons/fi';
 import { motion } from "framer-motion";
 import { cn } from '../../../lib/utils';
 import { Badge, Button } from './UIComponents';

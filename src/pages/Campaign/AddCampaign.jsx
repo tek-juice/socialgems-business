@@ -23,6 +23,8 @@ import {
   FiCreditCard,
   FiCalendar,
   FiX,
+  FiLock,
+  FiLoader,
 } from "react-icons/fi";
 import { post, upload, get, patch } from "../../utils/service";
 import { toast } from "sonner";
@@ -41,6 +43,133 @@ import {
 } from "./CreateCampaign/Card";
 import LoadingSkeleton from "./CreateCampaign/LoadingSkeleton";
 import useLocalStorage from "../../hooks/useLocalStorage";
+
+// FIXED: Enhanced timezone-aware date utilities
+const createLocalDate = (dateString) => {
+  if (!dateString) return null;
+  return new Date(dateString + 'T00:00:00');
+};
+
+const createUTCDate = (dateString) => {
+  if (!dateString) return null;
+  return new Date(dateString + 'T00:00:00Z');
+};
+
+const formatDateString = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// FIXED: Proper timezone conversion for server communication
+const localDateToUTC = (localDateString) => {
+  if (!localDateString) return '';
+  
+  // Create date in local timezone
+  const localDate = new Date(localDateString + 'T00:00:00');
+  
+  // Simply return the same date string since we want the same calendar date
+  // The server should handle this as UTC
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}`;
+};
+
+const utcDateToLocal = (utcDateString) => {
+  if (!utcDateString) return '';
+  
+  // For display purposes, we want to show the same date
+  // regardless of timezone, so just return the date part
+  if (utcDateString.includes('T')) {
+    return utcDateString.split('T')[0];
+  }
+  
+  return utcDateString;
+};
+
+const formatDisplayDate = (dateString) => {
+  if (!dateString) return '';
+  const date = createLocalDate(dateString);
+  if (!date) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// FIXED: More robust minimum date calculation
+const getMinimumDate = (daysFromToday = 4) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const minDate = new Date(today);
+  minDate.setDate(today.getDate() + daysFromToday);
+  return minDate;
+};
+
+const isDateDisabled = (date, minDate, maxDate) => {
+  if (!date) return true;
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  
+  if (minDate) {
+    const minDateTime = typeof minDate === 'string' 
+      ? createLocalDate(minDate) 
+      : new Date(minDate);
+    minDateTime.setHours(0, 0, 0, 0);
+    if (checkDate < minDateTime) return true;
+  }
+  
+  if (maxDate) {
+    const maxDateTime = typeof maxDate === 'string' 
+      ? createLocalDate(maxDate) 
+      : new Date(maxDate);
+    maxDateTime.setHours(0, 0, 0, 0);
+    if (checkDate > maxDateTime) return true;
+  }
+  
+  return false;
+};
+
+const isToday = (date) => {
+  if (!date) return false;
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
+
+// FIXED: Enhanced date range validation
+const validateDateRange = (startDate, endDate, minDays = 4) => {
+  const errors = {};
+  
+  if (startDate) {
+    const start = createLocalDate(startDate);
+    const minStartDate = getMinimumDate(4);
+
+    if (start < minStartDate) {
+      errors.start_date = 'Campaign start date must be at least 3 days from today';
+    }
+  }
+
+  if (endDate && startDate) {
+    const start = createLocalDate(startDate);
+    const end = createLocalDate(endDate);
+
+    if (end <= start) {
+      errors.end_date = 'End date must be after start date';
+    } else {
+      const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
+      if (daysDiff < minDays) {
+        errors.end_date = `Campaign must run for at least ${minDays} days`;
+      }
+    }
+  }
+
+  return { isValid: Object.keys(errors).length === 0, errors };
+};
 
 // Generate unique request ID
 const generateRequestId = () => {
@@ -87,6 +216,251 @@ const calculateMinimumBudget = (numberOfInfluencers) => {
   return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
 };
 
+// PIN Verification Modal Component
+const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
+  const [pin, setPin] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (pin.length !== 5) {
+      toast.error('PIN must be 5 digits');
+      return;
+    }
+
+    setVerifyLoading(true);
+    try {
+      const response = await post('wallet/pinlogin', {
+        pin: pin
+      });
+      
+      if (response?.status === 200) {
+        toast.success('PIN verified successfully!');
+        onSuccess();
+        setPin('');
+      }
+    } catch (error) {
+      console.error('Error verifying PIN:', error);
+      toast.error('Invalid PIN. Please try again.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setPin('');
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-scale-400 to-primary-scale-500 rounded-lg flex items-center justify-center">
+              <FiLock className="w-5 h-5 text-black" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Verify Wallet PIN</h3>
+              <p className="text-xs text-gray-600">Enter your 5-digit PIN to launch the campaign</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="verify-pin" className="block text-xs font-semibold text-gray-700">
+                Enter PIN
+              </label>
+              <input
+                id="verify-pin"
+                type="password"
+                placeholder="12345"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+                disabled={verifyLoading}
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={verifyLoading}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={verifyLoading || pin.length !== 5}
+                className="flex-1 px-4 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs"
+              >
+                {verifyLoading ? (
+                  <>
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 mr-2 inline-block"
+                    >
+                      <FiLoader className="w-4 h-4" />
+                    </motion.div>
+                    Verifying...
+                  </>
+                ) : (
+                  'Verify PIN'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// PIN Setup Modal Component
+const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (pin !== confirmPin) {
+      toast.error('PINs do not match');
+      return;
+    }
+    
+    if (pin.length !== 5) {
+      toast.error('PIN must be 5 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await post('wallet/setTransactionPin', {
+        pin: pin,
+        confirm_pin: confirmPin
+      });
+      
+      if (response?.status === 200) {
+        toast.success('Wallet PIN set successfully!');
+        onSuccess();
+        onClose();
+        setPin('');
+        setConfirmPin('');
+      }
+    } catch (error) {
+      console.error('Error setting PIN:', error);
+      toast.error('Failed to set PIN');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-scale-400 to-primary-scale-500 rounded-lg flex items-center justify-center">
+              <FiLock className="w-5 h-5 text-black" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Set Wallet PIN</h3>
+              <p className="text-xs text-gray-600">Secure your wallet with a 5-digit PIN</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="pin" className="block text-xs font-semibold text-gray-700">
+                Enter PIN
+              </label>
+              <input
+                id="pin"
+                type="password"
+                placeholder="12345"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="confirm-pin" className="block text-xs font-semibold text-gray-700">
+                Confirm PIN
+              </label>
+              <input
+                id="confirm-pin"
+                type="password"
+                placeholder="12345"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors text-xs"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={loading}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-4 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs"
+              >
+                {loading ? (
+                  <>
+                    <motion.div 
+                      animate={{ rotate: 360 }} 
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 mr-2 inline-block"
+                    >
+                      <FiLoader className="w-4 h-4" />
+                    </motion.div>
+                    Setting PIN...
+                  </>
+                ) : (
+                  'Set PIN'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // Custom Date Picker Modal Component
 const CustomDatePickerModal = ({ 
   isOpen, 
@@ -103,10 +477,10 @@ const CustomDatePickerModal = ({
   const [isMobile, setIsMobile] = useState(false);
   const [displayDate, setDisplayDate] = useState(() => {
     if (value) {
-      return new Date(value + 'T00:00:00');
+      return createLocalDate(value);
     }
     if (minDate) {
-      return new Date(minDate);
+      return typeof minDate === 'string' ? createLocalDate(minDate) : new Date(minDate);
     }
     return new Date();
   });
@@ -122,41 +496,17 @@ const CustomDatePickerModal = ({
   useEffect(() => {
     setSelectedDate(value || "");
     if (value) {
-      setDisplayDate(new Date(value + 'T00:00:00'));
+      setDisplayDate(createLocalDate(value));
     }
   }, [value]);
 
-  const formatDate = (date) => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const isDateDisabled = (date) => {
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    
-    if (minDate) {
-      const minDateTime = new Date(minDate);
-      minDateTime.setHours(0, 0, 0, 0);
-      if (checkDate < minDateTime) return true;
-    }
-    
-    if (maxDate) {
-      const maxDateTime = new Date(maxDate);
-      maxDateTime.setHours(0, 0, 0, 0);
-      if (checkDate > maxDateTime) return true;
-    }
-    
-    return false;
-  };
-
   const handleDateClick = (date) => {
-    if (isDateDisabled(date)) return;
+    const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
+    const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
     
-    const formattedDate = formatDate(date);
+    if (isDateDisabled(date, minDateTime, maxDateTime)) return;
+    
+    const formattedDate = formatDateString(date);
     setSelectedDate(formattedDate);
   };
 
@@ -204,8 +554,9 @@ const CustomDatePickerModal = ({
     if (!onPeriodSelect) return;
     
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() + 3); // Minimum 3 days from today
+    startDate.setDate(startDate.getDate() + 4); // Minimum 3 days from today
     
     const endDate = new Date(startDate);
     
@@ -230,15 +581,10 @@ const CustomDatePickerModal = ({
     }
     
     onPeriodSelect({
-      startDate: formatDate(startDate),
-      endDate: formatDate(endDate)
+      startDate: formatDateString(startDate),
+      endDate: formatDateString(endDate)
     });
     onClose();
-  };
-
-  const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
   };
 
   if (!isOpen) return null;
@@ -305,8 +651,10 @@ const CustomDatePickerModal = ({
                     return <div key={index} className="p-2"></div>;
                   }
 
-                  const isSelected = selectedDate && formatDate(date) === selectedDate;
-                  const isDisabled = isDateDisabled(date);
+                  const isSelected = selectedDate && formatDateString(date) === selectedDate;
+                  const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
+                  const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
+                  const isDisabled = isDateDisabled(date, minDateTime, maxDateTime);
                   const isTodayDate = isToday(date);
 
                   return (
@@ -452,8 +800,10 @@ return (
                 return <div key={index} className="p-2"></div>;
               }
 
-              const isSelected = selectedDate && formatDate(date) === selectedDate;
-              const isDisabled = isDateDisabled(date);
+              const isSelected = selectedDate && formatDateString(date) === selectedDate;
+              const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
+              const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
+              const isDisabled = isDateDisabled(date, minDateTime, maxDateTime);
               const isTodayDate = isToday(date);
 
               return (
@@ -541,16 +891,6 @@ return (
 // Custom Date Picker Component
 const CustomDatePicker = (props) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const formatDisplayDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   const displayValue = props.value ? formatDisplayDate(props.value) : '';
 
@@ -993,6 +1333,11 @@ const CreateCampaign = () => {
   const [dateErrors, setDateErrors] = useState({});
   const [showInsufficientFunds, setShowInsufficientFunds] = useState(false);
 
+  // PIN verification states
+  const [userData, setUserData] = useState(null);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [showPinVerification, setShowPinVerification] = useState(false);
+
   const [newTask, setNewTask] = useState({
     task: "",
     description: "",
@@ -1252,11 +1597,18 @@ const CreateCampaign = () => {
     fetchObjectives();
   }, []);
 
-  // Fetch wallet balance FIRST
+  // Fetch wallet balance and user data FIRST
   useEffect(() => {
-    const fetchWalletBalance = async () => {
+    const fetchWalletAndUserData = async () => {
       try {
         setLoadingWallet(true);
+        
+        // Fetch user profile to check PIN status
+        const userProfileResponse = await get("users/getUserProfile");
+        if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+          setUserData(userProfileResponse.data);
+        }
+
         const walletResponse = await get("wallet/getWallets");
         if (walletResponse?.status === 200 && walletResponse?.data) {
           setWalletBalance(safeToNumber(walletResponse.data.balance));
@@ -1264,14 +1616,14 @@ const CreateCampaign = () => {
           setWalletBalance(0);
         }
       } catch (error) {
-        console.error("Error fetching wallet balance:", error);
+        console.error("Error fetching wallet balance and user data:", error);
         setWalletBalance(0);
       } finally {
         setLoadingWallet(false);
       }
     };
 
-    fetchWalletBalance();
+    fetchWalletAndUserData();
   }, []);
 
   // Handle pre-filling data when in edit mode
@@ -1297,8 +1649,8 @@ const CreateCampaign = () => {
         title: editCampaignData.title || "",
         description: editCampaignData.description || "",
         objective: editCampaignData.objective || "",
-        start_date: editCampaignData.start_date || "",
-        end_date: editCampaignData.end_date || "",
+        start_date: utcDateToLocal(editCampaignData.start_date) || "",
+        end_date: utcDateToLocal(editCampaignData.end_date) || "",
         content: null,
         contentUrl: editCampaignData.campaign_image || null,
         tasks: formatTasksForForm(editCampaignData.tasks),
@@ -1349,8 +1701,8 @@ const CreateCampaign = () => {
           title: state.existingCampaign.title,
           description: state.existingCampaign.description,
           objective: state.existingCampaign.objective,
-          start_date: state.existingCampaign.start_date,
-          end_date: state.existingCampaign.end_date,
+          start_date: utcDateToLocal(state.existingCampaign.start_date),
+          end_date: utcDateToLocal(state.existingCampaign.end_date),
           contentUrl: state.existingCampaign.image_urls,
         }));
       }
@@ -1359,53 +1711,28 @@ const CreateCampaign = () => {
     }
   }, [mode, state]);
 
-  // Date validation functions
+  // Date validation functions - UPDATED with timezone awareness
   const getMinStartDate = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    today.setDate(today.getDate() + 3);
-    return today;
+    return getMinimumDate(4);
   };
 
   const getMinEndDate = () => {
     if (!campaignData.start_date) return null;
-    const startDate = new Date(campaignData.start_date + "T00:00:00");
-    startDate.setDate(startDate.getDate() + 3);
-    return startDate;
+    const startDate = createLocalDate(campaignData.start_date);
+    if (!startDate) return null;
+    const minEndDate = new Date(startDate);
+    minEndDate.setDate(minEndDate.getDate() + 4);
+    return minEndDate;
   };
 
   const validateDates = useCallback(() => {
-    const errors = {};
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (campaignData.start_date) {
-      const startDate = new Date(campaignData.start_date + "T00:00:00");
-      const minStartDate = new Date(today);
-      minStartDate.setDate(minStartDate.getDate() + 3);
-
-      if (startDate < minStartDate) {
-        errors.start_date =
-          "Campaign start date must be at least 3 days from today";
-      }
-    }
-
-    if (campaignData.end_date && campaignData.start_date) {
-      const startDate = new Date(campaignData.start_date + "T00:00:00");
-      const endDate = new Date(campaignData.end_date + "T00:00:00");
-
-      if (endDate <= startDate) {
-        errors.end_date = "End date must be after start date";
-      } else {
-        const daysDiff = (endDate - startDate) / (1000 * 60 * 60 * 24);
-        if (daysDiff < 3) {
-          errors.end_date = "Campaign must run for at least 3 days";
-        }
-      }
-    }
-
+    const { isValid, errors } = validateDateRange(
+      campaignData.start_date, 
+      campaignData.end_date, 
+      3
+    );
     setDateErrors(errors);
-    return Object.keys(errors).length === 0;
+    return isValid;
   }, [campaignData.start_date, campaignData.end_date]);
 
   // Scroll to top when step changes
@@ -1431,7 +1758,7 @@ const CreateCampaign = () => {
     setFilterData(newFilterData);
   }, []);
 
-  // Handle period selection for date picker
+  // Handle period selection for date picker - UPDATED with timezone awareness
   const handlePeriodSelect = useCallback((period) => {
     setCampaignData((prev) => ({
       ...prev,
@@ -1464,6 +1791,29 @@ const CreateCampaign = () => {
   const handleAddFunds = () => {
     window.open("/wallet", "_blank");
     toast.info("Opening wallet to add funds");
+  };
+
+  // Check if user has set a PIN by looking at wallet_pin data
+  const hasPinSet = userData?.wallet_pin && Object.keys(userData.wallet_pin).length > 0;
+
+  // Handle PIN success
+  const handlePinSuccess = async () => {
+    // Refresh user data to update PIN status
+    try {
+      const userProfileResponse = await get("users/getUserProfile");
+      if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+        setUserData(userProfileResponse.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    }
+  };
+
+  // Handle PIN verification success
+  const handlePinVerificationSuccess = () => {
+    setShowPinVerification(false);
+    // Proceed with campaign creation
+    handleCreateCampaignAfterPinVerification();
   };
 
   const createDraftCampaignAndFilter = useCallback(async () => {
@@ -1499,8 +1849,8 @@ const CreateCampaign = () => {
         title: campaignData.title || "Draft Campaign",
         description: campaignData.description || "Campaign description",
         objective: campaignData.objective || "brand_awareness",
-        start_date: campaignData.start_date,
-        end_date: campaignData.end_date,
+        start_date: localDateToUTC(campaignData.start_date), // Convert to UTC
+        end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
         budget: brandBudget,
         number_of_influencers: numberOfInfluencers,
         ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
@@ -1556,12 +1906,12 @@ const CreateCampaign = () => {
           brandBudget: brandBudget,
           number_of_users: numberOfInfluencers,
           campaign_id: campaignId,
-          end_date: campaignData.end_date,
+          end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
           industry_ids: [1, 2, 3],
           min_level_id: 3,
           min_points: 1000,
           social_media_requirements: [{ site_id: 1, min_followers: 50 }],
-          start_date: campaignData.start_date,
+          start_date: localDateToUTC(campaignData.start_date), // Convert to UTC
           iso_codes: ["UG"],
           gender: "",
           category_type: "",
@@ -1633,7 +1983,7 @@ const CreateCampaign = () => {
     setOriginalData,
   ]);
 
-  // Update existing campaign
+  // Update existing campaign - UPDATED with timezone conversion
   const updateExistingCampaign = useCallback(async () => {
     try {
       setLoading(true);
@@ -1676,8 +2026,8 @@ const CreateCampaign = () => {
         title: campaignData.title,
         description: campaignData.description,
         objective: campaignData.objective,
-        start_date: campaignData.start_date,
-        end_date: campaignData.end_date,
+        start_date: localDateToUTC(campaignData.start_date), // Convert to UTC
+        end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
         budget: brandBudget,
         number_of_influencers: numberOfInfluencers,
         industry_ids: editCampaignData?.industry_ids || [],
@@ -1764,9 +2114,16 @@ const CreateCampaign = () => {
         requestBody.requestId = generateRequestId();
       }
 
+      // Convert dates to UTC for server
+      const serverRequestBody = {
+        ...requestBody,
+        start_date: localDateToUTC(requestBody.start_date),
+        end_date: localDateToUTC(requestBody.end_date),
+      };
+
       const eligibleResponse = await post(
         "campaigns/filterInfluencers",
-        requestBody
+        serverRequestBody
       );
 
       if (eligibleResponse?.status === 200) {
@@ -1953,6 +2310,7 @@ const CreateCampaign = () => {
     toast.success("Task removed");
   }, []);
 
+  // Updated campaign creation flow with PIN verification
   const handleCreateCampaign = useCallback(async () => {
     try {
       setLoading(true);
@@ -1977,6 +2335,36 @@ const CreateCampaign = () => {
         setShowInsufficientFunds(true);
         return;
       }
+
+      // Check if user has PIN set
+      if (!hasPinSet) {
+        setLoading(false);
+        setShowPinModal(true);
+        return;
+      }
+
+      // Show PIN verification
+      setLoading(false);
+      setShowPinVerification(true);
+    } catch (error) {
+      console.error("Error in handleCreateCampaign:", error);
+      const errorMessage = error.message || "Failed to proceed. Please try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+      setLoading(false);
+    }
+  }, [
+    draftCampaignId,
+    eligibilityData,
+    walletBalance,
+    hasPinSet,
+  ]);
+
+  // Actual campaign creation after PIN verification
+  const handleCreateCampaignAfterPinVerification = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
       toast.loading(
         mode === "addMembers" ? "Adding members..." : "Launching campaign...",
@@ -2033,7 +2421,6 @@ const CreateCampaign = () => {
     draftCampaignId,
     eligibilityData,
     mode,
-    walletBalance,
     setPersistedCampaignData,
     setPersistedBudget,
     setPersistedInfluencers,
@@ -2069,6 +2456,7 @@ const CreateCampaign = () => {
       }
       if (mode === "create" && campaignData.tasks.length === 0) {
         setError("Please add at least one task for creators");
+        toast.setError("Please add at least one task for creators");
         toast.error("Please add at least one task for creators");
         return;
       }
@@ -2207,6 +2595,22 @@ const CreateCampaign = () => {
     return <LoadingSkeleton />;
   }
 
+  // ENHANCED: Function to render task description with HTML
+  const renderTaskDescription = (htmlContent) => {
+    if (!htmlContent) return "No description provided";
+    
+    return (
+      <div 
+        className="rich-text-preview"
+        dangerouslySetInnerHTML={{ 
+          __html: htmlContent.length > 200 
+            ? htmlContent.substring(0, 200) + '...'
+            : htmlContent 
+        }} 
+      />
+    );
+  };
+
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
@@ -2215,34 +2619,6 @@ const CreateCampaign = () => {
             <Card className="shadow-lg border-0 pt-10">
               <CardContent className="p-6">
                 <div className="space-y-8">
-                  {/* Campaign Visual Section */}
-                  <div className="space-y-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <FiImage className="w-4 h-4 text-gray-600" />
-                      </div>
-                      <div>
-                        <h2 className="text-xs font-bold text-black">
-                          Campaign Visual
-                        </h2>
-                        <p className="text-xs text-gray-600">
-                          {mode === "edit"
-                            ? "Update campaign image (optional)"
-                            : "Upload an image to represent your campaign"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <ImageUploadComponent
-                      onFileChange={handleFileChange}
-                      currentFile={campaignData.content}
-                      existingImageUrl={
-                        campaignData.contentUrl ||
-                        editCampaignData?.campaign_image
-                      }
-                    />
-                  </div>
-
                   {/* Basic Information Section */}
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 mb-6">
@@ -2301,7 +2677,7 @@ const CreateCampaign = () => {
                               </option>
                             ))}
                           </select>
-                          <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+                          {/* <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" /> */}
                           {loadingObjectives && (
                             <p className="text-xs text-gray-500 mt-1">
                               Loading objectives...
@@ -2366,6 +2742,34 @@ const CreateCampaign = () => {
                     </div>
                   </div>
 
+                  {/* Campaign Visual Section */}
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <FiImage className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-xs font-bold text-black">
+                          Campaign Visual
+                        </h2>
+                        <p className="text-xs text-gray-600">
+                          {mode === "edit"
+                            ? "Update campaign image (optional)"
+                            : "Upload an image to represent your campaign"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <ImageUploadComponent
+                      onFileChange={handleFileChange}
+                      currentFile={campaignData.content}
+                      existingImageUrl={
+                        campaignData.contentUrl ||
+                        editCampaignData?.campaign_image
+                      }
+                    />
+                  </div>
+
                   {/* Campaign Description Section */}
                   <div className="space-y-6">
                     <div className="flex items-center gap-3 mb-6">
@@ -2393,10 +2797,11 @@ const CreateCampaign = () => {
                       }
                       placeholder="Describe your campaign vision, requirements, deliverables, and what you expect from creators..."
                       minWords={100}
+                      showTemplate={true}
                     />
                   </div>
 
-                  {/* Tasks Section */}
+                  {/* Tasks Section - ENHANCED with rich text preview */}
                   {mode !== "addMembers" && (
                     <div className="space-y-6">
                       <div className="flex items-center justify-between mb-6">
@@ -2449,15 +2854,18 @@ const CreateCampaign = () => {
                           campaignData.tasks.map((task, index) => (
                             <div
                               key={index}
-                              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                              className="flex items-start justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
                             >
                               <div className="flex-1">
-                                <div className="font-semibold text-gray-900 text-xs mb-1">
+                                <div className="font-semibold text-gray-900 text-xs mb-2">
                                   {task.task}
                                 </div>
-                                <div className="text-gray-600 text-xs mb-2">
-                                  {task.description.substring(0, 100)}...
+                                
+                                {/* ENHANCED: Rich text preview for task description */}
+                                <div className="text-gray-600 text-xs mb-3">
+                                  {renderTaskDescription(task.description)}
                                 </div>
+                                
                                 <div className="flex items-center gap-2">
                                   <span
                                     className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
@@ -2475,6 +2883,12 @@ const CreateCampaign = () => {
                                       ? "URL Required"
                                       : "No URL Required"}
                                   </span>
+                                  
+                                  {task.task_type === "repetitive" && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                                      Repeats {task.repeats_after}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 ml-4">
@@ -2560,7 +2974,7 @@ const CreateCampaign = () => {
                           Start Date
                         </div>
                         <div className="text-xs text-gray-800 font-medium">
-                          {campaignData.start_date}
+                          {formatDisplayDate(campaignData.start_date)}
                         </div>
                       </div>
                       <div className="bg-gray-50 rounded-lg p-3">
@@ -2568,7 +2982,7 @@ const CreateCampaign = () => {
                           End Date
                         </div>
                         <div className="text-xs text-gray-800 font-medium">
-                          {campaignData.end_date}
+                          {formatDisplayDate(campaignData.end_date)}
                         </div>
                       </div>
                     </div>
@@ -2841,6 +3255,29 @@ const CreateCampaign = () => {
         socialSites={socialSites}
       />
 
+      {/* PIN Setup Modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <PinSetupModal
+            isOpen={showPinModal}
+            onClose={() => setShowPinModal(false)}
+            onSuccess={handlePinSuccess}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* PIN Verification Modal */}
+      <AnimatePresence>
+        {showPinVerification && (
+          <PinVerificationModal
+            isOpen={showPinVerification}
+            onClose={() => setShowPinVerification(false)}
+            onSuccess={handlePinVerificationSuccess}
+            loading={loading}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Insufficient Funds Modal */}
       <AnimatePresence>
         {showInsufficientFunds && (
@@ -2857,7 +3294,7 @@ const CreateCampaign = () => {
         )}
       </AnimatePresence>
       
-      {/* Add CSS for shake animation */}
+      {/* Enhanced CSS for rich text preview */}
       <style jsx>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
@@ -2866,6 +3303,40 @@ const CreateCampaign = () => {
         }
         .animate-shake {
           animation: shake 0.5s ease-in-out;
+        }
+        
+        .rich-text-preview h {
+          font-size: 14px;
+          font-weight: 600;
+          margin: 8px 0 4px 0;
+          color: #1F2937;
+        }
+        
+        .rich-text-preview p {
+          margin: 4px 0;
+          line-height: 1.5;
+        }
+        
+        .rich-text-preview li {
+          margin: 2px 0 2px 16px;
+          list-style: none;
+          position: relative;
+        }
+        
+        .rich-text-preview li:before {
+          content: "•";
+          color: #374151;
+          font-weight: bold;
+          position: absolute;
+          left: -16px;
+        }
+        
+        .rich-text-preview strong {
+          font-weight: 600;
+        }
+        
+        .rich-text-preview em {
+          font-style: italic;
         }
       `}</style>
     </div>
