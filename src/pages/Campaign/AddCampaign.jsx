@@ -142,7 +142,7 @@ const isToday = (date) => {
 };
 
 // FIXED: Enhanced date range validation
-const validateDateRange = (startDate, endDate, minDays = 4) => {
+const validateDateRange = (startDate, endDate, minDays = 2) => {
   const errors = {};
   
   if (startDate) {
@@ -162,8 +162,8 @@ const validateDateRange = (startDate, endDate, minDays = 4) => {
       errors.end_date = 'End date must be after start date';
     } else {
       const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
-      if (daysDiff < minDays) {
-        errors.end_date = `Campaign must run for at least ${minDays} days`;
+      if (daysDiff < 2) {
+        errors.end_date = `Campaign must run for at least 1 day`;
       }
     }
   }
@@ -1721,7 +1721,7 @@ const CreateCampaign = () => {
     const startDate = createLocalDate(campaignData.start_date);
     if (!startDate) return null;
     const minEndDate = new Date(startDate);
-    minEndDate.setDate(minEndDate.getDate() + 4);
+    minEndDate.setDate(minEndDate.getDate() + 1);
     return minEndDate;
   };
 

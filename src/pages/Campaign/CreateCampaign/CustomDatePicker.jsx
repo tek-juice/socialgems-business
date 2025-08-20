@@ -18,19 +18,23 @@ const CustomDatePicker = ({
   maxDate, 
   placeholder,
   error,
-  onPeriodSelect 
+  onPeriodSelect,
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [displayDate, setDisplayDate] = useState(() => {
     if (value) {
       return createLocalDate(value);
     }
-    if (minDate) {
+    if (minDate && minDate !== 'disabled') {
       return typeof minDate === 'string' ? createLocalDate(minDate) : new Date(minDate);
     }
     return new Date();
   });
   const datePickerRef = useRef(null);
+
+  // Check if picker should be disabled
+  const isDisabled = disabled || minDate === 'disabled';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -44,6 +48,8 @@ const CustomDatePicker = ({
   }, []);
 
   const handleDateClick = (date) => {
+    if (isDisabled) return;
+    
     const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
     const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
     
@@ -96,18 +102,21 @@ const CustomDatePicker = ({
     }
   }, [value]);
 
-  // Period selection functionality with timezone awareness
+  // FIXED: Period selection functionality with 1-day option
   const handlePeriodSelect = (period) => {
     if (!onPeriodSelect) return;
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() + 4); // Minimum 3 days from today
+    startDate.setDate(startDate.getDate() + 4); // Minimum 3 days from today for start
     
     const endDate = new Date(startDate);
     
     switch (period) {
+      case '1day':
+        endDate.setDate(startDate.getDate() + 1);
+        break;
       case '2weeks':
         endDate.setDate(startDate.getDate() + 14);
         break;
@@ -143,21 +152,28 @@ const CustomDatePicker = ({
         <input
           type="text"
           value={value ? formatDisplayDate(value) : ''}
-          onClick={() => setIsOpen(true)}
-          placeholder={placeholder}
-          className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs bg-gray-50 focus:bg-white cursor-pointer ${
+          onClick={() => !isDisabled && setIsOpen(true)}
+          placeholder={isDisabled ? "Select start date first" : placeholder}
+          className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-primary-scale-100 transition-colors text-xs ${
+            isDisabled 
+              ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400" 
+              : "bg-gray-50 focus:bg-white cursor-pointer"
+          } ${
             error ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-primary-scale-400'
           }`}
           readOnly
+          disabled={isDisabled}
         />
-        <FiCalendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
+        <FiCalendar className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 pointer-events-none ${
+          isDisabled ? "text-gray-300" : "text-gray-400"
+        }`} />
       </div>
       
       {error && (
         <p className="text-xs text-red-500 mt-1">{error}</p>
       )}
 
-      {isOpen && (
+      {isOpen && !isDisabled && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-primary-scale-500 rounded-lg shadow-lg z-50 max-w-[300px]">
           <div className="p-4">
             <div className="flex items-center justify-between mb-4">
@@ -197,7 +213,7 @@ const CustomDatePicker = ({
                 const isSelected = value && formatDateString(date) === value;
                 const minDateTime = typeof minDate === 'string' ? createLocalDate(minDate) : minDate;
                 const maxDateTime = typeof maxDate === 'string' ? createLocalDate(maxDate) : maxDate;
-                const isDisabled = isDateDisabled(date, minDateTime, maxDateTime);
+                const isDateDisabledFlag = isDateDisabled(date, minDateTime, maxDateTime);
                 const isTodayDate = isToday(date);
 
                 return (
@@ -205,11 +221,11 @@ const CustomDatePicker = ({
                     key={index}
                     type="button"
                     onClick={() => handleDateClick(date)}
-                    disabled={isDisabled}
+                    disabled={isDateDisabledFlag}
                     className={`p-2 text-xs rounded-full transition-colors min-h-[32px] flex items-center justify-center relative ${
                       isSelected
                         ? 'bg-primary-scale-400 text-black font-semibold'
-                        : isDisabled
+                        : isDateDisabledFlag
                         ? 'text-gray-300 cursor-not-allowed'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
@@ -223,11 +239,18 @@ const CustomDatePicker = ({
               })}
             </div>
 
-            {/* Period Selection */}
+            {/* FIXED: Period Selection with 1-day option */}
             {onPeriodSelect && (
               <div className="mt-4 border-t pt-4">
                 <h4 className="text-xs font-semibold text-gray-700 mb-2">Quick Selection</h4>
                 <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePeriodSelect('1day')}
+                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
+                  >
+                    1 Day
+                  </button>
                   <button
                     type="button"
                     onClick={() => handlePeriodSelect('2weeks')}
@@ -248,13 +271,6 @@ const CustomDatePicker = ({
                     className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
                   >
                     2 Months
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePeriodSelect('3months')}
-                    className="p-2 text-xs bg-gray-100 hover:bg-primary-scale-400 rounded transition-colors"
-                  >
-                    3 Months
                   </button>
                 </div>
               </div>

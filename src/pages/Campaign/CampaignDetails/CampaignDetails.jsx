@@ -27,7 +27,7 @@ import CampaignObjective from './CampaignObjective';
 import CampaignOverview from './CampaignOverview';
 import CampaignActionButtons from './CampaignActionButtons';
 import CampaignModals from './CampaignModals';
-import CampaignPreviewButtons from './CampaignPreviewButtons'; // NEW IMPORT
+import CampaignPreviewButtons from './CampaignPreviewButtons';
 
 // Import utilities
 import { formatDate, formatHtmlContent, getActionStatusBadge } from './utils';
@@ -697,28 +697,28 @@ export default function CampaignDetailsPage() {
   }, []);
 
   // CORRECTED: Fetch all sent invites using your existing get() utility
-useEffect(() => {
-  const fetchSentInvites = async () => {
-    try {
-      setSentInvitesLoading(true);
-      
-      // FIXED: Use your existing get() utility function instead of fetch()
-      const response = await get('campaigns/sentInvites');
-      
-      if (response?.status === 200 && response?.data) {
-        setAllSentInvites(response.data);
-      } else {
+  useEffect(() => {
+    const fetchSentInvites = async () => {
+      try {
+        setSentInvitesLoading(true);
+        
+        // FIXED: Use your existing get() utility function instead of fetch()
+        const response = await get('campaigns/sentInvites');
+        
+        if (response?.status === 200 && response?.data) {
+          setAllSentInvites(response.data);
+        } else {
+          setAllSentInvites([]);
+        }
+      } catch (error) {
         setAllSentInvites([]);
+      } finally {
+        setSentInvitesLoading(false);
       }
-    } catch (error) {
-      setAllSentInvites([]);
-    } finally {
-      setSentInvitesLoading(false);
-    }
-  };
+    };
 
-  fetchSentInvites();
-}, []);
+    fetchSentInvites();
+  }, []);
 
   // UPDATED: Enhanced campaign and task fetching logic to use proper endpoints
   useEffect(() => {
@@ -772,6 +772,8 @@ useEffect(() => {
               }
             } catch (campaignError) {
               toast.error('Campaign not found');
+              // Navigate back to campaigns list
+              navigate('/campaigns', { replace: true });
               return;
             }
           }
@@ -779,11 +781,15 @@ useEffect(() => {
           if (campaignData) {
             setCampaign(campaignData);
             setIsDraft(isDraftCampaign);
+          } else {
+            toast.error('Campaign not found');
+            navigate('/campaigns', { replace: true });
           }
         }
         
       } catch (error) {
         toast.error('Failed to load campaign data');
+        navigate('/campaigns', { replace: true });
       } finally {
         setLoading(false);
         setTasksLoading(false);
@@ -791,7 +797,7 @@ useEffect(() => {
     };
 
     fetchCampaignAndTasks();
-  }, [id, campaign, fetchActionedInfluencers]);
+  }, [id, campaign, fetchActionedInfluencers, navigate]);
 
   // Always fetch applications, then filter in UI based on max reached
   useEffect(() => {
@@ -885,7 +891,7 @@ useEffect(() => {
       tasks: formatTasksForForm(tasksToUse)
     };
     
-    // Navigate to create campaign with edit data
+    // Navigate to create campaign with edit data - FIXED FOR HASHROUTER
     navigate('/campaigns/create', {
       state: {
         mode: 'edit',
@@ -918,6 +924,7 @@ useEffect(() => {
       minLevelId: campaign.min_level_id || 3
     };
     
+    // FIXED FOR HASHROUTER
     navigate('/campaigns/create', { 
       state: { 
         mode: 'addMembers',
@@ -1025,6 +1032,17 @@ useEffect(() => {
     // Close the modal after rejecting
     setUserProfileModal(false);
   }, [campaign, handleBatchProcessApplications]);
+
+  // FIXED: Enhanced back navigation for HashRouter
+  const handleBackNavigation = useCallback(() => {
+    // Try to go back in history first
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Fallback to campaigns page
+      navigate('/campaigns', { replace: true });
+    }
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -1207,21 +1225,21 @@ useEffect(() => {
         <div className="container mx-auto">
           <div className="flex flex-col gap-6">
 
-            {/* Back Button with Campaign Title */}
+            {/* Back Button with Campaign Title - FIXED FOR HASHROUTER */}
             <div className="flex items-center gap-4">
               <button
-                onClick={() => navigate('/campaigns')}
+                onClick={handleBackNavigation}
                 className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-secondary hover:bg-secondary hover:text-white transition-all duration-200 hover:scale-110 shadow-xl"
               >
                 <MdArrowBackIosNew className="w-4 h-4" />
               </button>
-                  <p className='text-xl font-bold flex gap-2 items-center'>
-                  Campaign Details
-                  <span>-</span>
-                  <span className='font-semibold text-sm text-gray-500'>
+              <p className='text-xl font-bold flex gap-2 items-center'>
+                Campaign Details
+                <span>-</span>
+                <span className='font-semibold text-sm text-gray-500'>
                   {campaign.title}
-                  </span>
-                  </p>
+                </span>
+              </p>
             </div>
 
             {/* Professional Scroll Synchronized Grid Layout */}
@@ -1468,7 +1486,7 @@ useEffect(() => {
               await post('campaigns/deleteCampaign', { campaign_id: campaign.campaign_id });
               toast.success('Campaign deleted successfully!');
               setDeleteCampaignModal(false);
-              navigate('/campaigns');
+              navigate('/campaigns', { replace: true });
             } catch (error) {
               toast.error('Failed to delete campaign');
             } finally {
