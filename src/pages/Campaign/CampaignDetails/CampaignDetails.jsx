@@ -564,7 +564,7 @@ export default function CampaignDetailsPage() {
     const currentStatus = getCampaignStatus();
     
     if (currentStatus === 'draft') {
-      // For draft campaigns, get tasks from getDraftCampaign endpoint (campaign.tasks)
+      // For draft campaigns, get tasks from the main campaign response (campaign.tasks)
       if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
         computedTasks = campaign.tasks;
       } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
@@ -720,7 +720,7 @@ export default function CampaignDetailsPage() {
     fetchSentInvites();
   }, []);
 
-  // UPDATED: Enhanced campaign and task fetching logic to use proper endpoints
+  // FIXED: Enhanced campaign and task fetching logic to use the CORRECT endpoint
   useEffect(() => {
     document.title = campaign ? `${campaign.title} | Campaign Details` : 'Campaign Details | Social Gems Admin';
     
@@ -734,60 +734,48 @@ export default function CampaignDetailsPage() {
         setTasksLoading(true);
         
         if (!campaign) {
-          // First, try to get campaign as draft
-          let campaignData = null;
-          let isDraftCampaign = false;
-          
+          // FIXED: Use the correct endpoint pattern campaigns/campaign/${id}
           try {
-            const draftResponse = await get(`campaigns/getDraftCampaign/${id}`);
+            const campaignResponse = await get(`campaigns/campaign/${id}`);
             
-            if (draftResponse?.data) {
-              campaignData = draftResponse.data;
-              isDraftCampaign = true;
+            if (campaignResponse?.status === 200 && campaignResponse?.data) {
+              const campaignData = campaignResponse.data;
               
-              // For draft campaigns, tasks come from the getDraftCampaign endpoint
+              // Set campaign data
+              setCampaign(campaignData);
+              
+              // Determine if it's a draft based on status
+              const isDraftCampaign = campaignData.status === 'draft';
+              setIsDraft(isDraftCampaign);
+              
+              // Set tasks from the campaign response
               if (campaignData.tasks && Array.isArray(campaignData.tasks)) {
                 setCampaignTasks(campaignData.tasks);
               }
-            }
-          } catch (draftError) {
-            // Not a draft campaign, try regular campaign endpoint
-          }
-          
-          // If not found as draft, try regular campaign endpoint
-          if (!campaignData) {
-            try {
-              const campaignResponse = await get(`campaigns/${id}`);
               
-              if (campaignResponse?.data) {
-                campaignData = campaignResponse.data;
-                isDraftCampaign = false;
-                
-                // For non-draft campaigns, fetch tasks from getActionedInfluencers
+              // For non-draft campaigns, also fetch actioned influencers
+              if (!isDraftCampaign) {
                 try {
                   await fetchActionedInfluencers(campaignData.campaign_id);
                 } catch (actionedError) {
                   console.error('Error fetching actioned influencers:', actionedError);
                 }
               }
-            } catch (campaignError) {
+            } else {
               toast.error('Campaign not found');
-              // Navigate back to campaigns list
               navigate('/campaigns', { replace: true });
               return;
             }
-          }
-          
-          if (campaignData) {
-            setCampaign(campaignData);
-            setIsDraft(isDraftCampaign);
-          } else {
+          } catch (campaignError) {
+            console.error('Campaign fetch error:', campaignError);
             toast.error('Campaign not found');
             navigate('/campaigns', { replace: true });
+            return;
           }
         }
         
       } catch (error) {
+        console.error('General error:', error);
         toast.error('Failed to load campaign data');
         navigate('/campaigns', { replace: true });
       } finally {
@@ -803,8 +791,10 @@ export default function CampaignDetailsPage() {
   useEffect(() => {
     const fetchApplicationsAndActionedInfluencers = async () => {
       if (campaign?.campaign_id) {
-        // Always fetch actioned influencers first
-        await fetchActionedInfluencers(campaign.campaign_id);
+        // Always fetch actioned influencers first (for non-draft campaigns)
+        if (!isDraft) {
+          await fetchActionedInfluencers(campaign.campaign_id);
+        }
         
         // ALWAYS fetch applications if campaign has invites (needed to calculate max reached)
         if (campaignHasInvites) {
@@ -823,7 +813,7 @@ export default function CampaignDetailsPage() {
     if (allSentInvites.length >= 0) { // Changed from > 0 to >= 0 to handle empty arrays
       fetchApplicationsAndActionedInfluencers();
     }
-  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, fetchCampaignApplications, fetchActionedInfluencers]);
+  }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, isDraft, fetchCampaignApplications, fetchActionedInfluencers]);
 
   // Handle edit campaign with proper date and task formatting
   const handleEditCampaign = useCallback(() => {

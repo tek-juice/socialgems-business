@@ -49,17 +49,21 @@ const GridList = ({ children, className, ...props }) => {
 };
 
 const GridListItem = ({ children, className, value, isSelected, onSelect, ...props }) => {
+  const isDisabled = !onSelect;
+  
   return (
     <button
       type="button"
       className={cn(
-        "relative items-center justify-center px-5 py-2 text-xs font-medium rounded-lg transition-all duration-200 outline-none focus:outline-none focus:ring-2 focus:ring-primary-scale-400",
+        "relative items-center justify-center px-5 py-2 text-xs font-medium rounded-lg transition-all duration-200 outline-none focus:outline-none",
         isSelected 
           ? "bg-primary-scale-400 text-black shadow-md" 
           : "bg-gray-200 text-gray-500 hover:bg-gray-300",
+        isDisabled ? "cursor-not-allowed opacity-50" : "focus:ring-2 focus:ring-primary-scale-400",
         className
       )}
-      onClick={() => onSelect?.(value)}
+      onClick={() => !isDisabled && onSelect?.(value)}
+      disabled={isDisabled}
       {...props}
     >
       {children}
@@ -396,7 +400,8 @@ const FilterCampaigns = ({
   onBackToCampaigns,
   campaignId = '',
   startDate = '',
-  endDate = ''
+  endDate = '',
+  allowedSiteIds = [] // Add this prop
 }) => {
   const [socialSites, setSocialSites] = useState([]);
   const [socialFollowers, setSocialFollowers] = useState({});
@@ -1001,17 +1006,21 @@ const FilterCampaigns = ({
                 <GridSkeleton count={8} />
               ) : (
                 <GridList className="flex flex-row flex-wrap gap-3">
-                  {platformOptions.map((platform) => (
-                    <GridListItem
-                      key={platform.id}
-                      value={platform.id}
-                      isSelected={selectedPlatforms.includes(platform.id)}
-                      onSelect={() => handlePlatformToggle(platform.id)}
-                      className="text-xs"
-                    >
-                      {platform.name}
-                    </GridListItem>
-                  ))}
+                  {platformOptions.map((platform) => {
+                    const isAllowed = allowedSiteIds.length === 0 || allowedSiteIds.includes(platform.site_id);
+                    
+                    return (
+                      <GridListItem
+                        key={platform.id}
+                        value={platform.id}
+                        isSelected={selectedPlatforms.includes(platform.id)}
+                        onSelect={isAllowed ? () => handlePlatformToggle(platform.id) : undefined}
+                        className="text-xs"
+                      >
+                        {platform.name}
+                      </GridListItem>
+                    );
+                  })}
                 </GridList>
               )}
           </motion.div>

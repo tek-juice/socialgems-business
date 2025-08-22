@@ -812,6 +812,57 @@ const Campaigns = () => {
     setCurrentPage(1);
   };
 
+  // UPDATED: Enhanced handleViewCampaign to fetch detailed campaign data
+  const handleViewCampaign = async (campaign) => {
+    try {
+      // Show loading state
+      toast.loading('Loading campaign details...', { id: 'campaign-loading' });
+      
+      // Fetch detailed campaign data using the same endpoint as campaign details page
+      const campaignResponse = await get(`campaigns/campaign/${campaign.campaign_id}`);
+      
+      if (campaignResponse?.status === 200 && campaignResponse?.data) {
+        const detailedCampaignData = campaignResponse.data;
+        
+        // Navigate with the detailed campaign data
+        navigate(`/campaigns/${campaign.campaign_id}`, {
+          state: { 
+            campaign: detailedCampaignData,
+            isDraft: detailedCampaignData.status === 'draft'
+          }
+        });
+        
+        toast.dismiss('campaign-loading');
+        toast.success('Campaign loaded successfully');
+      } else {
+        // Fallback: navigate with original campaign data if detailed fetch fails
+        console.warn('Failed to fetch detailed campaign data, using fallback');
+        navigate(`/campaigns/${campaign.campaign_id}`, {
+          state: { 
+            campaign: campaign,
+            isDraft: campaign.status === 'draft'
+          }
+        });
+        
+        toast.dismiss('campaign-loading');
+        toast.info('Campaign loaded (using cached data)');
+      }
+    } catch (error) {
+      console.error('Error fetching campaign details:', error);
+      
+      // Fallback: navigate with original campaign data if detailed fetch fails
+      navigate(`/campaigns/${campaign.campaign_id}`, {
+        state: { 
+          campaign: campaign,
+          isDraft: campaign.status === 'draft'
+        }
+      });
+      
+      toast.dismiss('campaign-loading');
+      toast.error('Failed to load full campaign details, showing basic information');
+    }
+  };
+
   // Filter campaigns with pagination
   const filteredCampaigns = useMemo(() => {
     const filtered = campaigns.filter(campaign => {
@@ -869,15 +920,6 @@ const Campaigns = () => {
   const handleItemsPerPageChange = (value) => {
     setItemsPerPage(parseInt(value));
     setCurrentPage(1);
-  };
-
-  const handleViewCampaign = (campaign) => {
-    navigate(`/campaigns/${campaign.campaign_id}`, {
-      state: { 
-        campaign,
-        isDraft: campaign.status === 'draft'
-      }
-    });
   };
 
   const handleCreateCampaign = () => {

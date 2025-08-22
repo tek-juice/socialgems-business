@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   FiUsers,
   FiTarget,
@@ -216,6 +216,296 @@ const calculateMinimumBudget = (numberOfInfluencers) => {
   return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
 };
 
+// Payment Status Banner Component
+const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => {
+  const getStatusConfig = () => {
+    switch (status?.toLowerCase()) {
+      case 'success':
+        return {
+          icon: FiCheckCircle,
+          iconColor: 'text-green-600',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          title: 'Payment Successful!',
+          description: 'Your wallet has been funded successfully.',
+          showRetry: false
+        };
+      case 'failed':
+      case 'error':
+      case 'cancelled':
+        return {
+          icon: FiX,
+          iconColor: 'text-red-600',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-200',
+          title: 'Payment Failed',
+          description: 'Your payment could not be processed. Please try again.',
+          showRetry: true
+        };
+      case 'pending':
+        return {
+          icon: FiLoader,
+          iconColor: 'text-yellow-600',
+          bgColor: 'bg-yellow-50',
+          borderColor: 'border-yellow-200',
+          title: 'Payment Pending',
+          description: 'Your payment is being processed. This may take a few minutes.',
+          showRetry: false
+        };
+      default:
+        return {
+          icon: FiInfo,
+          iconColor: 'text-green-500',
+          bgColor: 'bg-green-100/20',
+          borderColor: 'border-green-200',
+          title: 'Payment Status: Success',
+          description: 'We are verifying your payment status.',
+          showRetry: false
+        };
+    }
+  };
+
+  const config = getStatusConfig();
+  const StatusIcon = config.icon;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`w-full ${config.bgColor} ${config.borderColor} border rounded-xl p-4 mb-6`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3">
+          <div className={`w-10 h-10 ${config.bgColor} rounded-full flex items-center justify-center border ${config.borderColor}`}>
+            <StatusIcon className={`w-5 h-5 ${config.iconColor}`} />
+          </div>
+          <div className="flex-1">
+            <h3 className={`font-semibold text-sm ${config.iconColor} mb-1`}>
+              {config.title}
+            </h3>
+            <p className="text-xs text-gray-600 mb-2">
+              {config.description}
+            </p>
+            {refId && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">Reference ID:</span> {refId}
+              </div>
+            )}
+            {sessionId && (
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">Session ID:</span> {sessionId.substring(0, 20)}...
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {config.showRetry && (
+            <button
+              onClick={onRetry}
+              className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              Try Again
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// FIXED: Influencer Mismatch Banner Component - Now in Step 1 (Influencers)
+const InfluencerMismatchBanner = ({ 
+  requestedInfluencers, 
+  availableInfluencers, 
+  onProceedWithAvailable, 
+  onGoBackToEdit,
+  loading 
+}) => {
+  // FIXED: Handle undefined/null availableInfluencers
+  const safeAvailableInfluencers = safeToNumber(availableInfluencers, 0);
+  const safeRequestedInfluencers = safeToNumber(requestedInfluencers, 0);
+  
+  if (safeRequestedInfluencers <= safeAvailableInfluencers) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-6"
+    >
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm mt-5">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <FiAlertCircle className="w-5 h-5 text-orange-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-orange-800 mb-2">
+              Influencer Count Mismatch
+            </h3>
+            <p className="text-xs text-secondary mb-4 leading-relaxed">
+              You requested <span className="font-semibold">{safeRequestedInfluencers}</span> influencers, 
+              but we only have <span className="font-semibold">{safeAvailableInfluencers}</span> total 
+              influencers matching your criteria in our system. You can either proceed with the available 
+              influencers or go back to reduce the number of influencers.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={onProceedWithAvailable}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <FiCheckCircle className="w-3 h-3" />
+                    Proceed with {safeAvailableInfluencers} Influencers
+                  </>
+                )}
+              </button>
+              <button
+                onClick={onGoBackToEdit}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 px-4 py-2 border border-orange-300 text-secondary bg-white rounded-lg hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+              >
+                <FiEdit className="w-3 h-3" />
+                Go Back to Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Add Funds Modal Component
+const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
+  const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("CARD");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (amount) {
+      onSubmit({ amount: parseFloat(amount), paymentMethod });
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-scale-400 to-primary-scale-500 rounded-lg flex items-center justify-center">
+              <FiDollarSign className="w-5 h-5 text-black" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900">Add Funds</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+          >
+            <FiX className="w-4 h-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Amount
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+                $
+              </span>
+              <input
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full pl-8 pr-3 py-3 text-lg h-12 border border-gray-300 rounded-lg focus:border-primary-scale-400 focus:ring-2 focus:ring-primary-scale-400/20 transition-colors bg-gray-50 focus:bg-white"
+                min="1"
+                step="0.01"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Payment Method
+            </label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full h-12 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-scale-400 focus:border-transparent"
+            >
+              <option value="CARD">Credit/Debit Card</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-xs"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs"
+              disabled={loading || !amount}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="w-4 h-4 border-2 border-black border-t-transparent rounded-full"
+                  />
+                  Processing...
+                </div>
+              ) : (
+                <>
+                  <FiPlus className="w-4 h-4 mr-2" />
+                  Add Funds
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
+};
+
 // PIN Verification Modal Component
 const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
   const [pin, setPin] = useState('');
@@ -270,7 +560,7 @@ const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Verify Wallet PIN</h3>
-              <p className="text-xs text-gray-600">Enter your 5-digit PIN to launch the campaign</p>
+              <p className="text-xs text-gray-600">Enter your 5-digit PIN to continue</p>
             </div>
           </div>
 
@@ -459,6 +749,124 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
       </motion.div>
     </div>
   );
+};
+
+// FIXED: Enhanced Payment Popup with window.open()
+const PaymentPopupManager = ({ isOpen, onClose, paymentUrl, onSuccess, onError }) => {
+  const popupRef = useRef(null);
+  const checkIntervalRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen || !paymentUrl) return;
+
+    // Clear any existing popup
+    if (popupRef.current && !popupRef.current.closed) {
+      popupRef.current.close();
+    }
+
+    // Calculate popup position (centered)
+    const width = 800;
+    const height = 700;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+
+    // Open popup with specific parameters to ensure it opens as popup
+    const popup = window.open(
+      paymentUrl,
+      'stripe_payment',
+      `width=${width},height=${height},left=${left},top=${top},` +
+      'scrollbars=yes,resizable=yes,status=no,toolbar=no,menubar=no,location=no'
+    );
+
+    if (!popup) {
+      toast.error('Popup blocked! Please allow popups and try again.');
+      onClose();
+      return;
+    }
+
+    popupRef.current = popup;
+    toast.success('Payment window opened. Complete your payment to continue.');
+
+    // Monitor popup
+    const checkPopup = () => {
+      if (popup.closed) {
+        clearInterval(checkIntervalRef.current);
+        // Give a small delay before checking URL params for completion
+        setTimeout(() => {
+          checkForPaymentCompletion();
+        }, 1000);
+        return;
+      }
+
+      try {
+        // Try to access popup URL to check for completion
+        const currentUrl = popup.location.href;
+        if (currentUrl.includes('status=')) {
+          const urlParams = new URLSearchParams(new URL(currentUrl).search);
+          const status = urlParams.get('status');
+          const refId = urlParams.get('refId');
+          const sessionId = urlParams.get('session_id');
+          
+          if (status) {
+            popup.close();
+            clearInterval(checkIntervalRef.current);
+            
+            const cleanStatus = status.replace(/['"]/g, '');
+            
+            if (cleanStatus.toLowerCase() === 'success') {
+              onSuccess({ status: cleanStatus, refId, sessionId });
+            } else {
+              onError({ status: cleanStatus, refId, sessionId });
+            }
+            onClose();
+          }
+        }
+      } catch (error) {
+        // Cross-origin errors are expected, continue monitoring
+      }
+    };
+
+    // Check every 1 second
+    checkIntervalRef.current = setInterval(checkPopup, 1000);
+
+    // Cleanup function
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+      if (popupRef.current && !popupRef.current.closed) {
+        popupRef.current.close();
+      }
+    };
+  }, [isOpen, paymentUrl, onSuccess, onError, onClose]);
+
+  // Check for payment completion in main window (fallback)
+  const checkForPaymentCompletion = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const refId = urlParams.get('refId');
+    const sessionId = urlParams.get('session_id');
+    
+    if (status) {
+      const cleanStatus = status.replace(/['"]/g, '');
+      
+      if (cleanStatus.toLowerCase() === 'success') {
+        onSuccess({ status: cleanStatus, refId, sessionId });
+      } else {
+        onError({ status: cleanStatus, refId, sessionId });
+      }
+      
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      onClose();
+    } else {
+      // If no status found, assume cancelled
+      toast.info('Payment was cancelled or incomplete.');
+      onClose();
+    }
+  };
+
+  return null; // This component doesn't render anything visible
 };
 
 // Custom Date Picker Modal Component
@@ -1277,29 +1685,41 @@ const InsufficientFundsModal = ({
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // State persistence with image handling - only for create mode
-  const [persistedCampaignData, setPersistedCampaignData] = useLocalStorage(
-    "campaign-draft",
+  // Enhanced state persistence for all steps
+  const [persistedCampaignState, setPersistedCampaignState] = useLocalStorage(
+    "campaign-create-state",
     {
-      title: "",
-      objective: "",
-      description: "",
-      start_date: "",
-      end_date: "",
-      content: null,
-      contentUrl: null,
-      tasks: [],
+      activeStep: 0,
+      campaignData: {
+        title: "",
+        objective: "",
+        description: "",
+        start_date: "",
+        end_date: "",
+        content: null,
+        contentUrl: null,
+        tasks: [],
+      },
+      brandBudget: MIN_BUDGET_PER_INFLUENCER,
+      numberOfInfluencers: 1,
+      eligibilityData: null,
+      draftCampaignId: "",
+      filterData: {
+        numberInfluencers: 5,
+        selectedRank: "3",
+        gemPoints: 1000,
+        brandBudget: MIN_BUDGET_PER_INFLUENCER,
+        socialPlatforms: [],
+        minFollowers: "50",
+        startDate: "",
+        endDate: "",
+        selectedIndustries: [],
+        socialFollowers: {},
+        eligibleResults: undefined,
+      },
     }
-  );
-
-  const [persistedBudget, setPersistedBudget] = useLocalStorage(
-    "campaign-budget",
-    MIN_BUDGET_PER_INFLUENCER
-  );
-  const [persistedInfluencers, setPersistedInfluencers] = useLocalStorage(
-    "campaign-influencers",
-    1
   );
 
   // Add mode tracking
@@ -1311,21 +1731,28 @@ const CreateCampaign = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [campaignCreatedOnce, setCampaignCreatedOnce] = useState(false);
 
-  // Update initial step based on state
+  // Update initial step based on state OR persisted state
   const [activeStep, setActiveStep] = useState(() => {
     if (state?.openOnStep !== undefined) {
       return state.openOnStep;
+    }
+    if (mode === "create" && persistedCampaignState.activeStep !== undefined) {
+      return persistedCampaignState.activeStep;
     }
     return 0;
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [eligibilityData, setEligibilityData] = useState(null);
+  const [eligibilityData, setEligibilityData] = useState(
+    mode === "create" ? persistedCampaignState.eligibilityData : null
+  );
   const [openTaskDialog, setOpenTaskDialog] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
   const [loadingWallet, setLoadingWallet] = useState(false);
-  const [draftCampaignId, setDraftCampaignId] = useState("");
+  const [draftCampaignId, setDraftCampaignId] = useState(
+    mode === "create" ? persistedCampaignState.draftCampaignId : ""
+  );
   const [editingTaskIndex, setEditingTaskIndex] = useState(null);
   const [socialSites, setSocialSites] = useState([]);
   const [objectives, setObjectives] = useState([]);
@@ -1333,10 +1760,29 @@ const CreateCampaign = () => {
   const [dateErrors, setDateErrors] = useState({});
   const [showInsufficientFunds, setShowInsufficientFunds] = useState(false);
 
+  // Add Funds states
+  const [showAddFunds, setShowAddFunds] = useState(false);
+  const [addingFunds, setAddingFunds] = useState(false);
+
   // PIN verification states
   const [userData, setUserData] = useState(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
+
+  // FIXED: Add PIN context state to track whether PIN operation is for campaign or add funds
+  const [pinContext, setPinContext] = useState('campaign'); // 'campaign' or 'addFunds'
+
+  // FIXED: Enhanced payment popup states
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState('');
+
+  // Payment status state
+  const [paymentStatus, setPaymentStatus] = useState({
+    show: false,
+    status: null,
+    refId: null,
+    sessionId: null
+  });
 
   const [newTask, setNewTask] = useState({
     task: "",
@@ -1347,32 +1793,38 @@ const CreateCampaign = () => {
     repeats_after: "",
   });
 
-  // Budget and influencers are now both state variables
+  // Budget and influencers initialized from persisted state
   const [brandBudget, setBrandBudget] = useState(
-    safeToNumber(persistedBudget, MIN_BUDGET_PER_INFLUENCER)
+    mode === "create" 
+      ? safeToNumber(persistedCampaignState.brandBudget, MIN_BUDGET_PER_INFLUENCER)
+      : MIN_BUDGET_PER_INFLUENCER
   );
   const [numberOfInfluencers, setNumberOfInfluencers] = useState(
-    safeToNumber(persistedInfluencers, 1)
+    mode === "create" 
+      ? safeToNumber(persistedCampaignState.numberOfInfluencers, 1)
+      : 1
   );
 
-  const [filterData, setFilterData] = useState({
-    numberInfluencers: 5,
-    selectedRank: "3",
-    gemPoints: 1000,
-    brandBudget: MIN_BUDGET_PER_INFLUENCER,
-    socialPlatforms: [],
-    minFollowers: "50",
-    startDate: "",
-    endDate: "",
-    selectedIndustries: [],
-    socialFollowers: {},
-    eligibleResults: undefined,
-  });
+  const [filterData, setFilterData] = useState(
+    mode === "create" ? persistedCampaignState.filterData : {
+      numberInfluencers: 5,
+      selectedRank: "3",
+      gemPoints: 1000,
+      brandBudget: MIN_BUDGET_PER_INFLUENCER,
+      socialPlatforms: [],
+      minFollowers: "50",
+      startDate: "",
+      endDate: "",
+      selectedIndustries: [],
+      socialFollowers: {},
+      eligibleResults: undefined,
+    }
+  );
 
   const [campaignData, setCampaignData] = useState(() => {
     // Only use persisted data in create mode
     if (mode === "create") {
-      return persistedCampaignData;
+      return persistedCampaignState.campaignData;
     }
     return {
       title: "",
@@ -1386,62 +1838,84 @@ const CreateCampaign = () => {
     };
   });
 
-  // Persist budget and influencers when they change - only in create mode
-  useEffect(() => {
-    if (mode === "create") {
-      setPersistedBudget(brandBudget);
-    }
-  }, [brandBudget, setPersistedBudget, mode]);
+  // Add getAllowedSiteIds function inside the component
+  const getAllowedSiteIds = useCallback(() => {
+    const siteIds = campaignData.tasks.map(task => parseInt(task.site_id)).filter(id => !isNaN(id));
+    return [...new Set(siteIds)]; // Remove duplicates
+  }, [campaignData.tasks]);
 
+  // Handle payment redirect parameters (fallback for direct navigation)
   useEffect(() => {
-    if (mode === "create") {
-      setPersistedInfluencers(numberOfInfluencers);
-    }
-  }, [numberOfInfluencers, setPersistedInfluencers, mode]);
+    const refId = searchParams.get('refId');
+    const status = searchParams.get('status');
+    const sessionId = searchParams.get('session_id');
 
-  // Persist campaign data when it changes - only in create mode
-  useEffect(() => {
-    if (mode === "create") {
-      try {
-        // Don't persist the actual File object, just the URL
-        const dataToStore = {
-          ...campaignData,
-          content: null, // Don't store File object
-          contentUrl:
-            campaignData.content && campaignData.content instanceof File
-              ? URL.createObjectURL(campaignData.content)
-              : campaignData.contentUrl,
-        };
-        setPersistedCampaignData(dataToStore);
-      } catch (error) {
-        console.error("Error persisting campaign data:", error);
-        // Fallback: persist without URL
-        const dataToStore = {
-          ...campaignData,
-          content: null,
-          contentUrl: null,
-        };
-        setPersistedCampaignData(dataToStore);
+    if (refId || status || sessionId) {
+      // Clean up status value (remove quotes if present)
+      const cleanStatus = status?.replace(/['"]/g, '');
+      
+      setPaymentStatus({
+        show: true,
+        status: cleanStatus,
+        refId: refId,
+        sessionId: sessionId
+      });
+
+      // Show appropriate toast based on status
+      switch (cleanStatus?.toLowerCase()) {
+        case 'success':
+          toast.success('Payment completed successfully!');
+          // Refresh wallet balance after successful payment
+          setTimeout(() => {
+            handleRefreshWallet();
+          }, 2000);
+          break;
+        case 'failed':
+        case 'error':
+        case 'cancelled':
+          toast.error('Payment failed or was cancelled.');
+          break;
+        case 'pending':
+          toast.info('Payment is being processed.');
+          break;
+        default:
+          toast.info('Payment status received.');
       }
-    }
-  }, [campaignData, mode, setPersistedCampaignData]);
 
-  // Cleanup blob URLs when component unmounts or when switching files
+      // Clear URL parameters after 100ms to avoid repeated triggers
+      setTimeout(() => {
+        setSearchParams({});
+      }, 100);
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Enhanced state persistence - save state changes immediately
   useEffect(() => {
-    return () => {
-      if (
-        campaignData.contentUrl &&
-        typeof campaignData.contentUrl === "string" &&
-        campaignData.contentUrl.startsWith("blob:")
-      ) {
-        try {
-          URL.revokeObjectURL(campaignData.contentUrl);
-        } catch (error) {
-          console.error("Error revoking blob URL:", error);
-        }
-      }
-    };
-  }, [campaignData.contentUrl]);
+    if (mode === "create") {
+      setPersistedCampaignState({
+        activeStep,
+        campaignData: {
+          ...campaignData,
+          content: null, // Don't persist File objects
+        },
+        brandBudget,
+        numberOfInfluencers,
+        eligibilityData,
+        draftCampaignId,
+        filterData,
+      });
+    }
+  }, [
+    mode,
+    activeStep,
+    campaignData,
+    brandBudget,
+    numberOfInfluencers,
+    eligibilityData,
+    draftCampaignId,
+    filterData,
+    setPersistedCampaignState,
+  ]);
 
   // Track unsaved changes - Enhanced to handle both edit mode and created campaigns
   const originalDataRef = useRef(null);
@@ -1631,16 +2105,30 @@ const CreateCampaign = () => {
     if (mode === "edit" && editCampaignData) {
       console.log("Pre-filling edit data:", editCampaignData);
 
+      // FIXED: Enhanced task formatting to properly preserve site_id
       const formatTasksForForm = (tasks) => {
         if (!tasks || !Array.isArray(tasks)) return [];
 
         return tasks.map((task) => ({
-          task: task.task || "",
+          task: task.task || task.title || task.name || "",
           description: task.description || "",
-          site_id: task.site_id || 4,
-          task_type: task.task_type || "repetitive",
-          requires_url: task.requires_url === "1" || task.requires_url === true,
-          repeats_after: task.repeats_after || "daily",
+          // FIXED: Properly handle site_id conversion and validation
+          site_id: (() => {
+            const siteId = task.site_id || task.platform_id || task.social_media_id;
+            const numericSiteId = parseInt(siteId);
+            
+            // Validate that the site_id exists in our socialSites list
+            if (!isNaN(numericSiteId) && socialSites.length > 0) {
+              const siteExists = socialSites.find(site => site.site_id === numericSiteId);
+              return siteExists ? numericSiteId : (socialSites[0]?.site_id || 4);
+            }
+            
+            // Default fallback
+            return socialSites.length > 0 ? socialSites[0].site_id : 4;
+          })(),
+          task_type: task.task_type || task.type || "repetitive",
+          requires_url: task.requires_url === "1" || task.requires_url === true || task.requires_url === 'true',
+          repeats_after: task.repeats_after || task.frequency || "daily",
         }));
       };
 
@@ -1666,7 +2154,7 @@ const CreateCampaign = () => {
 
       toast.success("Campaign data loaded for editing");
     }
-  }, [mode, editCampaignData]);
+  }, [mode, editCampaignData, socialSites]); // Added socialSites dependency
 
   // Add effect to handle add members mode
   useEffect(() => {
@@ -1787,16 +2275,81 @@ const CreateCampaign = () => {
     }
   };
 
-  // Handle add funds redirect
-  const handleAddFunds = () => {
-    window.open("/wallet", "_blank");
-    toast.info("Opening wallet to add funds");
+  // FIXED: Handle add funds functionality with forced popup window
+  const handleAddFunds = async (data) => {
+    setAddingFunds(true);
+    try {
+      const depositData = {
+        amount: data.amount,
+        paymentMethod: "CARD",
+        currency: "USD",
+        payment_method_id: "",
+      };
+
+      const response = await post("wallet/depositRequest", depositData);
+
+      if (response.status === 200) {
+        // FIXED: Use window.open with proper popup parameters
+        setPaymentUrl(response.data.paymentUrl);
+        setShowPaymentPopup(true);
+        setShowAddFunds(false);
+        toast.success("Opening payment window...");
+      }
+    } catch (error) {
+      console.error("Payment request error:", error);
+      toast.error("Failed to process deposit request");
+    } finally {
+      setAddingFunds(false);
+    }
+  };
+
+  // FIXED: Handle payment popup success
+  const handlePaymentSuccess = (result) => {
+    console.log("Payment successful:", result);
+    
+    setPaymentStatus({
+      show: true,
+      status: result.status,
+      refId: result.refId,
+      sessionId: result.sessionId
+    });
+    
+    toast.success('Payment completed successfully!');
+    
+    // Refresh wallet balance after successful payment
+    setTimeout(() => {
+      handleRefreshWallet();
+    }, 2000);
+  };
+
+  // FIXED: Handle payment popup error
+  const handlePaymentError = (result) => {
+    console.log("Payment failed:", result);
+    
+    setPaymentStatus({
+      show: true,
+      status: result.status,
+      refId: result.refId,
+      sessionId: result.sessionId
+    });
+    
+    toast.error('Payment failed or was cancelled.');
+  };
+
+  // FIXED: Handle add funds redirect with proper PIN context
+  const handleAddFundsRedirect = () => {
+    setPinContext('addFunds'); // Set context to add funds
+    if (hasPinSet) {
+      setShowPinVerification(true);
+    } else {
+      setShowPinModal(true);
+    }
   };
 
   // Check if user has set a PIN by looking at wallet_pin data
   const hasPinSet = userData?.wallet_pin && Object.keys(userData.wallet_pin).length > 0;
 
-  // Handle PIN success
+  // FIXED: Handle PIN success with context awareness
   const handlePinSuccess = async () => {
     // Refresh user data to update PIN status
     try {
@@ -1807,24 +2360,95 @@ const CreateCampaign = () => {
     } catch (error) {
       console.error("Error refreshing user profile:", error);
     }
+    
+    // After setting PIN, proceed based on context
+    if (pinContext === 'addFunds') {
+      setShowAddFunds(true);
+    }
+    // For campaign context, the flow continues normally
   };
 
-  // Handle PIN verification success
+  // FIXED: Handle PIN verification success with context awareness
   const handlePinVerificationSuccess = () => {
     setShowPinVerification(false);
-    // Proceed with campaign creation
-    handleCreateCampaignAfterPinVerification();
+    
+    if (pinContext === 'addFunds') {
+      setShowAddFunds(true);
+    } else {
+      // Campaign creation context
+      handleCreateCampaignAfterPinVerification();
+    }
   };
+
+  // Handle close payment status
+  const handleClosePaymentStatus = () => {
+    setPaymentStatus(prev => ({ ...prev, show: false }));
+  };
+
+  // Handle retry payment
+  const handleRetryPayment = () => {
+    setPaymentStatus(prev => ({ ...prev, show: false }));
+    setPinContext('addFunds'); // Set context for retry
+    if (hasPinSet) {
+      setShowPinVerification(true);
+    } else {
+      setShowPinModal(true);
+    }
+  };
+
+  // FIXED: Handle influencer mismatch - Proceed with available influencers
+  const handleProceedWithAvailable = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const availableInfluencers = safeToNumber(eligibilityData?.totalCount, 0); // Changed from eligibleCount to totalCount
+      
+      // Update the campaign with available influencer count
+      const updatePayload = {
+        campaign_id: draftCampaignId,
+        number_of_influencers: availableInfluencers,
+      };
+  
+      const updateResponse = await patch("campaigns/edit", updatePayload);
+  
+      if (updateResponse?.status === 200) {
+        // Update local state
+        setNumberOfInfluencers(availableInfluencers);
+        
+        // Update eligibility data with safe conversions
+        setEligibilityData(prev => ({
+          ...prev,
+          budget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
+          totalBudget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
+        }));
+  
+        toast.success(`Campaign updated to proceed with ${availableInfluencers} influencers`);
+      } else {
+        throw new Error("Failed to update campaign");
+      }
+    } catch (error) {
+      console.error("Error updating campaign:", error);
+      toast.error("Failed to update campaign");
+    } finally {
+      setLoading(false);
+    }
+  }, [draftCampaignId, eligibilityData]);
+
+  // Handle influencer mismatch - Go back to edit
+  const handleGoBackToEdit = useCallback(() => {
+    setActiveStep(0);
+    toast.info("Please adjust the number of influencers and try again");
+  }, []);
 
   const createDraftCampaignAndFilter = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-
+  
       toast.loading("Creating draft campaign...", {
         id: "create-draft",
       });
-
+  
       // Upload image if exists
       let campaignImageUrl = null;
       if (campaignData.content) {
@@ -1832,10 +2456,10 @@ const CreateCampaign = () => {
         const formData = new FormData();
         formData.append("file_type", "STATUS_POST");
         formData.append("content", campaignData.content);
-
+  
         const uploadResponse = await upload("media/uploadFile", formData);
         console.log("Upload response:", uploadResponse);
-
+  
         if (
           uploadResponse?.status === 200 &&
           uploadResponse?.data?.[0]?.file_url
@@ -1844,13 +2468,13 @@ const CreateCampaign = () => {
           console.log("Image uploaded successfully:", campaignImageUrl);
         }
       }
-
+  
       const draftCampaignPayload = {
         title: campaignData.title || "Draft Campaign",
         description: campaignData.description || "Campaign description",
         objective: campaignData.objective || "brand_awareness",
-        start_date: localDateToUTC(campaignData.start_date), // Convert to UTC
-        end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
+        start_date: localDateToUTC(campaignData.start_date),
+        end_date: localDateToUTC(campaignData.end_date),
         budget: brandBudget,
         number_of_influencers: numberOfInfluencers,
         ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
@@ -1863,26 +2487,26 @@ const CreateCampaign = () => {
           repeats_after: "daily",
         })),
       };
-
+  
       console.log("Draft campaign payload:", draftCampaignPayload);
-
+  
       const draftResponse = await post(
         "campaigns/create-draft",
         draftCampaignPayload
       );
-
+  
       console.log("Draft campaign response:", draftResponse);
-
+  
       if (draftResponse?.status === 200 && draftResponse?.data?.campaign_id) {
         const campaignId = draftResponse.data.campaign_id;
         setDraftCampaignId(campaignId);
         setCampaignCreatedOnce(true);
-
+  
         setCampaignData((prev) => ({
           ...prev,
           campaign_id: campaignId,
         }));
-
+  
         // Set original data after successful creation
         setOriginalData({
           title: campaignData.title,
@@ -1895,62 +2519,65 @@ const CreateCampaign = () => {
           numberOfInfluencers: numberOfInfluencers,
           contentUrl: campaignImageUrl,
         });
-
+  
         toast.loading("Analyzing eligible creators...", {
           id: "create-draft",
         });
-
+  
         const requestId = generateRequestId();
         const eligibleResponse = await post("campaigns/filterInfluencers", {
           requestId: requestId,
           brandBudget: brandBudget,
           number_of_users: numberOfInfluencers,
           campaign_id: campaignId,
-          end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
+          end_date: localDateToUTC(campaignData.end_date),
           industry_ids: [1, 2, 3],
           min_level_id: 3,
           min_points: 1000,
           social_media_requirements: [{ site_id: 1, min_followers: 50 }],
-          start_date: localDateToUTC(campaignData.start_date), // Convert to UTC
+          start_date: localDateToUTC(campaignData.start_date),
           iso_codes: ["UG"],
           gender: "",
           category_type: "",
         });
-
+  
+        console.log("Filter influencers response:", eligibleResponse);
+  
         if (eligibleResponse?.status === 200) {
+          // FIX: Use the correct response structure
           const newEligibilityData = {
-            budget: brandBudget,
-            currency: "USD",
-            count: eligibleResponse.count || 0,
+            budget: eligibleResponse.totalBudget || brandBudget,
+            currency: eligibleResponse.currency || "USD",
+            count: eligibleResponse.totalCount || 0,
             eligibleCount: eligibleResponse.eligibleCount || 0,
-            totalBudget: brandBudget,
+            totalBudget: eligibleResponse.totalBudget || brandBudget,
             requestId: requestId,
             brandBudget: brandBudget,
             campaignId: campaignId,
+            totalCount: eligibleResponse.totalCount || 0,
           };
-
+  
           setEligibilityData(newEligibilityData);
-
+  
           setFilterData((prev) => ({
             ...prev,
             brandBudget: brandBudget,
             campaignId: campaignId,
             eligibleResults: {
-              budget: brandBudget,
-              currency: "USD",
-              count: eligibleResponse.count || 0,
+              budget: eligibleResponse.totalBudget || brandBudget,
+              currency: eligibleResponse.currency || "USD",
+              count: eligibleResponse.totalCount || 0,
               eligibleCount: eligibleResponse.eligibleCount || 0,
-              totalBudget: brandBudget,
+              totalBudget: eligibleResponse.totalBudget || brandBudget,
+              totalCount: eligibleResponse.totalCount || 0,
             },
           }));
-
+  
           toast.success(
-            `Perfect! Found ${
-              eligibleResponse.eligibleCount || 0
-            } matching creators`,
+            `Perfect! Found ${eligibleResponse.eligibleCount || 0} matching creators`,
             { id: "create-draft" }
           );
-
+  
           return true;
         } else {
           throw new Error("Failed to get eligible influencers");
@@ -1971,19 +2598,13 @@ const CreateCampaign = () => {
       setLoading(false);
     }
   }, [
-    campaignData.title,
-    campaignData.description,
-    campaignData.objective,
-    campaignData.tasks,
-    campaignData.start_date,
-    campaignData.end_date,
-    campaignData.content,
+    campaignData,
     brandBudget,
     numberOfInfluencers,
     setOriginalData,
+    localDateToUTC,
   ]);
 
-  // Update existing campaign - UPDATED with timezone conversion
   const updateExistingCampaign = useCallback(async () => {
     try {
       setLoading(true);
@@ -1993,7 +2614,8 @@ const CreateCampaign = () => {
         id: "update-campaign",
       });
 
-      let campaignImageUrl = originalDataRef.current?.contentUrl || null;
+      // Upload new image if exists
+      let campaignImageUrl = campaignData.contentUrl;
       if (campaignData.content) {
         console.log("Uploading new image...");
         const formData = new FormData();
@@ -2008,21 +2630,12 @@ const CreateCampaign = () => {
           uploadResponse?.data?.[0]?.file_url
         ) {
           campaignImageUrl = uploadResponse.data[0].file_url;
-          console.log("New image uploaded successfully:", campaignImageUrl);
+          console.log("Image uploaded successfully:", campaignImageUrl);
         }
       }
 
-      const formattedTasks = campaignData.tasks.map((task) => ({
-        task: task.task || "",
-        description: task.description || "",
-        site_id: parseInt(task.site_id) || 4,
-        task_type: task.task_type || "repetitive",
-        requires_url: task.requires_url ? "1" : "",
-        repeats_after: task.repeats_after || "daily",
-      }));
-
-      const updateCampaignPayload = {
-        campaign_id: campaignData.campaign_id || draftCampaignId,
+      const updatePayload = {
+        campaign_id: draftCampaignId || campaignData.campaign_id,
         title: campaignData.title,
         description: campaignData.description,
         objective: campaignData.objective,
@@ -2030,25 +2643,25 @@ const CreateCampaign = () => {
         end_date: localDateToUTC(campaignData.end_date), // Convert to UTC
         budget: brandBudget,
         number_of_influencers: numberOfInfluencers,
-        industry_ids: editCampaignData?.industry_ids || [],
-        min_level_id: editCampaignData?.min_level_id || 3,
-        social_media_requirements:
-          editCampaignData?.social_media_requirements || [],
         ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
-        tasks: formattedTasks,
+        tasks: campaignData.tasks.map((task) => ({
+          task: task.task,
+          description: task.description,
+          site_id: parseInt(task.site_id) || 4,
+          task_type: "repetitive",
+          requires_url: task.requires_url ? "1" : "",
+          repeats_after: "daily",
+        })),
       };
 
-      console.log("Update campaign payload:", updateCampaignPayload);
+      console.log("Update campaign payload:", updatePayload);
 
-      const updateResponse = await patch(
-        "campaigns/edit",
-        updateCampaignPayload
-      );
+      const updateResponse = await patch("campaigns/edit", updatePayload);
 
       console.log("Update campaign response:", updateResponse);
 
       if (updateResponse?.status === 200) {
-        // Update original data after successful update
+        // Update original data reference
         setOriginalData({
           title: campaignData.title,
           description: campaignData.description,
@@ -2061,12 +2674,13 @@ const CreateCampaign = () => {
           contentUrl: campaignImageUrl,
         });
 
-        toast.success("Campaign updated successfully!", {
+        toast.success("Campaign updated successfully", {
           id: "update-campaign",
         });
+
         return true;
       } else {
-        throw new Error(updateResponse?.message || "Failed to update campaign");
+        throw new Error("Failed to update campaign");
       }
     } catch (error) {
       console.error("Error updating campaign:", error);
@@ -2082,81 +2696,84 @@ const CreateCampaign = () => {
     campaignData,
     brandBudget,
     numberOfInfluencers,
-    editCampaignData,
     draftCampaignId,
     setOriginalData,
+    localDateToUTC,
   ]);
 
   const handleCheckEligibility = async (requestBody) => {
     try {
       setLoading(true);
       setError(null);
-
+  
       if (mode === "create" && campaignData.tasks.length === 0) {
         const errorMessage = "Please add at least one task for creators";
         setError(errorMessage);
         toast.error(errorMessage);
         return;
       }
-
+  
       if (brandBudget < MIN_BUDGET_PER_INFLUENCER) {
         const errorMessage = `Minimum budget requirement is $${MIN_BUDGET_PER_INFLUENCER}`;
         setError(errorMessage);
         toast.error(errorMessage);
         return;
       }
-
+  
       toast.loading("Analyzing eligible creators...", {
         id: "eligibility-check",
       });
-
+  
       if (!requestBody.requestId) {
         requestBody.requestId = generateRequestId();
       }
-
+  
       // Convert dates to UTC for server
       const serverRequestBody = {
         ...requestBody,
         start_date: localDateToUTC(requestBody.start_date),
         end_date: localDateToUTC(requestBody.end_date),
       };
-
+  
       const eligibleResponse = await post(
         "campaigns/filterInfluencers",
         serverRequestBody
       );
-
+  
+      console.log("Eligibility response:", eligibleResponse);
+  
       if (eligibleResponse?.status === 200) {
+        // FIX: Use the correct response structure
         const newEligibilityData = {
-          budget: safeToNumber(requestBody.brandBudget || brandBudget),
-          currency: "USD",
-          count: eligibleResponse.count || 0,
+          budget: eligibleResponse.totalBudget || safeToNumber(requestBody.brandBudget || brandBudget),
+          currency: eligibleResponse.currency || "USD",
+          count: eligibleResponse.totalCount || 0,
           eligibleCount: eligibleResponse.eligibleCount || 0,
-          totalBudget: safeToNumber(requestBody.brandBudget || brandBudget),
+          totalBudget: eligibleResponse.totalBudget || safeToNumber(requestBody.brandBudget || brandBudget),
           requestId: requestBody.requestId,
           brandBudget: safeToNumber(requestBody.brandBudget || brandBudget),
           campaignId: requestBody.campaign_id,
+          totalCount: eligibleResponse.totalCount || 0,
         };
-
+  
         setEligibilityData(newEligibilityData);
-
+  
         setFilterData((prev) => ({
           ...prev,
           brandBudget: safeToNumber(requestBody.brandBudget || brandBudget),
           campaignId: requestBody.campaign_id,
           eligibleResults: {
-            budget: safeToNumber(requestBody.brandBudget || brandBudget),
-            currency: "USD",
-            count: eligibleResponse.count || 0,
+            budget: eligibleResponse.totalBudget || safeToNumber(requestBody.brandBudget || brandBudget),
+            currency: eligibleResponse.currency || "USD",
+            count: eligibleResponse.totalCount || 0,
             eligibleCount: eligibleResponse.eligibleCount || 0,
-            totalBudget: safeToNumber(requestBody.brandBudget || brandBudget),
+            totalBudget: eligibleResponse.totalBudget || safeToNumber(requestBody.brandBudget || brandBudget),
+            totalCount: eligibleResponse.totalCount || 0,
           },
         }));
-
+  
         toast.success(
-          `Perfect! Found ${
-            eligibleResponse.eligibleCount || 0
-          } matching creators`,
+          `Perfect! Found ${eligibleResponse.eligibleCount || 0} matching creators`,
           { id: "eligibility-check" }
         );
       } else {
@@ -2173,101 +2790,45 @@ const CreateCampaign = () => {
     }
   };
 
-  const handleFileChange = useCallback(
-    (event) => {
-      const file = event.target.files?.[0];
-      if (file && file instanceof File) {
-        const allowedTypes = [
-          "image/jpeg",
-          "image/jpg",
-          "image/png",
-          "image/webp",
-        ];
-        if (!allowedTypes.includes(file.type)) {
-          toast.error("Please upload a valid image (JPEG, PNG, or WebP)");
-          return;
-        }
+  const handleFileChange = useCallback((event) => {
+    const file = event.target.files?.[0];
+    if (file instanceof File) {
+      setCampaignData((prev) => ({
+        ...prev,
+        content: file,
+      }));
+    }
+  }, []);
 
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (file.size > maxSize) {
-          toast.error("Image must be smaller than 5MB");
-          return;
-        }
-
-        // Clean up previous URL if it exists
-        if (
-          campaignData.contentUrl &&
-          typeof campaignData.contentUrl === "string" &&
-          campaignData.contentUrl.startsWith("blob:")
-        ) {
-          try {
-            URL.revokeObjectURL(campaignData.contentUrl);
-          } catch (error) {
-            console.error("Error revoking previous blob URL:", error);
-          }
-        }
-
-        setCampaignData((prev) => ({
-          ...prev,
-          content: file,
-          contentUrl: null,
-        }));
-        toast.success("Campaign visual uploaded successfully");
-      }
-    },
-    [campaignData.contentUrl]
-  );
-
-  // Handle add task
   const handleAddTask = useCallback(() => {
-    if (!newTask.task.trim()) {
-      toast.error("Task title is required");
+    if (
+      !newTask.task.trim() ||
+      !newTask.description.trim() ||
+      !newTask.site_id ||
+      !newTask.task_type ||
+      (newTask.task_type === "repetitive" && !newTask.repeats_after)
+    ) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    if (!newTask.description.trim()) {
-      toast.error("Task description is required");
-      return;
-    }
-
-    if (!newTask.site_id) {
-      toast.error("Please select a target platform");
-      return;
-    }
-
-    if (!newTask.task_type) {
-      toast.error("Please select a task type");
-      return;
-    }
-
-    if (newTask.task_type === "repetitive" && !newTask.repeats_after) {
-      toast.error("Please select repeat frequency for repetitive tasks");
-      return;
-    }
-
-    const formattedTask = {
-      task: newTask.task.trim(),
-      description: newTask.description.trim(),
+    const taskToAdd = {
+      ...newTask,
       site_id: parseInt(newTask.site_id),
-      task_type: newTask.task_type,
-      requires_url: Boolean(newTask.requires_url),
-      repeats_after:
-        newTask.task_type === "repetitive" ? newTask.repeats_after : "",
     };
 
     if (editingTaskIndex !== null) {
       setCampaignData((prev) => ({
         ...prev,
         tasks: prev.tasks.map((task, index) =>
-          index === editingTaskIndex ? formattedTask : task
+          index === editingTaskIndex ? taskToAdd : task
         ),
       }));
       toast.success("Task updated successfully");
-      setEditingTaskIndex(null);
     } else {
       setCampaignData((prev) => ({
         ...prev,
-        tasks: [...prev.tasks, formattedTask],
+        tasks: [...prev.tasks, taskToAdd],
       }));
       toast.success("Task added successfully");
     }
@@ -2324,7 +2885,8 @@ const CreateCampaign = () => {
         return;
       }
 
-      const totalCost = safeToNumber(eligibilityData?.budget);
+      // FIXED: Handle undefined eligibilityData safely
+      const totalCost = safeToNumber(eligibilityData?.budget, 0);
       if (walletBalance < totalCost) {
         const errorMessage = `Insufficient funds. You need $${safeToFixed(
           totalCost,
@@ -2339,12 +2901,14 @@ const CreateCampaign = () => {
       // Check if user has PIN set
       if (!hasPinSet) {
         setLoading(false);
+        setPinContext('campaign'); // Set context for campaign creation
         setShowPinModal(true);
         return;
       }
 
       // Show PIN verification
       setLoading(false);
+      setPinContext('campaign'); // Set context for campaign creation
       setShowPinVerification(true);
     } catch (error) {
       console.error("Error in handleCreateCampaign:", error);
@@ -2371,6 +2935,11 @@ const CreateCampaign = () => {
         { id: "create-campaign" }
       );
 
+      // FIXED: Handle undefined eligibilityData safely
+      if (!eligibilityData?.requestId) {
+        throw new Error("No eligibility data found. Please analyze criteria first.");
+      }
+
       const invitePayload = {
         requestId: eligibilityData.requestId,
         campaign_id: draftCampaignId,
@@ -2380,18 +2949,37 @@ const CreateCampaign = () => {
 
       if (inviteResponse?.status === 200) {
         if (mode === "create") {
-          setPersistedCampaignData({
-            title: "",
-            objective: "",
-            description: "",
-            start_date: "",
-            end_date: "",
-            content: null,
-            contentUrl: null,
-            tasks: [],
+          // Clear persisted state after successful launch
+          setPersistedCampaignState({
+            activeStep: 0,
+            campaignData: {
+              title: "",
+              objective: "",
+              description: "",
+              start_date: "",
+              end_date: "",
+              content: null,
+              contentUrl: null,
+              tasks: [],
+            },
+            brandBudget: MIN_BUDGET_PER_INFLUENCER,
+            numberOfInfluencers: 1,
+            eligibilityData: null,
+            draftCampaignId: "",
+            filterData: {
+              numberInfluencers: 5,
+              selectedRank: "3",
+              gemPoints: 1000,
+              brandBudget: MIN_BUDGET_PER_INFLUENCER,
+              socialPlatforms: [],
+              minFollowers: "50",
+              startDate: "",
+              endDate: "",
+              selectedIndustries: [],
+              socialFollowers: {},
+              eligibleResults: undefined,
+            },
           });
-          setPersistedBudget(MIN_BUDGET_PER_INFLUENCER);
-          setPersistedInfluencers(1);
         }
 
         toast.success(
@@ -2421,9 +3009,7 @@ const CreateCampaign = () => {
     draftCampaignId,
     eligibilityData,
     mode,
-    setPersistedCampaignData,
-    setPersistedBudget,
-    setPersistedInfluencers,
+    setPersistedCampaignState,
   ]);
 
   const nextStep = useCallback(async () => {
@@ -2456,7 +3042,6 @@ const CreateCampaign = () => {
       }
       if (mode === "create" && campaignData.tasks.length === 0) {
         setError("Please add at least one task for creators");
-        toast.setError("Please add at least one task for creators");
         toast.error("Please add at least one task for creators");
         return;
       }
@@ -2677,7 +3262,6 @@ const CreateCampaign = () => {
                               </option>
                             ))}
                           </select>
-                          {/* <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" /> */}
                           {loadingObjectives && (
                             <p className="text-xs text-gray-500 mt-1">
                               Loading objectives...
@@ -2920,6 +3504,16 @@ const CreateCampaign = () => {
       case 1:
         return (
           <div className="mx-auto">
+            {/* FIXED: Influencer Mismatch Banner - Now in Step 1 (Influencers) */}
+            {eligibilityData && (
+              <InfluencerMismatchBanner
+                requestedInfluencers={numberOfInfluencers}
+                availableInfluencers={safeToNumber(eligibilityData?.totalCount, 0)} // Changed from eligibleCount to totalCount
+                onProceedWithAvailable={handleProceedWithAvailable}
+                onGoBackToEdit={handleGoBackToEdit}
+                loading={loading}
+              />
+            )}
             <Card className="shadow-lg border-0 bg-white">
               <CardContent className="p-6">
                 <FilterCampaigns
@@ -2931,6 +3525,7 @@ const CreateCampaign = () => {
                   campaignId={draftCampaignId}
                   startDate={campaignData.start_date}
                   endDate={campaignData.end_date}
+                  allowedSiteIds={getAllowedSiteIds()}
                 />
               </CardContent>
             </Card>
@@ -3055,7 +3650,7 @@ const CreateCampaign = () => {
                               more to launch.
                             </p>
                             <button
-                              onClick={handleAddFunds}
+                              onClick={handleAddFundsRedirect}
                               className="bg-primary-scale-400 text-black px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors w-full"
                             >
                               Add Funds
@@ -3082,7 +3677,7 @@ const CreateCampaign = () => {
                 onClick={handleCreateCampaign}
                 disabled={
                   loading ||
-                  walletBalance < safeToNumber(eligibilityData?.totalBudget)
+                  walletBalance < safeToNumber(eligibilityData?.budget, 0)
                 }
                 className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
               >
@@ -3147,6 +3742,19 @@ const CreateCampaign = () => {
       <StepperComponent steps={steps} activeStep={activeStep} />
 
       <div className="mx-auto">
+        {/* Payment Status Banner */}
+        <AnimatePresence>
+          {paymentStatus.show && (
+            <PaymentStatusBanner
+              status={paymentStatus.status}
+              refId={paymentStatus.refId}
+              sessionId={paymentStatus.sessionId}
+              onClose={handleClosePaymentStatus}
+              onRetry={handleRetryPayment}
+            />
+          )}
+        </AnimatePresence>
+
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -3278,6 +3886,27 @@ const CreateCampaign = () => {
         )}
       </AnimatePresence>
 
+      {/* Add Funds Modal */}
+      <AnimatePresence>
+        {showAddFunds && (
+          <AddFundsModal
+            isOpen={showAddFunds}
+            onClose={() => setShowAddFunds(false)}
+            onSubmit={handleAddFunds}
+            loading={addingFunds}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* FIXED: Payment Popup Manager */}
+      <PaymentPopupManager
+        isOpen={showPaymentPopup}
+        onClose={() => setShowPaymentPopup(false)}
+        paymentUrl={paymentUrl}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
+
       {/* Insufficient Funds Modal */}
       <AnimatePresence>
         {showInsufficientFunds && (
@@ -3286,7 +3915,7 @@ const CreateCampaign = () => {
             onClose={() => setShowInsufficientFunds(false)}
             onAddFunds={() => {
               setShowInsufficientFunds(false);
-              handleAddFunds();
+              handleAddFundsRedirect();
             }}
             requiredAmount={brandBudget}
             walletBalance={walletBalance}
@@ -3305,7 +3934,7 @@ const CreateCampaign = () => {
           animation: shake 0.5s ease-in-out;
         }
         
-        .rich-text-preview h {
+        .rich-text-preview h1, .rich-text-preview h2, .rich-text-preview h3 {
           font-size: 14px;
           font-weight: 600;
           margin: 8px 0 4px 0;
