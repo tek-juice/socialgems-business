@@ -1167,8 +1167,8 @@ const Signup = () => {
               {loading ? "Creating Account..." : "Sign up"}
             </button>
 
-            {/* Download App Section - RIGHT SIDE BOTTOM */}
-            <div className="flex-shrink-0">
+
+            {/* <div className="flex-shrink-0">
             <div className="flex items-center w-full py-2">
               <div className="flex-grow h-px bg-gray-300"></div>
               <p className="mx-4 text-center text-xs text-gray-600">Download the app</p>
@@ -1206,7 +1206,7 @@ const Signup = () => {
                   </div>
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         );
 

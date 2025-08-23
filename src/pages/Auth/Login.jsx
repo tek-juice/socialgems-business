@@ -376,125 +376,126 @@ const Login = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE - Form Section */}
+          {/* RIGHT SIDE - Form Section - UPDATED TO BE CENTERED */}
           <div className="w-1/2 bg-white flex flex-col h-full">
-            {/* Header */}
-            <div className="flex-shrink-0 p-8 pb-6">
-              <div className="flex justify-center mb-6">
-                {/* Clean logo without background */}
-                <img
-                  src={assets.LogoIcon}
-                  alt="Social Gems"
-                  className="h-12 w-12 object-contain"
-                />
-              </div>
-              
-              <div className="text-center">
-                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-                  Welcome Back
-                </h1>
-                <p className="text-gray-600 text-xs">
-                  Don't have an account?{" "}
-                  <button
-                    onClick={() => navigate("/signup")}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Sign up
-                  </button>
-                </p>
-              </div>
-            </div>
-
-            {/* Form Content - SCROLLABLE */}
-            <div className="flex-1 overflow-y-auto px-8 scrollbar-none">
-              <form
-                className="flex flex-col gap-5"
-                onSubmit={handleLogin}
-                noValidate
-              >
-                <div>
-                  <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-2">
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    placeholder="business@socialgems.me"
-                    className={`w-full px-4 py-3 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
-                      emailError ? "border-red-500" : ""
-                    }`}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-invalid={!!emailError}
-                    aria-describedby="email-error"
-                    disabled={loading}
-                  />
-                  {emailError && (
-                    <p id="email-error" className="text-red-500 text-xs mt-1">
-                      {emailError}
+            {/* Centered Content Container */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-full max-w-sm px-8">
+                {/* Header */}
+                <div className="flex-shrink-0 mb-8">
+                  <div className="flex justify-center mb-6">
+                    <img
+                      src={assets.LogoIcon}
+                      alt="Social Gems"
+                      className="h-12 w-12 object-contain"
+                    />
+                  </div>
+                  
+                  <div className="text-center">
+                    <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                      Welcome Back
+                    </h1>
+                    <p className="text-gray-600 text-xs">
+                      Don't have an account?{" "}
+                      <button
+                        onClick={() => navigate("/signup")}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Sign up
+                      </button>
                     </p>
-                  )}
+                  </div>
                 </div>
 
-                <div>
-                  <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
+                {/* Form Content */}
+                <form
+                  className="flex flex-col gap-5"
+                  onSubmit={handleLogin}
+                  noValidate
+                >
+                  <div>
+                    <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-2">
+                      Email address
+                    </label>
                     <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      placeholder="Enter your password"
-                      className={`w-full pr-10 py-3 px-4 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
-                        passwordError ? "border-red-500" : ""
+                      type="email"
+                      id="email"
+                      placeholder="business@socialgems.me"
+                      className={`w-full px-4 py-3 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
+                        emailError ? "border-red-500" : ""
                       }`}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      aria-invalid={!!passwordError}
-                      aria-describedby="password-error"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      aria-invalid={!!emailError}
+                      aria-describedby="email-error"
                       disabled={loading}
                     />
-                    <button
+                    {emailError && (
+                      <p id="email-error" className="text-red-500 text-xs mt-1">
+                        {emailError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-xs font-medium text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        placeholder="Enter your password"
+                        className={`w-full pr-10 py-3 px-4 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
+                          passwordError ? "border-red-500" : ""
+                        }`}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        aria-invalid={!!passwordError}
+                        aria-describedby="password-error"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                    {passwordError && (
+                      <p id="password-error" className="text-red-500 text-xs mt-1">
+                        {passwordError}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button 
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="text-xs text-primary hover:underline font-medium"
+                      onClick={() => setShowForgotPassword(true)}
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
+                      Forgot password?
                     </button>
                   </div>
-                  {passwordError && (
-                    <p id="password-error" className="text-red-500 text-xs mt-1">
-                      {passwordError}
-                    </p>
-                  )}
-                </div>
 
-                <div className="flex justify-end">
-                  <button 
-                    type="button"
-                    className="text-xs text-primary hover:underline font-medium"
-                    onClick={() => setShowForgotPassword(true)}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition disabled:opacity-50 text-xs hover:bg-primary"
                   >
-                    Forgot password?
+                    {loading ? 'Signing in...' : 'Sign in'}
                   </button>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition disabled:opacity-50 text-xs hover:bg-primary"
-                >
-                  {loading ? 'Signing in...' : 'Sign in'}
-                </button>
-              </form>
+                </form>
+              </div>
             </div>
 
-            {/* Download App Section - RIGHT SIDE BOTTOM */}
-            <div className="flex-shrink-0 p-8 pt-6 border-t border-gray-100">
+            {/* <div className="flex-shrink-0 p-8 pt-6 border-t border-gray-100">
               <p className="text-center text-xs text-gray-600 mb-4">Download the app</p>
               <div className="flex gap-3 justify-center w-full">
                 <button
@@ -527,7 +528,7 @@ const Login = () => {
                   </div>
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
