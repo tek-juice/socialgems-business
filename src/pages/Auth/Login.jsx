@@ -359,16 +359,16 @@ const Login = () => {
                 <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
                 
                 <div className="flex items-center justify-center gap-4">
-                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaInstagram className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiTiktokLogoLight className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaXTwitter className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiYoutubeLogo className="w-5 h-5 text-primary" />
                   </a>
                 </div>
@@ -399,7 +399,7 @@ const Login = () => {
                       Don't have an account?{" "}
                       <button
                         onClick={() => navigate("/signup")}
-                        className="text-primary hover:underline font-medium"
+                        className="text-secondary hover:underline font-medium"
                       >
                         Sign up
                       </button>
@@ -554,13 +554,13 @@ const Login = () => {
                 <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
                 
                 <div className="flex items-center justify-center gap-4">
-                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaInstagram className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiTiktokLogoLight className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaXTwitter className="w-5 h-5 text-primary" />
                   </a>
                   <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
@@ -592,7 +592,7 @@ const Login = () => {
                   Don't have an account?{" "}
                   <button
                     onClick={() => navigate("/signup")}
-                    className="text-primary hover:underline font-medium"
+                    className="text-secondary hover:underline font-medium"
                   >
                     Sign up
                   </button>
@@ -751,7 +751,7 @@ const Login = () => {
                   Don't have an account?{" "}
                   <button
                     onClick={() => navigate("/signup")}
-                    className="text-primary hover:underline font-medium"
+                    className="text-secondary hover:underline font-medium"
                   >
                     Sign up
                   </button>

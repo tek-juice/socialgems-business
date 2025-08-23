@@ -1481,7 +1481,7 @@ const Signup = () => {
                           {stepTitles[currentStep].description}{" "}
                           <button
                             onClick={() => navigate("/login")}
-                            className="text-primary hover:underline font-bold"
+                            className="text-secondary hover:underline font-bold"
                           >
                             Login
                           </button>
