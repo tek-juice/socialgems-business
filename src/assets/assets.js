@@ -5,7 +5,11 @@ import Logo from './logo.png'
 import LogoIcon from './LogoIcon.svg'
 
 // banner 
-import banner from './SG-web-banner.webp'
+// import banner from './SG-web-banner.webp'
+
+// import banner from './onboarding.jpg'
+
+import banner from './onboarding.png'
 
 // Socials 
 import tiktok from './tiktok.webp'

@@ -23,12 +23,6 @@ import {
   ExternalLink,
   Gift,
 } from "lucide-react";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-  InputOTPSeparator,
-} from "../../components/ui/input-otp";
 
 import { FaInstagram, FaXTwitter } from "react-icons/fa6";
 import { PiTiktokLogoLight } from "react-icons/pi";
@@ -39,6 +33,63 @@ import { PiYoutubeLogo } from "react-icons/pi";
 import { TiBusinessCard } from "react-icons/ti";
 import { CiAt } from "react-icons/ci";
 import { assets } from "../../assets/assets";
+
+// Simple OTP Input Component
+const OTPInput = ({ value, onChange, disabled, maxLength = 4 }) => {
+  const inputRefs = useRef([]);
+
+  const handleChange = (index, val) => {
+    if (val.length > 1) {
+      // Handle paste
+      const pastedValue = val.slice(0, maxLength);
+      onChange(pastedValue);
+      
+      // Focus on the last filled input or the next empty one
+      const nextIndex = Math.min(pastedValue.length - 1, maxLength - 1);
+      inputRefs.current[nextIndex]?.focus();
+      return;
+    }
+
+    // Handle single character input
+    const newValue = value.split('');
+    newValue[index] = val;
+    
+    // Remove any undefined values and join
+    const finalValue = newValue.slice(0, maxLength).join('').replace(/undefined/g, '');
+    onChange(finalValue);
+
+    // Move to next input
+    if (val && index < maxLength - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !value[index] && index > 0) {
+      // Move to previous input on backspace if current is empty
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  return (
+    <div className="flex gap-2 justify-center">
+      {Array.from({ length: maxLength }, (_, index) => (
+        <input
+          key={index}
+          ref={(el) => (inputRefs.current[index] = el)}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={value[index] || ''}
+          onChange={(e) => handleChange(index, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(index, e)}
+          disabled={disabled}
+          className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none disabled:bg-gray-100"
+        />
+      ))}
+    </div>
+  );
+};
 
 // Terms and Privacy Modal Component
 const TermsPrivacyModal = ({ isOpen, onClose }) => {
@@ -900,17 +951,17 @@ const Signup = () => {
   };
 
   const handleAppStoreDownload = () => {
-    window.open('https://apps.apple.com/app/socialgems', '_blank');
+    window.open('https://apps.apple.com/ug/app/social-gems/id6736918664', '_blank');
   };
 
   const handlePlayStoreDownload = () => {
-    window.open('https://play.google.com/store/apps/details?id=com.socialgems.app', '_blank');
+    window.open('https://play.google.com/store/apps/details?id=com.tekjuice.social_gems', '_blank');
   };
 
   const stepTitles = {
     1: {
       title: "Create an account",
-      description: "Already have an account?"
+      description: "Already have an account ?"
     },
     2: {
       title: "Verify Email",
@@ -942,7 +993,7 @@ const Signup = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-5">
+          <div className="space-y-2">
             {/* Business Name Field */}
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-2">
@@ -983,100 +1034,106 @@ const Signup = () => {
               />
             </div>
 
-            {/* Select Country Field */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Select country
-              </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                  disabled={loading}
-                  className="w-full px-4 py-3 text-xs text-black rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-left flex items-center justify-between transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    {selectedCountry && (
-                      <span className="text-orange-500 font-medium">🇺🇬</span>
-                    )}
-                    <span>
-                      {selectedCountry ? selectedCountry.name : "Uganda"}
-                    </span>
-                  </div>
-                  <ChevronDown
-                    className={`w-4 h-4 text-gray-400 transition-transform ${
-                      isCountryDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-
-                {isCountryDropdownOpen && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                    <div className="p-2 border-b border-gray-100">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search countries..."
-                          value={countrySearchTerm}
-                          onChange={(e) => setCountrySearchTerm(e.target.value)}
-                          className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
-                        />
-                      </div>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto scrollbar-none">
-                      {filteredCountries.length > 0 ? (
-                        filteredCountries.map((country) => (
-                          <button
-                            key={country.id}
-                            type="button"
-                            className="w-full px-3 py-2 text-xs hover:bg-gray-50 text-left border-b border-gray-50 last:border-b-0 flex items-center justify-between"
-                            onClick={() => handleCountryChange(country)}
-                          >
-                            <span>{country.name}</span>
-                            <span className="text-gray-500">+{country.phone_code}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-3 py-2 text-xs text-gray-500">
-                          No countries found
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Phone Number Field */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-2">
-                Phone number
-              </label>
-              <div className="flex gap-2">
-                {/* Country Code Dropdown */}
-                <div className="relative w-24">
+            {/* Country and Phone Number Row - Responsive */}
+            <div className="flex flex-col lg:flex-row gap-2">
+              {/* Select Country Field */}
+              <div className="w-full lg:flex-1">
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Select country
+                </label>
+                <div className="relative">
                   <button
                     type="button"
                     onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                    disabled={loading || !selectedCountry}
-                    className="w-full px-3 py-3 text-xs text-black rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary flex items-center justify-center gap-1 transition-all"
+                    disabled={loading}
+                    className="w-full px-4 py-3 text-xs text-black rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-left flex items-center justify-between transition-all"
                   >
-                    <span className="text-orange-500">🇺🇬</span>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                    <span>
+                      {selectedCountry ? selectedCountry.name : "Uganda"}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-gray-400 transition-transform ${
+                        isCountryDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
-                </div>
 
-                {/* Phone Number Input */}
-                <input
-                  placeholder="772906777"
-                  type="tel"
-                  value={localPhoneNumber}
-                  className="flex-1 px-4 py-3 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all"
-                  onChange={(e) => handlePhoneChange(e.target.value)}
-                  disabled={loading || !selectedCountry}
-                />
+                  {isCountryDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+                          <input
+                            type="text"
+                            placeholder="Search countries..."
+                            value={countrySearchTerm}
+                            onChange={(e) => setCountrySearchTerm(e.target.value)}
+                            className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto scrollbar-none">
+                        {filteredCountries.length > 0 ? (
+                          filteredCountries.map((country) => (
+                            <button
+                              key={country.id}
+                              type="button"
+                              className="w-full px-3 py-2 text-xs hover:bg-gray-50 text-left border-b border-gray-50 last:border-b-0 flex items-center justify-between"
+                              onClick={() => handleCountryChange(country)}
+                            >
+                              <span>{country.name}</span>
+                              <span className="text-gray-500">+{country.phone_code}</span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-xs text-gray-500">
+                            No countries found
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Phone Number Field */}
+              <div className="w-full lg:flex-1">
+                <label className="block text-xs font-medium text-gray-700 mb-2">
+                  Phone number
+                </label>
+                {/* Unified Phone Input Field */}
+                <div className="flex overflow-hidden items-center bg-gray-200 focus-within:bg-white focus-within:border focus-within:border-primary rounded-lg transition-all">
+                  {/* Country Code Section */}
+                  <div className="px-3 py-3 text-xs text-black font-medium border-r border-gray-300">
+                    +{selectedCountry ? selectedCountry.phone_code : "256"}
+                  </div>
+                  
+                  {/* Phone Number Input */}
+                  <input
+                    placeholder="772906777"
+                    type="tel"
+                    value={localPhoneNumber}
+                    className="flex-1 px-4 py-3 border-none bg-transparent outline-none text-black text-xs"
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    disabled={loading || !selectedCountry}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Referral Code Field (Optional) */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-2">
+                Referral code <span className="text-gray-400">(optional)</span>
+              </label>
+              <input
+                placeholder="Enter referral code"
+                type="text"
+                value={referralCode}
+                className="w-full px-4 py-3 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all"
+                onChange={(e) => setReferralCode(e.target.value)}
+                disabled={loading}
+              />
             </div>
 
             {/* Terms Checkbox */}
@@ -1109,36 +1166,68 @@ const Signup = () => {
             >
               {loading ? "Creating Account..." : "Sign up"}
             </button>
+
+            {/* Download App Section - RIGHT SIDE BOTTOM */}
+            <div className="flex-shrink-0">
+            <div className="flex items-center w-full py-2">
+              <div className="flex-grow h-px bg-gray-300"></div>
+              <p className="mx-4 text-center text-xs text-gray-600">Download the app</p>
+              <div className="flex-grow h-px bg-gray-300"></div>
+            </div>
+
+              <div className="flex gap-3 justify-center w-full">
+                <button
+                  onClick={handleAppStoreDownload}
+                  className="bg-black hover:bg-gray-900 text-white rounded-lg px-4 py-2 flex items-center w-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <img 
+                    src={assets.applelogo}
+                    alt="Apple Logo"
+                    className="w-6 h-6 mr-2 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-xs font-semibold">App Store</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={handlePlayStoreDownload}
+                  className="bg-black hover:bg-gray-900 text-white w-full rounded-lg px-4 py-2 flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <img 
+                    src={assets.playstorelogo}
+                    alt="Play Store Logo"
+                    className="w-6 h-6 mr-2 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-xs font-semibold">Google Play</div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         );
 
       case 2:
         return (
           <div className="space-y-6 mt-2">
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={4}
-                value={otpData.otp}
-                onChange={(value) => {
-                  setOtpData((prev) => ({ ...prev, otp: value }));
-                  if (value.length === 4) {
-                    setTimeout(() => {
-                      if (!loading) {
-                        handleStepThree();
-                      }
-                    }, 100);
-                  }
-                }}
-                disabled={loading}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+            <OTPInput
+              value={otpData.otp}
+              onChange={(value) => {
+                setOtpData((prev) => ({ ...prev, otp: value }));
+                if (value.length === 4) {
+                  setTimeout(() => {
+                    if (!loading) {
+                      handleStepThree();
+                    }
+                  }, 100);
+                }
+              }}
+              disabled={loading}
+              maxLength={4}
+            />
 
             <div className="text-center">
               <span className="text-xs text-gray-600">
@@ -1290,17 +1379,6 @@ const Signup = () => {
                   </button>
                 ))}
               </div>
-              
-              {/* {selectedCategories.length > 0 && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-600 mb-2">
-                    Selected categories: <span className="font-medium">{selectedCategories.join(', ')}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {selectedIndustries.length} industries included
-                  </p>
-                </div>
-              )} */}
             </div>
 
             <div className="flex gap-3">
@@ -1339,11 +1417,11 @@ const Signup = () => {
         }
       `}</style>
 
-      {/* Desktop Layout - FULL SCREEN */}
-      <div className="min-h-screen w-full lg:flex hidden">
-        <div className="w-full h-screen flex">
+      {/* Desktop Layout - 80vh and 80vw with Shadow */}
+      <div className="min-h-screen w-full hidden xl:flex items-center justify-center bg-gray-100">
+        <div className="w-[80vw] h-[80vh] flex shadow-2xl rounded-2xl overflow-hidden bg-white">
           
-          {/* LEFT SIDE - Image Section - FULL HEIGHT */}
+          {/* LEFT SIDE - Image Section */}
           <div className="w-1/2 relative overflow-hidden">
             {/* Background Image */}
             <div 
@@ -1360,19 +1438,16 @@ const Signup = () => {
                 <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
                 
                 <div className="flex items-center justify-center gap-4">
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaInstagram className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
-                    <SlSocialFacebook className="w-5 h-5 text-primary" />
-                  </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiTiktokLogoLight className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaXTwitter className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiYoutubeLogo className="w-5 h-5 text-primary" />
                   </a>
                 </div>
@@ -1380,86 +1455,141 @@ const Signup = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE - Form Section - FULL HEIGHT */}
-          <div className="w-1/2 bg-white flex flex-col h-screen">
-            {/* Header */}
-            <div className="flex-shrink-0 p-8 pb-6">
-              <div className="flex justify-center mb-6">
-                {/* Clean logo without background */}
-                <img
-                  src={assets.LogoIcon}
-                  alt="Social Gems"
-                  className="h-12 w-12 object-contain"
-                />
-              </div>
-              
-              <div className="text-center">
-                <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-                  {stepTitles[currentStep].title}
-                </h1>
-                <p className="text-gray-600 text-xs">
-                  {currentStep === 1 ? (
-                    <>
-                      {stepTitles[currentStep].description}{" "}
-                      <button
-                        onClick={() => navigate("/login")}
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Login
-                      </button>
-                    </>
-                  ) : (
-                    stepTitles[currentStep].description
-                  )}
-                </p>
-              </div>
-            </div>
-
-            {/* Form Content - SCROLLABLE */}
-            <div className="flex-1 overflow-y-auto px-8 scrollbar-none">
-              {renderStepContent()}
-            </div>
-
-            {/* Download App Section - RIGHT SIDE BOTTOM */}
-            <div className="flex-shrink-0 p-8 pt-6 border-t border-gray-100">
-              <p className="text-center text-xs text-gray-600 mb-4">Download the app</p>
-              <div className="flex gap-3 justify-center w-full">
-                <button
-                  onClick={handleAppStoreDownload}
-                  className="bg-black hover:bg-gray-900 text-white rounded-lg px-4 py-2 flex items-center w-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <img 
-                    src={assets.applelogo}
-                    alt="Apple Logo"
-                    className="w-6 h-6 mr-2 object-contain"
-                  />
-                  <div className="text-left">
-                    <div className="text-xs text-gray-300">Get it on</div>
-                    <div className="text-xs font-semibold">App Store</div>
+          {/* RIGHT SIDE - Form Section */}
+          <div className="w-1/2 flex flex-col h-full justify-center">
+            {/* Centered Content Container */}
+            <div className="flex-1 flex items-center justify-center px-[50px]">
+              <div className="w-full max-w-md">
+                {/* Header */}
+                <div className="flex-shrink-0 mb-6">
+                  <div className="flex justify-center mb-4">
+                    {/* Clean logo without background */}
+                    <img
+                      src={assets.LogoIcon}
+                      alt="Social Gems"
+                      className="h-16 w-16 object-contain"
+                    />
                   </div>
-                </button>
-                
-                <button
-                  onClick={handlePlayStoreDownload}
-                  className="bg-black hover:bg-gray-900 text-white w-full rounded-lg px-4 py-2 flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <img 
-                    src={assets.playstorelogo}
-                    alt="Play Store Logo"
-                    className="w-6 h-6 mr-2 object-contain"
-                  />
-                  <div className="text-left">
-                    <div className="text-xs text-gray-300">Get it on</div>
-                    <div className="text-xs font-semibold">Google Play</div>
+                  
+                  <div className="text-center">
+                    <h1 className="text-2xl font-semibold text-secondary mb-2">
+                      {stepTitles[currentStep].title}
+                    </h1>
+                    <p className="text-gray-600 text-xs">
+                      {currentStep === 1 ? (
+                        <>
+                          {stepTitles[currentStep].description}{" "}
+                          <button
+                            onClick={() => navigate("/login")}
+                            className="text-primary hover:underline font-bold"
+                          >
+                            Login
+                          </button>
+                        </>
+                      ) : (
+                        stepTitles[currentStep].description
+                      )}
+                    </p>
                   </div>
-                </button>
+                </div>
+
+                {/* Form Content */}
+                <div className={currentStep !== 1 ? "max-h-96 overflow-y-auto scrollbar-none" : ""}>
+                  {renderStepContent()}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile Layout - FULL SCREEN */}
+      {/* Tablet Layout - Slightly Smaller but Full Coverage */}
+      <div className="min-h-screen w-full lg:flex hidden xl:hidden bg-gray-50">
+        <div className="w-full h-screen flex shadow-xl">
+          
+          {/* LEFT SIDE - Image Section */}
+          <div className="w-1/2 relative overflow-hidden">
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${assets.banner})` }}
+            />
+            
+            {/* Dark Overlay */}
+            <div className="absolute inset-0 bg-black/40"></div>
+            
+            {/* Content - CENTERED SOCIALS AT BOTTOM */}
+            <div className="relative z-20 h-full flex flex-col justify-end items-center pb-12">
+              <div className="text-white text-center">
+                <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
+                
+                <div className="flex items-center justify-center gap-4">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <FaInstagram className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <PiTiktokLogoLight className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <FaXTwitter className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-secondary rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <PiYoutubeLogo className="w-5 h-5 text-primary" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE - Form Section */}
+          <div className="w-1/2 flex flex-col h-full justify-center bg-white">
+            {/* Centered Content Container */}
+            <div className="flex-1 flex items-center justify-center px-[40px]">
+              <div className="w-full max-w-sm">
+                {/* Header */}
+                <div className="flex-shrink-0 mb-6">
+                  <div className="flex justify-center mb-4">
+                    {/* Clean logo without background */}
+                    <img
+                      src={assets.LogoIcon}
+                      alt="Social Gems"
+                      className="h-14 w-14 object-contain"
+                    />
+                  </div>
+                  
+                  <div className="text-center">
+                    <h1 className="text-xl font-semibold text-secondary mb-2">
+                      {stepTitles[currentStep].title}
+                    </h1>
+                    <p className="text-gray-600 text-xs">
+                      {currentStep === 1 ? (
+                        <>
+                          {stepTitles[currentStep].description}{" "}
+                          <button
+                            onClick={() => navigate("/login")}
+                            className="text-primary hover:underline font-bold"
+                          >
+                            Login
+                          </button>
+                        </>
+                      ) : (
+                        stepTitles[currentStep].description
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Form Content */}
+                <div className={currentStep !== 1 ? "max-h-80 overflow-y-auto scrollbar-none" : ""}>
+                  {renderStepContent()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout - Full Screen (unchanged) */}
       <div className="min-h-screen w-full flex flex-col lg:hidden bg-gray-50">
         <div className="w-full h-screen flex flex-col">
           {/* Mobile Logo Section */}

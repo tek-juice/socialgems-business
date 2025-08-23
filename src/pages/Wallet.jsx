@@ -35,6 +35,10 @@ import {
   FiInfo,
   FiLock,
   FiLoader,
+  FiMail,
+  FiPhone,
+  FiKey,
+  FiSmartphone,
 } from "react-icons/fi";
 
 import { HiArrowsRightLeft } from "react-icons/hi2";
@@ -135,7 +139,7 @@ const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => 
           {config.showRetry && (
             <button
               onClick={onRetry}
-              className="px-3 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors"
+              className="px-3 py-1 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
             >
               Try Again
             </button>
@@ -173,10 +177,19 @@ const SkeletonButton = ({ className }) => (
 
 // Table Components
 const Table = ({ className, children, ...props }) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto scrollbar-hide">
     <table className={cn("w-full caption-bottom text-sm", className)} {...props}>
       {children}
     </table>
+    <style jsx>{`
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+    `}</style>
   </div>
 );
 
@@ -279,7 +292,7 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
     success: "bg-green-100 text-green-800",
     warning: "bg-yellow-100 text-yellow-800",
     error: "bg-red-100 text-red-800",
-    info: "bg-blue-100 text-blue-800",
+    info: "bg-primary/10 text-primary",
     gold: "bg-gradient-to-r from-primary to-[#E8C547] text-secondary",
   };
 
@@ -590,7 +603,7 @@ const TransactionCard = ({ transaction, onClick, isLastOdd = false }) => {
       case "WITHDRAW":
         return <FiArrowUpRight className="w-5 h-5 text-red-600" />;
       case "CAMPAIGN_PAYMENT":
-        return <HiArrowsRightLeft className="w-5 h-5 text-blue-600" />;
+        return <HiArrowsRightLeft className="w-5 h-5 text-primary" />;
       default:
         return <FiDollarSign className="w-5 h-5 text-gray-600" />;
     }
@@ -704,7 +717,7 @@ const TransactionTableRow = ({ transaction, onClick }) => {
       case "WITHDRAW":
         return <FiArrowUpRight className="w-5 h-5 text-red-600" />;
       case "CAMPAIGN_PAYMENT":
-        return <HiArrowsRightLeft className="w-5 h-5 text-blue-600" />;
+        return <HiArrowsRightLeft className="w-5 h-5 text-primary" />;
       default:
         return <FiDollarSign className="w-5 h-5 text-gray-600" />;
     }
@@ -806,8 +819,16 @@ const TransactionTableRow = ({ transaction, onClick }) => {
         )}
       </TableCell>
       <TableCell>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-          <FiMoreHorizontal className="w-4 h-4" />
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 px-3 text-xs text-secondary text-semibold hover:text-bold hover:bg-primary/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick(transaction);
+          }}
+        >
+          View
         </Button>
       </TableCell>
     </TableRow>
@@ -826,7 +847,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
       case "WITHDRAW":
         return <FiArrowUpRight className="w-6 h-6 text-red-600" />;
       case "CAMPAIGN_PAYMENT":
-        return <HiArrowsRightLeft className="w-6 h-6 text-blue-600" />;
+        return <HiArrowsRightLeft className="w-6 h-6 text-primary" />;
       default:
         return <FiDollarSign className="w-6 h-6 text-gray-600" />;
     }
@@ -897,15 +918,15 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-8 h-8 border-2 border-secondary border-t-transparent rounded-full"
-              />
+              <div className="space-y-4 w-full">
+                <SkeletonLine className="h-4 w-3/4" />
+                <SkeletonLine className="h-4 w-1/2" />
+                <SkeletonLine className="h-4 w-2/3" />
+                <SkeletonLine className="h-4 w-1/3" />
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Transaction Header */}
               <div className="flex items-center gap-4 p-2 bg-gray-50 rounded-lg">
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
                   {getTransactionIcon(transaction.trans_type)}
@@ -926,7 +947,6 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
                 </div>
               </div>
 
-              {/* Transaction Details */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Transaction ID</span>
@@ -960,7 +980,6 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
                 )}
               </div>
 
-              {/* Campaign Details (if available) */}
               {transactionDetails && (
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <h5 className="font-semibold text-gray-900 mb-3">Campaign Details</h5>
@@ -999,7 +1018,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction, transactionDetai
 };
 
 // PIN Verification Modal
-const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
+const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading, onForgotPin }) => {
   const [pin, setPin] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
 
@@ -1024,7 +1043,11 @@ const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
       }
     } catch (error) {
       console.error('Error verifying PIN:', error);
-      toast.error('Invalid PIN. Please try again.');
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Invalid PIN. Please try again.');
+      }
     } finally {
       setVerifyLoading(false);
     }
@@ -1078,17 +1101,463 @@ const PinVerificationModal = ({ isOpen, onClose, onSuccess, loading }) => {
               <Button type="submit" disabled={verifyLoading || pin.length !== 5} className="flex-1">
                 {verifyLoading ? (
                   <>
-                    <motion.div 
-                      animate={{ rotate: 360 }} 
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-4 h-4 mr-2"
-                    >
-                      <FiLoader className="w-4 h-4" />
-                    </motion.div>
+                    <div className="flex space-x-1 mr-2">
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                    </div>
                     Verifying...
                   </>
                 ) : (
                   'Verify PIN'
+                )}
+              </Button>
+            </div>
+
+            <div className="pt-2 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={onForgotPin}
+                className="w-full text-center text-xs text-secondary transition-colors"
+                disabled={verifyLoading}
+              >
+                Forgot PIN ? <span className="font-semibold">Reset via OTP</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Email OTP Modal
+const EmailOTPModal = ({ isOpen, onClose, onSuccess, email, loading }) => {
+  const [otp, setOtp] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+
+  const sendEmailOTP = async () => {
+    setSendingOtp(true);
+    try {
+      const response = await post('users/sendEmailOTP', {
+        email: email
+      });
+      
+      if (response?.status === 200) {
+        setOtpSent(true);
+        toast.success('Email OTP sent successfully!');
+      }
+    } catch (error) {
+      console.error('Error sending email OTP:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to send email OTP');
+      }
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (otp.length !== 4) {
+      toast.error('OTP must be 4 digits');
+      return;
+    }
+
+    onSuccess(otp);
+  };
+
+  const handleCancel = () => {
+    setOtp('');
+    setOtpSent(false);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (isOpen && !otpSent) {
+      sendEmailOTP();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <FiMail className="w-5 h-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Email Verification</h3>
+              <p className="text-xs text-gray-600">Enter the OTP sent to your email</p>
+            </div>
+          </div>
+
+          {sendingOtp ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center space-y-4">
+                <div className="space-y-2">
+                  <SkeletonLine className="h-4 w-full" />
+                  <SkeletonLine className="h-4 w-3/4 mx-auto" />
+                  <SkeletonLine className="h-4 w-1/2 mx-auto" />
+                </div>
+                <p className="text-sm text-gray-600">Sending OTP to {email}...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-xs text-secondary">
+                  We've sent a 4-digit OTP to <strong>{email}</strong>
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email-otp">Email OTP</Label>
+                  <Input
+                    id="email-otp"
+                    type="text"
+                    placeholder="1234"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    maxLength={4}
+                    required
+                    disabled={verifyingOtp}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCancel} disabled={verifyingOtp} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={verifyingOtp || otp.length !== 4} className="flex-1">
+                    {verifyingOtp ? (
+                      <>
+                        <div className="flex space-x-1 mr-2">
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                        Verifying...
+                      </>
+                    ) : (
+                      'Verify Email'
+                    )}
+                  </Button>
+                </div>
+
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={sendEmailOTP}
+                    className="w-full text-center text-sm text-secondary transition-colors"
+                    disabled={verifyingOtp || sendingOtp}
+                  >
+                    Resend Email OTP
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Phone OTP Modal
+const PhoneOTPModal = ({ isOpen, onClose, onSuccess, phone, loading }) => {
+  const [otp, setOtp] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+
+  const sendPhoneOTP = async () => {
+    setSendingOtp(true);
+    try {
+      const response = await post('users/sendPhoneOTP', {
+        phone: phone
+      });
+      
+      if (response?.status === 200) {
+        setOtpSent(true);
+        toast.success('Phone OTP sent successfully!');
+      }
+    } catch (error) {
+      console.error('Error sending phone OTP:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to send phone OTP');
+      }
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (otp.length !== 4) {
+      toast.error('OTP must be 4 digits');
+      return;
+    }
+
+    onSuccess(otp);
+  };
+
+  const handleCancel = () => {
+    setOtp('');
+    setOtpSent(false);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (isOpen && !otpSent) {
+      sendPhoneOTP();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <FiPhone className="w-5 h-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Phone Verification</h3>
+              <p className="text-xs text-gray-600">Enter the OTP sent to your phone</p>
+            </div>
+          </div>
+
+          {sendingOtp ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center space-y-4">
+                <div className="space-y-2">
+                  <SkeletonLine className="h-4 w-full" />
+                  <SkeletonLine className="h-4 w-3/4 mx-auto" />
+                  <SkeletonLine className="h-4 w-1/2 mx-auto" />
+                </div>
+                <p className="text-sm text-gray-600">Sending OTP to {phone}...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                <p className="text-xs text-secondary">
+                  We've sent a 4-digit OTP to <strong>{phone}</strong>
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="phone-otp">Phone OTP</Label>
+                  <Input
+                    id="phone-otp"
+                    type="text"
+                    placeholder="1234"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    maxLength={4}
+                    required
+                    disabled={verifyingOtp}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCancel} disabled={verifyingOtp} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={verifyingOtp || otp.length !== 4} className="flex-1">
+                    {verifyingOtp ? (
+                      <>
+                        <div className="flex space-x-1 mr-2">
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                        Verifying...
+                      </>
+                    ) : (
+                      'Verify Phone'
+                    )}
+                  </Button>
+                </div>
+
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={sendPhoneOTP}
+                    className="w-full text-center text-sm text-secondary transition-colors"
+                    disabled={verifyingOtp || sendingOtp}
+                  >
+                    Resend Phone OTP
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// New PIN Setup Modal (for reset)
+const NewPinSetupModal = ({ isOpen, onClose, onSuccess, emailOtp, phoneOtp, onRestartFlow }) => {
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (pin !== confirmPin) {
+      toast.error('PINs do not match');
+      return;
+    }
+    
+    if (pin.length !== 5) {
+      toast.error('PIN must be 5 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await post('wallet/resetTransactionPin', {
+        pin: pin,
+        confirmPin: confirmPin,
+        emailCode: emailOtp,
+        phoneCode: phoneOtp,
+        deviceId: ""
+      });
+      
+      if (response?.status === 200) {
+        toast.success('PIN reset successfully!');
+        onSuccess();
+        onClose();
+        setPin('');
+        setConfirmPin('');
+      }
+    } catch (error) {
+      console.error('Error resetting PIN:', error);
+      
+      if (error.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        
+        if (errorMessage.toLowerCase().includes('invalid') && 
+            (errorMessage.toLowerCase().includes('code') || errorMessage.toLowerCase().includes('otp'))) {
+          
+          toast.error('OTP codes are invalid or expired. Please verify your codes again.');
+          
+          // Show option to restart the flow
+          setTimeout(() => {
+            const shouldRestart = window.confirm(
+              'The OTP codes you entered are invalid or have expired. Would you like to restart the verification process?'
+            );
+            
+            if (shouldRestart && onRestartFlow) {
+              onRestartFlow();
+            }
+          }, 1000);
+          
+        } else {
+          toast.error(errorMessage);
+        }
+      } else {
+        toast.error('Failed to reset PIN. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl max-w-md w-full"
+      >
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-[#E8C547] rounded-lg flex items-center justify-center">
+              <FiKey className="w-5 h-5 text-secondary" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Set New PIN</h3>
+              <p className="text-xs text-gray-600">Create a new 5-digit PIN for your wallet</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-pin">New PIN</Label>
+              <Input
+                id="new-pin"
+                type="password"
+                placeholder="12345"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirm-new-pin">Confirm New PIN</Label>
+              <Input
+                id="confirm-new-pin"
+                type="password"
+                placeholder="12345"
+                value={confirmPin}
+                onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                maxLength={5}
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="flex-1">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading || pin.length !== 5 || confirmPin.length !== 5} className="flex-1">
+                {loading ? (
+                  <>
+                    <div className="flex space-x-1 mr-2">
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                    Resetting PIN...
+                  </>
+                ) : (
+                  'Reset PIN'
                 )}
               </Button>
             </div>
@@ -1167,6 +1636,7 @@ const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
               className="w-full h-12 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="CARD">Credit/Debit Card</option>
+              <option value="MOBILE">Mobile Money</option>
             </select>
           </div>
 
@@ -1187,15 +1657,11 @@ const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="w-4 h-4 border-2 border-secondary border-t-transparent rounded-full"
-                  />
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                  </div>
                   Processing...
                 </div>
               ) : (
@@ -1247,7 +1713,11 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
       }
     } catch (error) {
       console.error('Error setting PIN:', error);
-      toast.error('Failed to set PIN');
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to set PIN');
+      }
     } finally {
       setLoading(false);
     }
@@ -1308,13 +1778,11 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
               <Button type="submit" disabled={loading} className="flex-1">
                 {loading ? (
                   <>
-                    <motion.div 
-                      animate={{ rotate: 360 }} 
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="w-4 h-4 mr-2"
-                    >
-                      <FiLoader className="w-4 h-4" />
-                    </motion.div>
+                    <div className="flex space-x-1 mr-2">
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" style={{animationDelay: '0.2s'}}></div>
+                    </div>
                     Setting PIN...
                   </>
                 ) : (
@@ -1372,6 +1840,13 @@ export default function WalletPage() {
   const [userData, setUserData] = useState(null);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
+
+  // PIN Reset flow state
+  const [showEmailOtp, setShowEmailOtp] = useState(false);
+  const [showPhoneOtp, setShowPhoneOtp] = useState(false);
+  const [showNewPinSetup, setShowNewPinSetup] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [phoneOtpCode, setPhoneOtpCode] = useState('');
 
   // Payment status state
   const [paymentStatus, setPaymentStatus] = useState({
@@ -1531,7 +2006,7 @@ export default function WalletPage() {
     try {
       const depositData = {
         amount: data.amount,
-        paymentMethod: "CARD",
+        paymentMethod: data.paymentMethod,
         currency: "USD",
         payment_method_id: "",
       };
@@ -1544,7 +2019,20 @@ export default function WalletPage() {
         setShowAddFunds(false);
       }
     } catch (error) {
-      toast.error("Failed to process deposit request");
+      console.error('Error processing payment:', error);
+      
+      if (error.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        
+        if (data.paymentMethod === 'MOBILE' && errorMessage.includes('Failed to request payment')) {
+          toast.error('Mobile Money payment failed. Please check your mobile money account and try again.');
+        } else {
+          toast.error(errorMessage);
+        }
+      } else {
+        const paymentMethodText = data.paymentMethod === 'MOBILE' ? 'Mobile Money' : 'Card';
+        toast.error(`${paymentMethodText} payment failed. Please try again.`);
+      }
     } finally {
       setAddingFunds(false);
     }
@@ -1618,6 +2106,48 @@ export default function WalletPage() {
     } else {
       setShowPinModal(true);
     }
+  };
+
+  // Handle forgot PIN flow
+  const handleForgotPin = () => {
+    setShowPinVerification(false);
+    setShowEmailOtp(true);
+  };
+
+  const handleEmailOtpSuccess = (otp) => {
+    setEmailOtpCode(otp);
+    setShowEmailOtp(false);
+    setShowPhoneOtp(true);
+  };
+
+  const handlePhoneOtpSuccess = (otp) => {
+    setPhoneOtpCode(otp);
+    setShowPhoneOtp(false);
+    setShowNewPinSetup(true);
+  };
+
+  const handleNewPinSuccess = async () => {
+    setShowNewPinSetup(false);
+    setEmailOtpCode('');
+    setPhoneOtpCode('');
+    
+    // Refresh user data to update PIN status
+    try {
+      const userProfileResponse = await get("users/getUserProfile");
+      if (userProfileResponse?.status === 200 && userProfileResponse?.data) {
+        setUserData(userProfileResponse.data);
+      }
+    } catch (error) {
+      console.error("Error refreshing user profile:", error);
+    }
+  };
+
+  // Handle restart flow for failed OTP verification
+  const handleRestartOtpFlow = () => {
+    setShowNewPinSetup(false);
+    setEmailOtpCode('');
+    setPhoneOtpCode('');
+    setShowEmailOtp(true);
   };
 
   // Check if user has set a PIN by looking at wallet_pin data
@@ -1870,26 +2400,221 @@ export default function WalletPage() {
                     className="text-gray-600 hover:text-gray-800"
                   >
                     <motion.div
-                      animate={refreshing ? { rotate: 360 } : {}}
-                      transition={refreshing ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
-                    >
-                      <FiRefreshCw className="w-4 h-4" />
-                    </motion.div>
-                  </Button>
-                </div>
+                    animate={refreshing ? { rotate: 360 } : {}}
+                    transition={refreshing ? { duration: 1, repeat: Infinity, ease: "linear" } : {}}
+                  >
+                    <FiRefreshCw className="w-4 h-4" />
+                  </motion.div>
+                </Button>
+              </div>
 
-                <CreditCard
-                  balance={
-                    walletData ? formatBalance(walletData.balance) : "0.00"
-                  }
-                  currency={walletData?.asset || "USD"}
-                  walletId={walletData?.wallet_id}
-                />
+              <CreditCard
+                balance={
+                  walletData ? formatBalance(walletData.balance) : "0.00"
+                }
+                currency={walletData?.asset || "USD"}
+                walletId={walletData?.wallet_id}
+              />
 
-                <div className="mt-6">
-                  <Button
+              <div className="mt-6">
+                <Button
+                  onClick={handleAddFundsOrSetPin}
+                  className="w-full"
+                >
+                  {hasPinSet ? (
+                    <>
+                      <FiPlus className="w-4 h-4 mr-2" />
+                      Add Funds
+                    </>
+                  ) : (
+                    <>
+                      <FiLock className="w-4 h-4 mr-2" />
+                      Set PIN
+                    </>
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Status Tabs */}
+        <motion.div variants={itemVariants}>
+          <AnimatedTabs 
+            tabs={statusTabs} 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        </motion.div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex gap-2 flex-wrap">
+            <FiFilter className="text-gray-600 w-4 h-4 mt-2" />
+            
+            <FilterDropdownMenu
+              options={[
+                {
+                  label: 'All Types',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, type: 'all' })),
+                  checked: !columnFilters.type || columnFilters.type === 'all'
+                },
+                {
+                  label: 'Deposit',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, type: 'deposit' })),
+                  checked: columnFilters.type === 'deposit'
+                },
+                {
+                  label: 'Withdrawal',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, type: 'withdrawal' })),
+                  checked: columnFilters.type === 'withdrawal'
+                },
+                {
+                  label: 'Campaign Payment',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, type: 'campaign_payment' })),
+                  checked: columnFilters.type === 'campaign_payment'
+                }
+              ]}
+              className="text-secondary border-primary/50 hover:bg-primary/20"
+            >
+              Type
+            </FilterDropdownMenu>
+
+            <FilterDropdownMenu
+              options={[
+                {
+                  label: 'All Amounts',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'all' })),
+                  checked: !columnFilters.amount || columnFilters.amount === 'all'
+                },
+                {
+                  label: 'Positive Amounts',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'positive' })),
+                  checked: columnFilters.amount === 'positive'
+                },
+                {
+                  label: 'Negative Amounts',
+                  onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'negative' })),
+                  checked: columnFilters.amount === 'negative'
+                }
+              ]}
+              className="text-secondary border-primary/50 hover:bg-primary/20"
+            >
+              Amount
+            </FilterDropdownMenu>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600">Show:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => handleItemsPerPageChange(e.target.value)}
+              className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            >
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Desktop Table View (Hidden on Mobile) */}
+        <div className="hidden md:block">
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Transaction</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {currentItems.length ? (
+                  currentItems.map((transaction) => (
+                    <TransactionTableRow
+                      key={transaction.trans_id}
+                      transaction={transaction}
+                      onClick={handleTransactionClick}
+                    />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-12">
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
+                          <FiCreditCard className="w-8 h-8 text-secondary" />
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold text-secondary">
+                            No Transactions Available
+                          </h3>
+                          <p className="text-sm text-gray-600 max-w-md">
+                            Your transaction history is empty. Add funds to your wallet to get started with transactions.
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={handleAddFundsOrSetPin}
+                          className="mt-4"
+                        >
+                          {hasPinSet ? (
+                            <>
+                              <FiPlus className="w-4 h-4 mr-2" />
+                              Add Funds
+                            </>
+                          ) : (
+                            <>
+                              <FiLock className="w-4 h-4 mr-2" />
+                              Set PIN
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        {/* Mobile Card View (Hidden on Desktop) */}
+        <div className="md:hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {currentItems.length ? (
+              <AnimatePresence mode="wait">
+                {currentItems.map((transaction, index) => {
+                  const isLastOdd = currentItems.length % 2 !== 0 && index === currentItems.length - 1;
+                  return (
+                    <TransactionCard
+                      key={transaction.trans_id}
+                      transaction={transaction}
+                      onClick={handleTransactionClick}
+                      isLastOdd={isLastOdd}
+                    />
+                  );
+                })}
+              </AnimatePresence>
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
+                    <FiCreditCard className="w-8 h-8 text-secondary" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-secondary">
+                      No Transactions Available
+                    </h3>
+                    <p className="text-sm text-gray-600 max-w-md">
+                      Your transaction history is empty. Add funds to your wallet to get started with transactions.
+                    </p>
+                  </div>
+                  <Button 
                     onClick={handleAddFundsOrSetPin}
-                    className="w-full"
+                    className="mt-4"
                   >
                     {hasPinSet ? (
                       <>
@@ -1904,314 +2629,158 @@ export default function WalletPage() {
                     )}
                   </Button>
                 </div>
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Status Tabs */}
-          <motion.div variants={itemVariants}>
-            <AnimatedTabs 
-              tabs={statusTabs} 
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
-          </motion.div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex gap-2 flex-wrap">
-              <FiFilter className="text-gray-600 w-4 h-4 mt-2" />
-              
-              <FilterDropdownMenu
-                options={[
-                  {
-                    label: 'All Types',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, type: 'all' })),
-                    checked: !columnFilters.type || columnFilters.type === 'all'
-                  },
-                  {
-                    label: 'Deposit',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, type: 'deposit' })),
-                    checked: columnFilters.type === 'deposit'
-                  },
-                  {
-                    label: 'Withdrawal',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, type: 'withdrawal' })),
-                    checked: columnFilters.type === 'withdrawal'
-                  },
-                  {
-                    label: 'Campaign Payment',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, type: 'campaign_payment' })),
-                    checked: columnFilters.type === 'campaign_payment'
-                  }
-                ]}
-                className="text-secondary border-primary/50 hover:bg-primary/20"
-              >
-                Type
-              </FilterDropdownMenu>
-
-              <FilterDropdownMenu
-                options={[
-                  {
-                    label: 'All Amounts',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'all' })),
-                    checked: !columnFilters.amount || columnFilters.amount === 'all'
-                  },
-                  {
-                    label: 'Positive Amounts',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'positive' })),
-                    checked: columnFilters.amount === 'positive'
-                  },
-                  {
-                    label: 'Negative Amounts',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, amount: 'negative' })),
-                    checked: columnFilters.amount === 'negative'
-                  }
-                ]}
-                className="text-secondary border-primary/50 hover:bg-primary/20"
-              >
-                Amount
-              </FilterDropdownMenu>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-600">Show:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(e.target.value)}
-                className="h-8 px-2 rounded-lg border border-gray-300 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-              >
-                <option value={6}>6</option>
-                <option value={12}>12</option>
-                <option value={24}>24</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Desktop Table View (Hidden on Mobile) */}
-          <div className="hidden md:block">
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentItems.length ? (
-                    currentItems.map((transaction) => (
-                      <TransactionTableRow
-                        key={transaction.trans_id}
-                        transaction={transaction}
-                        onClick={handleTransactionClick}
-                      />
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                          <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
-                            <FiCreditCard className="w-8 h-8 text-secondary" />
-                          </div>
-                          <div className="space-y-2">
-                            <h3 className="text-lg font-semibold text-secondary">
-                              No Transactions Available
-                            </h3>
-                            <p className="text-sm text-gray-600 max-w-md">
-                              Your transaction history is empty. Add funds to your wallet to get started with transactions.
-                            </p>
-                          </div>
-                          <Button 
-                            onClick={handleAddFundsOrSetPin}
-                            className="mt-4"
-                          >
-                            {hasPinSet ? (
-                              <>
-                                <FiPlus className="w-4 h-4 mr-2" />
-                                Add Funds
-                              </>
-                            ) : (
-                              <>
-                                <FiLock className="w-4 h-4 mr-2" />
-                                Set PIN
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Mobile Card View (Hidden on Desktop) */}
-          <div className="md:hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {currentItems.length ? (
-                <AnimatePresence mode="wait">
-                  {currentItems.map((transaction, index) => {
-                    const isLastOdd = currentItems.length % 2 !== 0 && index === currentItems.length - 1;
-                    return (
-                      <TransactionCard
-                        key={transaction.trans_id}
-                        transaction={transaction}
-                        onClick={handleTransactionClick}
-                        isLastOdd={isLastOdd}
-                      />
-                    );
-                  })}
-                </AnimatePresence>
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <div className="flex flex-col items-center justify-center space-y-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-[#E8C547]/20 rounded-full flex items-center justify-center">
-                      <FiCreditCard className="w-8 h-8 text-secondary" />
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold text-secondary">
-                        No Transactions Available
-                      </h3>
-                      <p className="text-sm text-gray-600 max-w-md">
-                        Your transaction history is empty. Add funds to your wallet to get started with transactions.
-                      </p>
-                    </div>
-                    <Button 
-                      onClick={handleAddFundsOrSetPin}
-                      className="mt-4"
-                    >
-                      {hasPinSet ? (
-                        <>
-                          <FiPlus className="w-4 h-4 mr-2" />
-                          Add Funds
-                        </>
-                      ) : (
-                        <>
-                          <FiLock className="w-4 h-4 mr-2" />
-                          Set PIN
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex flex-row flex-wrap pt-4 items-center justify-between w-full">
-            <div className="text-xs text-gray-600">
-              Showing {Math.min(startIndex + 1, totalItems)} to {Math.min(endIndex, totalItems)} of{" "}
-              {totalItems} transactions
-            </div>
-
-            {totalPages > 1 && (
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        handlePageChange(Math.max(1, currentPage - 1))
-                      }
-                      disabled={currentPage === 1}
-                    />
-                  </PaginationItem>
-
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNumber;
-                    if (totalPages <= 5) {
-                      pageNumber = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNumber = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNumber = totalPages - 4 + i;
-                    } else {
-                      pageNumber = currentPage - 2 + i;
-                    }
-
-                    return (
-                      <PaginationItem key={pageNumber}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(pageNumber)}
-                          isActive={currentPage === pageNumber}
-                        >
-                          {pageNumber}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        handlePageChange(
-                          Math.min(totalPages, currentPage + 1)
-                        )
-                      }
-                      disabled={currentPage === totalPages}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+              </div>
             )}
           </div>
         </div>
+
+        {/* Pagination */}
+        <div className="flex flex-row flex-wrap pt-4 items-center justify-between w-full">
+          <div className="text-xs text-gray-600">
+            Showing {Math.min(startIndex + 1, totalItems)} to {Math.min(endIndex, totalItems)} of{" "}
+            {totalItems} transactions
+          </div>
+
+          {totalPages > 1 && (
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      handlePageChange(Math.max(1, currentPage - 1))
+                    }
+                    disabled={currentPage === 1}
+                  />
+                </PaginationItem>
+
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <PaginationItem key={pageNumber}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                {totalPages > 5 && currentPage < totalPages - 2 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      handlePageChange(
+                        Math.min(totalPages, currentPage + 1)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
       </div>
-
-      {/* PIN Verification Modal */}
-      <AnimatePresence>
-        {showPinVerification && (
-          <PinVerificationModal
-            isOpen={showPinVerification}
-            onClose={() => setShowPinVerification(false)}
-            onSuccess={handlePinVerificationSuccess}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Add Funds Modal */}
-      <AnimatePresence>
-        {showAddFunds && (
-          <AddFundsModal
-            isOpen={showAddFunds}
-            onClose={() => setShowAddFunds(false)}
-            onSubmit={handleAddFunds}
-            loading={addingFunds}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* PIN Setup Modal */}
-      <AnimatePresence>
-        {showPinModal && (
-          <PinSetupModal
-            isOpen={showPinModal}
-            onClose={() => setShowPinModal(false)}
-            onSuccess={handlePinSuccess}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Transaction Detail Modal */}
-      <TransactionDetailModal
-        isOpen={transactionDetailModal.isOpen}
-        onClose={handleCloseTransactionDetail}
-        transaction={transactionDetailModal.transaction}
-        transactionDetails={transactionDetailModal.details}
-        loading={transactionDetailModal.loading}
-      />
     </div>
-  );
+
+    {/* PIN Verification Modal with Forgot PIN option */}
+    <AnimatePresence>
+      {showPinVerification && (
+        <PinVerificationModal
+          isOpen={showPinVerification}
+          onClose={() => setShowPinVerification(false)}
+          onSuccess={handlePinVerificationSuccess}
+          onForgotPin={handleForgotPin}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* Email OTP Modal */}
+    <AnimatePresence>
+      {showEmailOtp && (
+        <EmailOTPModal
+          isOpen={showEmailOtp}
+          onClose={() => setShowEmailOtp(false)}
+          onSuccess={handleEmailOtpSuccess}
+          email={userData?.email}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* Phone OTP Modal */}
+    <AnimatePresence>
+      {showPhoneOtp && (
+        <PhoneOTPModal
+          isOpen={showPhoneOtp}
+          onClose={() => setShowPhoneOtp(false)}
+          onSuccess={handlePhoneOtpSuccess}
+          phone={userData?.phone}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* New PIN Setup Modal */}
+    <AnimatePresence>
+      {showNewPinSetup && (
+        <NewPinSetupModal
+          isOpen={showNewPinSetup}
+          onClose={() => setShowNewPinSetup(false)}
+          onSuccess={handleNewPinSuccess}
+          emailOtp={emailOtpCode}
+          phoneOtp={phoneOtpCode}
+          onRestartFlow={handleRestartOtpFlow}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* Add Funds Modal */}
+    <AnimatePresence>
+      {showAddFunds && (
+        <AddFundsModal
+          isOpen={showAddFunds}
+          onClose={() => setShowAddFunds(false)}
+          onSubmit={handleAddFunds}
+          loading={addingFunds}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* PIN Setup Modal */}
+    <AnimatePresence>
+      {showPinModal && (
+        <PinSetupModal
+          isOpen={showPinModal}
+          onClose={() => setShowPinModal(false)}
+          onSuccess={handlePinSuccess}
+        />
+      )}
+    </AnimatePresence>
+
+    {/* Transaction Detail Modal */}
+    <TransactionDetailModal
+      isOpen={transactionDetailModal.isOpen}
+      onClose={handleCloseTransactionDetail}
+      transaction={transactionDetailModal.transaction}
+      transactionDetails={transactionDetailModal.details}
+      loading={transactionDetailModal.loading}
+    />
+  </div>
+);
 }

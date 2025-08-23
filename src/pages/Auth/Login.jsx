@@ -338,11 +338,11 @@ const Login = () => {
         }
       `}</style>
 
-      {/* Desktop Layout - FULL SCREEN */}
-      <div className="min-h-screen w-full lg:flex hidden">
-        <div className="w-full h-screen flex">
+      {/* Desktop Layout - 80vh and 80vw with Shadow */}
+      <div className="min-h-screen w-full hidden xl:flex items-center justify-center bg-gray-100">
+        <div className="w-[80vw] h-[80vh] flex shadow-2xl rounded-2xl overflow-hidden bg-white">
           
-          {/* LEFT SIDE - Image Section - FULL HEIGHT */}
+          {/* LEFT SIDE - Image Section */}
           <div className="w-1/2 relative overflow-hidden">
             {/* Background Image */}
             <div 
@@ -359,19 +359,16 @@ const Login = () => {
                 <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
                 
                 <div className="flex items-center justify-center gap-4">
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaInstagram className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
-                    <SlSocialFacebook className="w-5 h-5 text-primary" />
-                  </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiTiktokLogoLight className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <FaXTwitter className="w-5 h-5 text-primary" />
                   </a>
-                  <a href="#" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
                     <PiYoutubeLogo className="w-5 h-5 text-primary" />
                   </a>
                 </div>
@@ -379,8 +376,8 @@ const Login = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE - Form Section - FULL HEIGHT */}
-          <div className="w-1/2 bg-white flex flex-col h-screen">
+          {/* RIGHT SIDE - Form Section */}
+          <div className="w-1/2 bg-white flex flex-col h-full">
             {/* Header */}
             <div className="flex-shrink-0 p-8 pb-6">
               <div className="flex justify-center mb-6">
@@ -535,7 +532,201 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Mobile Layout - FULL SCREEN */}
+      {/* Tablet Layout - Slightly Smaller but Full Coverage */}
+      <div className="min-h-screen w-full lg:flex hidden xl:hidden bg-gray-50">
+        <div className="w-full h-screen flex shadow-xl">
+          
+          {/* LEFT SIDE - Image Section */}
+          <div className="w-1/2 relative overflow-hidden">
+            {/* Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${assets.banner})` }}
+            />
+            
+            {/* Dark Overlay */}
+            <div className="absolute inset-0 bg-black/40"></div>
+            
+            {/* Content - CENTERED SOCIALS AT BOTTOM */}
+            <div className="relative z-20 h-full flex flex-col justify-end items-center pb-12">
+              <div className="text-white text-center">
+                <h2 className="text-sm font-medium mb-6">Follow us on social media</h2>
+                
+                <div className="flex items-center justify-center gap-4">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <FaInstagram className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <PiTiktokLogoLight className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <FaXTwitter className="w-5 h-5 text-primary" />
+                  </a>
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-primary">
+                    <PiYoutubeLogo className="w-5 h-5 text-primary" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE - Form Section */}
+          <div className="w-1/2 bg-white flex flex-col h-full">
+            {/* Header */}
+            <div className="flex-shrink-0 p-6 pb-4">
+              <div className="flex justify-center mb-4">
+                {/* Clean logo without background */}
+                <img
+                  src={assets.LogoIcon}
+                  alt="Social Gems"
+                  className="h-10 w-10 object-contain"
+                />
+              </div>
+              
+              <div className="text-center">
+                <h1 className="text-xl font-semibold text-gray-900 mb-2">
+                  Welcome Back
+                </h1>
+                <p className="text-gray-600 text-xs">
+                  Don't have an account?{" "}
+                  <button
+                    onClick={() => navigate("/signup")}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Sign up
+                  </button>
+                </p>
+              </div>
+            </div>
+
+            {/* Form Content - SCROLLABLE */}
+            <div className="flex-1 overflow-y-auto px-6 scrollbar-none">
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={handleLogin}
+                noValidate
+              >
+                <div>
+                  <label htmlFor="email-tablet" className="block text-xs font-medium text-gray-700 mb-2">
+                    Email address
+                  </label>
+                  <input
+                    type="email"
+                    id="email-tablet"
+                    placeholder="business@socialgems.me"
+                    className={`w-full px-4 py-3 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
+                      emailError ? "border-red-500" : ""
+                    }`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-invalid={!!emailError}
+                    aria-describedby="email-error-tablet"
+                    disabled={loading}
+                  />
+                  {emailError && (
+                    <p id="email-error-tablet" className="text-red-500 text-xs mt-1">
+                      {emailError}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="password-tablet" className="block text-xs font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      id="password-tablet"
+                      placeholder="Enter your password"
+                      className={`w-full pr-10 py-3 px-4 rounded-lg border-0 outline-0 bg-gray-200 focus:bg-white focus:border focus:border-primary text-black text-xs transition-all ${
+                        passwordError ? "border-red-500" : ""
+                      }`}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      aria-invalid={!!passwordError}
+                      aria-describedby="password-error-tablet"
+                      disabled={loading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {passwordError && (
+                    <p id="password-error-tablet" className="text-red-500 text-xs mt-1">
+                      {passwordError}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex justify-end">
+                  <button 
+                    type="button"
+                    className="text-xs text-primary hover:underline font-medium"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-secondary font-medium py-3 rounded-lg transition disabled:opacity-50 text-xs hover:bg-primary"
+                >
+                  {loading ? 'Signing in...' : 'Sign in'}
+                </button>
+              </form>
+            </div>
+
+            {/* Download App Section - RIGHT SIDE BOTTOM */}
+            <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-100">
+              <p className="text-center text-xs text-gray-600 mb-3">Download the app</p>
+              <div className="flex gap-2 justify-center w-full">
+                <button
+                  onClick={handleAppStoreDownload}
+                  className="bg-black hover:bg-gray-900 text-white rounded-lg px-3 py-2 flex items-center w-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <img 
+                    src={assets.applelogo}
+                    alt="Apple Logo"
+                    className="w-5 h-5 mr-2 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-xs font-semibold">App Store</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={handlePlayStoreDownload}
+                  className="bg-black hover:bg-gray-900 text-white w-full rounded-lg px-3 py-2 flex items-center transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <img 
+                    src={assets.playstorelogo}
+                    alt="Play Store Logo"
+                    className="w-5 h-5 mr-2 object-contain"
+                  />
+                  <div className="text-left">
+                    <div className="text-xs text-gray-300">Get it on</div>
+                    <div className="text-xs font-semibold">Google Play</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout - Full Screen (unchanged) */}
       <div className="min-h-screen w-full flex flex-col lg:hidden bg-gray-50">
         <div className="w-full h-screen flex flex-col">
           {/* Mobile Logo Section */}
@@ -657,21 +848,18 @@ const Login = () => {
               {/* Mobile Social Media Links */}
               <div className="text-center">
                 <p className="text-sm opacity-80 mb-4 text-gray-600">Follow us on social media</p>
-                <div className="flex items-center justify-center gap-4 mb-6">
-                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <FaInstagram className="w-4 h-4 text-primary" />
+                <div className="flex items-center justify-center gap-4">
+                  <a href="https://www.instagram.com/socialgems.ug/" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-secondary">
+                    <FaInstagram className="w-5 h-5 text-secondary" />
                   </a>
-                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <SlSocialFacebook className="w-4 h-4 text-primary" />
+                  <a href="https://www.tiktok.com/@social_gems_" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-secondary">
+                    <PiTiktokLogoLight className="w-5 h-5 text-secondary" />
                   </a>
-                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <PiTiktokLogoLight className="w-4 h-4 text-primary" />
+                  <a href="https://x.com/socialgems_ug" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-secondary">
+                    <FaXTwitter className="w-5 h-5 text-secondary" />
                   </a>
-                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <FaXTwitter className="w-4 h-4 text-primary" />
-                  </a>
-                  <a href="#" className="w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <PiYoutubeLogo className="w-4 h-4 text-primary" />
+                  <a href="https://www.youtube.com/@socialgems.africa" className="w-12 h-12 bg-transparent hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-secondary">
+                    <PiYoutubeLogo className="w-5 h-5 text-secondary" />
                   </a>
                 </div>
               </div>

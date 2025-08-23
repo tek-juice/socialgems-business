@@ -797,7 +797,7 @@ const FilterCampaigns = ({
               className="flex items-center gap-2 px-3 py-2 text-xs text-black bg-primary-scale-400 rounded-lg hover:bg-primary-scale-500 transition-all font-medium w-fit"
             >
               <FiArrowLeft className="w-3 h-3" />
-              Back to Campaigns
+              Back
             </button>
 
             {/* Auto-refresh toggle */}

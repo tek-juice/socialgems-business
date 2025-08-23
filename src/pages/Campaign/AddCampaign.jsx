@@ -44,177 +44,27 @@ import {
 import LoadingSkeleton from "./CreateCampaign/LoadingSkeleton";
 import useLocalStorage from "../../hooks/useLocalStorage";
 
-// FIXED: Enhanced timezone-aware date utilities
-const createLocalDate = (dateString) => {
-  if (!dateString) return null;
-  return new Date(dateString + 'T00:00:00');
-};
-
-const createUTCDate = (dateString) => {
-  if (!dateString) return null;
-  return new Date(dateString + 'T00:00:00Z');
-};
-
-const formatDateString = (date) => {
-  if (!date) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-// FIXED: Proper timezone conversion for server communication
-const localDateToUTC = (localDateString) => {
-  if (!localDateString) return '';
-  
-  // Create date in local timezone
-  const localDate = new Date(localDateString + 'T00:00:00');
-  
-  // Simply return the same date string since we want the same calendar date
-  // The server should handle this as UTC
-  const year = localDate.getFullYear();
-  const month = String(localDate.getMonth() + 1).padStart(2, '0');
-  const day = String(localDate.getDate()).padStart(2, '0');
-  
-  return `${year}-${month}-${day}`;
-};
-
-const utcDateToLocal = (utcDateString) => {
-  if (!utcDateString) return '';
-  
-  // For display purposes, we want to show the same date
-  // regardless of timezone, so just return the date part
-  if (utcDateString.includes('T')) {
-    return utcDateString.split('T')[0];
-  }
-  
-  return utcDateString;
-};
-
-const formatDisplayDate = (dateString) => {
-  if (!dateString) return '';
-  const date = createLocalDate(dateString);
-  if (!date) return '';
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
-// FIXED: More robust minimum date calculation
-const getMinimumDate = (daysFromToday = 4) => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const minDate = new Date(today);
-  minDate.setDate(today.getDate() + daysFromToday);
-  return minDate;
-};
-
-const isDateDisabled = (date, minDate, maxDate) => {
-  if (!date) return true;
-  const checkDate = new Date(date);
-  checkDate.setHours(0, 0, 0, 0);
-  
-  if (minDate) {
-    const minDateTime = typeof minDate === 'string' 
-      ? createLocalDate(minDate) 
-      : new Date(minDate);
-    minDateTime.setHours(0, 0, 0, 0);
-    if (checkDate < minDateTime) return true;
-  }
-  
-  if (maxDate) {
-    const maxDateTime = typeof maxDate === 'string' 
-      ? createLocalDate(maxDate) 
-      : new Date(maxDate);
-    maxDateTime.setHours(0, 0, 0, 0);
-    if (checkDate > maxDateTime) return true;
-  }
-  
-  return false;
-};
-
-const isToday = (date) => {
-  if (!date) return false;
-  const today = new Date();
-  return date.toDateString() === today.toDateString();
-};
-
-// FIXED: Enhanced date range validation
-const validateDateRange = (startDate, endDate, minDays = 2) => {
-  const errors = {};
-  
-  if (startDate) {
-    const start = createLocalDate(startDate);
-    const minStartDate = getMinimumDate(4);
-
-    if (start < minStartDate) {
-      errors.start_date = 'Campaign start date must be at least 3 days from today';
-    }
-  }
-
-  if (endDate && startDate) {
-    const start = createLocalDate(startDate);
-    const end = createLocalDate(endDate);
-
-    if (end <= start) {
-      errors.end_date = 'End date must be after start date';
-    } else {
-      const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
-      if (daysDiff < 2) {
-        errors.end_date = `Campaign must run for at least 1 day`;
-      }
-    }
-  }
-
-  return { isValid: Object.keys(errors).length === 0, errors };
-};
-
-// Generate unique request ID
-const generateRequestId = () => {
-  const timestamp = Date.now().toString(16);
-  const randomBytes = new Uint8Array(16);
-  crypto.getRandomValues(randomBytes);
-  const randomHex = Array.from(randomBytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  const combined = (timestamp + randomHex).substring(0, 32);
-  return `cp${combined}`;
-};
-
-// Utility functions
-const countWords = (text) => {
-  return text
-    ? text
-        .trim()
-        .split(/\s+/)
-        .filter((word) => word.length > 0).length
-    : 0;
-};
-
-// Helper function to safely convert to number with fallback
-const safeToNumber = (value, fallback = 0) => {
-  const num = Number(value);
-  return isNaN(num) ? fallback : num;
-};
-
-// Helper function to safely call toFixed with fallback
-const safeToFixed = (value, decimals = 2, fallback = 0) => {
-  const num = safeToNumber(value, fallback);
-  return num.toFixed(decimals);
-};
-
-// Constants - Updated calculation logic
-const INFLUENCER_BASE_RATE = 15; // $15 per influencer
-const PLATFORM_FEE = 50; // $50 platform fee
-const MIN_BUDGET_PER_INFLUENCER = 65; // $65 minimum per influencer (includes company fee)
-
-// Calculate minimum budget based on number of influencers
-const calculateMinimumBudget = (numberOfInfluencers) => {
-  return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
-};
+// Import utilities
+import {
+  createLocalDate,
+  createUTCDate,
+  formatDateString,
+  localDateToUTC,
+  utcDateToLocal,
+  formatDisplayDate,
+  getMinimumDate,
+  isDateDisabled,
+  isToday,
+  validateDateRange,
+  generateRequestId,
+  countWords,
+  safeToNumber,
+  safeToFixed,
+  calculateMinimumBudget,
+  INFLUENCER_BASE_RATE,
+  PLATFORM_FEE,
+  MIN_BUDGET_PER_INFLUENCER,
+} from "./CreateCampaign/utils";
 
 // Payment Status Banner Component
 const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => {
@@ -320,7 +170,6 @@ const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => 
   );
 };
 
-// FIXED: Influencer Mismatch Banner Component - Now in Step 1 (Influencers)
 const InfluencerMismatchBanner = ({ 
   requestedInfluencers, 
   availableInfluencers, 
@@ -328,7 +177,6 @@ const InfluencerMismatchBanner = ({
   onGoBackToEdit,
   loading 
 }) => {
-  // FIXED: Handle undefined/null availableInfluencers
   const safeAvailableInfluencers = safeToNumber(availableInfluencers, 0);
   const safeRequestedInfluencers = safeToNumber(requestedInfluencers, 0);
   
@@ -342,18 +190,12 @@ const InfluencerMismatchBanner = ({
     >
       <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm mt-5">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-            <FiAlertCircle className="w-5 h-5 text-orange-600" />
+          <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center flex-shrink-0">
+            <FiAlertCircle className="w-5 h-5 rounded-full text-secondary" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-bold text-orange-800 mb-2">
-              Influencer Count Mismatch
-            </h3>
             <p className="text-xs text-secondary mb-4 leading-relaxed">
-              You requested <span className="font-semibold">{safeRequestedInfluencers}</span> influencers, 
-              but we only have <span className="font-semibold">{safeAvailableInfluencers}</span> total 
-              influencers matching your criteria in our system. You can either proceed with the available 
-              influencers or go back to reduce the number of influencers.
+              The number of influencers found is less than the number of influencers that you requested for, you can either go back and edit details and budget or continue to payment with the input budget and this number of influncers found.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -369,7 +211,7 @@ const InfluencerMismatchBanner = ({
                 ) : (
                   <>
                     <FiCheckCircle className="w-3 h-3" />
-                    Proceed with {safeAvailableInfluencers} Influencers
+                    Continue
                   </>
                 )}
               </button>
@@ -751,7 +593,7 @@ const PinSetupModal = ({ isOpen, onClose, onSuccess }) => {
   );
 };
 
-// FIXED: Enhanced Payment Popup with window.open()
+// Enhanced Payment Popup with window.open()
 const PaymentPopupManager = ({ isOpen, onClose, paymentUrl, onSuccess, onError }) => {
   const popupRef = useRef(null);
   const checkIntervalRef = useRef(null);
@@ -1769,10 +1611,10 @@ const CreateCampaign = () => {
   const [showPinModal, setShowPinModal] = useState(false);
   const [showPinVerification, setShowPinVerification] = useState(false);
 
-  // FIXED: Add PIN context state to track whether PIN operation is for campaign or add funds
+  // Add PIN context state to track whether PIN operation is for campaign or add funds
   const [pinContext, setPinContext] = useState('campaign'); // 'campaign' or 'addFunds'
 
-  // FIXED: Enhanced payment popup states
+  // Enhanced payment popup states
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState('');
 
@@ -2105,14 +1947,14 @@ const CreateCampaign = () => {
     if (mode === "edit" && editCampaignData) {
       console.log("Pre-filling edit data:", editCampaignData);
 
-      // FIXED: Enhanced task formatting to properly preserve site_id
+      // Enhanced task formatting to properly preserve site_id
       const formatTasksForForm = (tasks) => {
         if (!tasks || !Array.isArray(tasks)) return [];
 
         return tasks.map((task) => ({
           task: task.task || task.title || task.name || "",
           description: task.description || "",
-          // FIXED: Properly handle site_id conversion and validation
+          // Properly handle site_id conversion and validation
           site_id: (() => {
             const siteId = task.site_id || task.platform_id || task.social_media_id;
             const numericSiteId = parseInt(siteId);
@@ -2275,7 +2117,7 @@ const CreateCampaign = () => {
     }
   };
 
-  // FIXED: Handle add funds functionality with forced popup window
+  // Handle add funds functionality with forced popup window
   const handleAddFunds = async (data) => {
     setAddingFunds(true);
     try {
@@ -2289,7 +2131,7 @@ const CreateCampaign = () => {
       const response = await post("wallet/depositRequest", depositData);
 
       if (response.status === 200) {
-        // FIXED: Use window.open with proper popup parameters
+        // Use window.open with proper popup parameters
         setPaymentUrl(response.data.paymentUrl);
         setShowPaymentPopup(true);
         setShowAddFunds(false);
@@ -2303,7 +2145,7 @@ const CreateCampaign = () => {
     }
   };
 
-  // FIXED: Handle payment popup success
+  // Handle payment popup success
   const handlePaymentSuccess = (result) => {
     console.log("Payment successful:", result);
     
@@ -2322,7 +2164,7 @@ const CreateCampaign = () => {
     }, 2000);
   };
 
-  // FIXED: Handle payment popup error
+  // Handle payment popup error
   const handlePaymentError = (result) => {
     console.log("Payment failed:", result);
     
@@ -2336,7 +2178,7 @@ const CreateCampaign = () => {
     toast.error('Payment failed or was cancelled.');
   };
 
-  // FIXED: Handle add funds redirect with proper PIN context
+  // Handle add funds redirect with proper PIN context
   const handleAddFundsRedirect = () => {
     setPinContext('addFunds'); // Set context to add funds
     if (hasPinSet) {
@@ -2349,7 +2191,7 @@ const CreateCampaign = () => {
   // Check if user has set a PIN by looking at wallet_pin data
   const hasPinSet = userData?.wallet_pin && Object.keys(userData.wallet_pin).length > 0;
 
-  // FIXED: Handle PIN success with context awareness
+  // Handle PIN success with context awareness
   const handlePinSuccess = async () => {
     // Refresh user data to update PIN status
     try {
@@ -2368,7 +2210,7 @@ const CreateCampaign = () => {
     // For campaign context, the flow continues normally
   };
 
-  // FIXED: Handle PIN verification success with context awareness
+  // Handle PIN verification success with context awareness
   const handlePinVerificationSuccess = () => {
     setShowPinVerification(false);
     
@@ -2396,43 +2238,98 @@ const CreateCampaign = () => {
     }
   };
 
-  // FIXED: Handle influencer mismatch - Proceed with available influencers
-  const handleProceedWithAvailable = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      const availableInfluencers = safeToNumber(eligibilityData?.totalCount, 0); // Changed from eligibleCount to totalCount
-      
-      // Update the campaign with available influencer count
-      const updatePayload = {
-        campaign_id: draftCampaignId,
-        number_of_influencers: availableInfluencers,
-      };
-  
-      const updateResponse = await patch("campaigns/edit", updatePayload);
-  
-      if (updateResponse?.status === 200) {
-        // Update local state
-        setNumberOfInfluencers(availableInfluencers);
-        
-        // Update eligibility data with safe conversions
-        setEligibilityData(prev => ({
-          ...prev,
-          budget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
-          totalBudget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
-        }));
-  
-        toast.success(`Campaign updated to proceed with ${availableInfluencers} influencers`);
-      } else {
-        throw new Error("Failed to update campaign");
+  // Handle influencer mismatch - Proceed with available influencers (FULL DATA)
+const handleProceedWithAvailable = useCallback(async () => {
+  try {
+    setLoading(true);
+    
+    const availableInfluencers = safeToNumber(eligibilityData?.totalCount, 0);
+    
+    // Handle image upload if there's a new image
+    let campaignImageUrl = campaignData.contentUrl;
+    if (campaignData.content) {
+      console.log("Uploading new image...");
+      const formData = new FormData();
+      formData.append("file_type", "STATUS_POST");
+      formData.append("content", campaignData.content);
+
+      const uploadResponse = await upload("media/uploadFile", formData);
+      if (
+        uploadResponse?.status === 200 &&
+        uploadResponse?.data?.[0]?.file_url
+      ) {
+        campaignImageUrl = uploadResponse.data[0].file_url;
+        console.log("Image uploaded successfully:", campaignImageUrl);
       }
-    } catch (error) {
-      console.error("Error updating campaign:", error);
-      toast.error("Failed to update campaign");
-    } finally {
-      setLoading(false);
     }
-  }, [draftCampaignId, eligibilityData]);
+    
+    // Send full campaign data like regular edit
+    const updatePayload = {
+      campaign_id: draftCampaignId || campaignData.campaign_id,
+      title: campaignData.title,
+      description: campaignData.description,
+      objective: campaignData.objective,
+      start_date: localDateToUTC(campaignData.start_date),
+      end_date: localDateToUTC(campaignData.end_date),
+      budget: brandBudget,
+      number_of_influencers: availableInfluencers, // Use available count instead of requested
+      ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
+      tasks: campaignData.tasks.map((task) => ({
+        task: task.task,
+        description: task.description,
+        site_id: parseInt(task.site_id) || 4,
+        task_type: "repetitive",
+        requires_url: task.requires_url ? "1" : "",
+        repeats_after: "daily",
+      })),
+    };
+
+    console.log("Update campaign payload with full data:", updatePayload);
+
+    const updateResponse = await patch("campaigns/edit", updatePayload);
+
+    if (updateResponse?.status === 200) {
+      // Update local state
+      setNumberOfInfluencers(availableInfluencers);
+      
+      // Update eligibility data with safe conversions
+      setEligibilityData(prev => ({
+        ...prev,
+        budget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
+        totalBudget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
+      }));
+
+      // Update original data reference like in updateExistingCampaign
+      setOriginalData({
+        title: campaignData.title,
+        description: campaignData.description,
+        objective: campaignData.objective,
+        start_date: campaignData.start_date,
+        end_date: campaignData.end_date,
+        tasks: campaignData.tasks,
+        budget: brandBudget,
+        numberOfInfluencers: availableInfluencers,
+        contentUrl: campaignImageUrl,
+      });
+
+      toast.success(`Campaign updated to proceed with ${availableInfluencers} influencers`);
+    } else {
+      throw new Error("Failed to update campaign");
+    }
+  } catch (error) {
+    console.error("Error updating campaign:", error);
+    toast.error("Failed to update campaign");
+  } finally {
+    setLoading(false);
+  }
+}, [
+  draftCampaignId,
+  eligibilityData,
+  campaignData,
+  brandBudget,
+  setOriginalData,
+  localDateToUTC,
+]);
 
   // Handle influencer mismatch - Go back to edit
   const handleGoBackToEdit = useCallback(() => {
@@ -2544,7 +2441,7 @@ const CreateCampaign = () => {
         console.log("Filter influencers response:", eligibleResponse);
   
         if (eligibleResponse?.status === 200) {
-          // FIX: Use the correct response structure
+          // Use the correct response structure
           const newEligibilityData = {
             budget: eligibleResponse.totalBudget || brandBudget,
             currency: eligibleResponse.currency || "USD",
@@ -2743,7 +2640,7 @@ const CreateCampaign = () => {
       console.log("Eligibility response:", eligibleResponse);
   
       if (eligibleResponse?.status === 200) {
-        // FIX: Use the correct response structure
+        // Use the correct response structure
         const newEligibilityData = {
           budget: eligibleResponse.totalBudget || safeToNumber(requestBody.brandBudget || brandBudget),
           currency: eligibleResponse.currency || "USD",
@@ -2885,7 +2782,7 @@ const CreateCampaign = () => {
         return;
       }
 
-      // FIXED: Handle undefined eligibilityData safely
+      // Handle undefined eligibilityData safely
       const totalCost = safeToNumber(eligibilityData?.budget, 0);
       if (walletBalance < totalCost) {
         const errorMessage = `Insufficient funds. You need $${safeToFixed(
@@ -2935,7 +2832,7 @@ const CreateCampaign = () => {
         { id: "create-campaign" }
       );
 
-      // FIXED: Handle undefined eligibilityData safely
+      // Handle undefined eligibilityData safely
       if (!eligibilityData?.requestId) {
         throw new Error("No eligibility data found. Please analyze criteria first.");
       }
@@ -3180,7 +3077,7 @@ const CreateCampaign = () => {
     return <LoadingSkeleton />;
   }
 
-  // ENHANCED: Function to render task description with HTML
+  // Function to render task description with HTML
   const renderTaskDescription = (htmlContent) => {
     if (!htmlContent) return "No description provided";
     
@@ -3385,7 +3282,7 @@ const CreateCampaign = () => {
                     />
                   </div>
 
-                  {/* Tasks Section - ENHANCED with rich text preview */}
+                  {/* Tasks Section - with rich text preview */}
                   {mode !== "addMembers" && (
                     <div className="space-y-6">
                       <div className="flex items-center justify-between mb-6">
@@ -3445,7 +3342,7 @@ const CreateCampaign = () => {
                                   {task.task}
                                 </div>
                                 
-                                {/* ENHANCED: Rich text preview for task description */}
+                                {/* Rich text preview for task description */}
                                 <div className="text-gray-600 text-xs mb-3">
                                   {renderTaskDescription(task.description)}
                                 </div>
@@ -3504,16 +3401,6 @@ const CreateCampaign = () => {
       case 1:
         return (
           <div className="mx-auto">
-            {/* FIXED: Influencer Mismatch Banner - Now in Step 1 (Influencers) */}
-            {eligibilityData && (
-              <InfluencerMismatchBanner
-                requestedInfluencers={numberOfInfluencers}
-                availableInfluencers={safeToNumber(eligibilityData?.totalCount, 0)} // Changed from eligibleCount to totalCount
-                onProceedWithAvailable={handleProceedWithAvailable}
-                onGoBackToEdit={handleGoBackToEdit}
-                loading={loading}
-              />
-            )}
             <Card className="shadow-lg border-0 bg-white">
               <CardContent className="p-6">
                 <FilterCampaigns
@@ -3784,6 +3671,17 @@ const CreateCampaign = () => {
           </motion.div>
         </AnimatePresence>
 
+        {/* Move InfluencerMismatchBanner here - before the navigation buttons */}
+        {activeStep === 1 && eligibilityData && (
+          <InfluencerMismatchBanner
+            requestedInfluencers={numberOfInfluencers}
+            availableInfluencers={safeToNumber(eligibilityData?.totalCount, 0)}
+            onProceedWithAvailable={handleProceedWithAvailable}
+            onGoBackToEdit={handleGoBackToEdit}
+            loading={loading}
+          />
+        )}
+
         {activeStep < 2 && (
           <div className="flex justify-between items-center mx-auto max-w-full">
             <button
@@ -3898,7 +3796,7 @@ const CreateCampaign = () => {
         )}
       </AnimatePresence>
 
-      {/* FIXED: Payment Popup Manager */}
+      {/* Payment Popup Manager */}
       <PaymentPopupManager
         isOpen={showPaymentPopup}
         onClose={() => setShowPaymentPopup(false)}
