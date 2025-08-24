@@ -6,13 +6,12 @@ import { cn } from '../../lib/utils';
 const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMobile }) => {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(true); // Start with true for autoplay
+  const [isPlaying, setIsPlaying] = useState(true); 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const controlsTimeoutRef = useRef(null);
 
-  // Auto-play and controls management
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
@@ -24,7 +23,6 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
           .catch(error => console.error("Auto-play failed:", error));
       }
 
-      // Hide controls after 3 seconds
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
@@ -34,7 +32,7 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
   }, []);
 
   const togglePlay = (e) => {
-    e.stopPropagation(); // Prevent fullscreen toggle when clicking play button
+    e.stopPropagation();
     const video = videoRef.current;
     if (video) {
       if (isPlaying) {
@@ -113,7 +111,6 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
         muted={false}
       />
 
-      {/* Progress bar with centered circle */}
       <div className="absolute bottom-2 left-2 right-2 h-0.5 bg-white/20 rounded-full">
         <div
           className="h-full bg-white rounded-full relative"
@@ -123,7 +120,6 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
         </div>
       </div>
 
-      {/* Controls overlay */}
       <AnimatePresence>
         {showControls && (
           <motion.div
@@ -132,7 +128,6 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
             exit={{ opacity: 0 }}
             className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"
           >
-            {/* Play/Pause button */}
             <div className="absolute inset-0 flex items-center justify-center">
               <button
                 onClick={togglePlay}
@@ -146,14 +141,12 @@ const CustomVideoPlayer = ({ src, poster, isFullScreen, onToggleFullScreen, isMo
               </button>
             </div>
 
-            {/* Time display */}
             <div className="absolute bottom-3 left-3">
               <span className="text-xs text-white/80 bg-black/50 px-2 py-1 rounded">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
 
-            {/* Fullscreen indicator */}
             <div className="absolute top-3 right-3">
               {isFullScreen ? (
                 <FiMinimize className="w-4 h-4 text-white/80" />

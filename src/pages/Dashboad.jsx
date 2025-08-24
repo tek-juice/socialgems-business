@@ -34,16 +34,16 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 
-// ============= UTILITY FUNCTION =============
+
 function cn(...classes) {
   return classes.filter(Boolean).join(' ')
 }
 
-// ============= CAMPAIGN DESCRIPTION COMPONENT =============
+
 const CampaignDescription = ({ description, wordLimit = 20, className = "" }) => {
   const [expanded, setExpanded] = useState(false);
   
-  // Function to extract first N words from HTML content
+
   const getPreview = (html, wordLimit) => {
     if (!html) return { text: 'No description available', isTruncated: false };
     
@@ -93,7 +93,7 @@ const CampaignDescription = ({ description, wordLimit = 20, className = "" }) =>
   );
 };
 
-// ============= SKELETON COMPONENTS =============
+
 const SkeletonLine = ({ className }) => (
   <div className={cn("bg-gray-200 rounded animate-pulse", className)} />
 );
@@ -112,7 +112,7 @@ const SkeletonCard = ({ className, children }) => (
   </div>
 );
 
-// ============= SIMPLE CAMPAIGN CARDS COMPONENT =============
+
 const CampaignCard = ({ campaign, onClick }) => {
   const getStatusColor = (status) => {
     switch (status) {
@@ -267,7 +267,7 @@ const CampaignGrid = ({ campaigns, onCampaignClick }) => {
   );
 };
 
-// ============= BADGE COMPONENT =============
+
 const Badge = ({ className, variant = "default", ...props }) => {
   const variants = {
     default: "border-transparent bg-gradient-to-r from-primary to-[#E8C547] text-secondary hover:from-[#E8C547] hover:to-primary",
@@ -287,7 +287,7 @@ const Badge = ({ className, variant = "default", ...props }) => {
   );
 };
 
-// ============= CARD COMPONENTS =============
+
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -344,7 +344,7 @@ const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
 ))
 CardFooter.displayName = "CardFooter"
 
-// ============= AVATAR CONFIGURATION =============
+
 const AVATAR_CONFIG = {
   size: 60,
   gap: 1,             
@@ -353,7 +353,7 @@ const AVATAR_CONFIG = {
   maxVisible: 5,     
 };
 
-// Memoized Avatar Component with improved hover functionality
+
 const Avatar = memo(({ 
   avatar, 
   idx, 
@@ -397,7 +397,7 @@ const Avatar = memo(({
       }}
       className="relative rounded-full flex items-center justify-start cursor-pointer overflow-hidden border border-gray-100 transition-all duration-300 shadow-lg"
     >
-      {/* Background gradient that shows on hover */}
+
       <div
         className={cn(
           "absolute inset-0 rounded-full bg-gradient-to-r from-[var(--gradient-from)] to-[var(--gradient-to)] transition-opacity duration-300",
@@ -405,7 +405,7 @@ const Avatar = memo(({
         )}
       />
       
-      {/* White background when not hovered */}
+
       <div
         className={cn(
           "absolute inset-0 rounded-full bg-white transition-opacity duration-300",
@@ -463,7 +463,7 @@ const Avatar = memo(({
 
 Avatar.displayName = 'Avatar';
 
-// Plus Counter Component
+
 const PlusCounter = memo(({ count, onClick, gradientFrom = '#F9D769', gradientTo = '#734D20' }) => {
   return (
     <motion.li
@@ -491,7 +491,7 @@ const PlusCounter = memo(({ count, onClick, gradientFrom = '#F9D769', gradientTo
 
 PlusCounter.displayName = 'PlusCounter';
 
-// Memoized AvatarGroup Component
+
 const AvatarGroup = memo(({
   avatars = [],
   maxVisible = AVATAR_CONFIG.maxVisible,
@@ -563,7 +563,7 @@ const AvatarGroup = memo(({
 
 AvatarGroup.displayName = 'AvatarGroup';
 
-// TopInfluencers Component with dynamic height
+
 const TopInfluencers = memo(({ influencersData, loading, onRefresh }) => {
   const [maxVisible, setMaxVisible] = useState(AVATAR_CONFIG.maxVisible);
 
@@ -614,7 +614,7 @@ const TopInfluencers = memo(({ influencersData, loading, onRefresh }) => {
 
 TopInfluencers.displayName = 'TopInfluencers';
 
-// Helper functions for campaigns
+
 const getStatusName = (campaign) => {
   if (campaign.closed_date) return 'Closed';
   const endDate = new Date(campaign.end_date);
@@ -626,7 +626,7 @@ const getStatusName = (campaign) => {
   return 'Active';
 };
 
-// Helper function to truncate text
+
 const truncateText = (text, maxLength) => {
   if (!text) return '';
   if (text.length <= maxLength) return text;
@@ -641,7 +641,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
-  const [viewMode, setViewMode] = useState('table'); // 'table' or 'grid'
+  const [viewMode, setViewMode] = useState('table');
   const [brandStats, setBrandStats] = useState({
     total_campaigns: 0,
     total_completed_users: 0,
@@ -973,10 +973,8 @@ export default function Dashboard() {
             </motion.button> */}
           </div>
 
-          {/* Row 1: Campaign Overview (left) | Total Investment (top right) + Completed Tasks (bottom right) */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Campaign Overview - Takes 2/3 width */}
             <motion.div 
               whileHover={{ y: -5 }}
               className="bg-gradient-to-br from-primary to-[#E8C547] rounded-xl lg:col-span-2 p-8 flex justify-between flex-col shadow-lg min-h-[320px]"
@@ -1014,7 +1012,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
 
-            {/* Right Column - Stack Total Investment and Completed Tasks */}
+
             <div className="flex flex-col gap-8">
               {/* Total Investment Card */}
               <motion.div 
@@ -1033,7 +1031,7 @@ export default function Dashboard() {
                 </div>
               </motion.div>
 
-              {/* Completed Tasks Card */}
+
               <motion.div 
                 whileHover={{ y: -5 }}
                 className="bg-white rounded-xl p-6 flex justify-between flex-col shadow-lg border border-gray-200 min-h-[150px]"
@@ -1052,7 +1050,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Row 2: Top Performers - Full Width with dynamic height */}
+
           {brandStats.actioned_users_top && brandStats.actioned_users_top.length > 0 && (
             <motion.div 
               whileHover={{ y: -5 }}
@@ -1066,10 +1064,10 @@ export default function Dashboard() {
             </motion.div>
           )}
 
-          {/* Row 3: Campaign History (left) + Quick Actions (right) - Bottom Section */}
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Campaign History - Takes 2/3 width */}
+
             <motion.div 
               whileHover={{ y: -5 }}
               className="bg-white rounded-xl lg:col-span-2 p-8 flex justify-between flex-col shadow-lg border border-gray-200 min-h-[400px] overflow-hidden"
@@ -1177,7 +1175,7 @@ export default function Dashboard() {
               </div>
             </motion.div>
 
-            {/* Quick Actions Card - Right side matching height */}
+
             <motion.div 
               whileHover={{ y: -5 }}
               className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-8 flex justify-between flex-col shadow-lg min-h-[400px]"

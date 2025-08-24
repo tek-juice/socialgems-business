@@ -1,4 +1,3 @@
-// src/hooks/useNavData.jsx
 import { useMemo } from 'react';
 import { 
   FiHome, 

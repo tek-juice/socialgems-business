@@ -1,51 +1,34 @@
-// utils/dateUtils.js
-
-/**
- * Timezone-aware date utilities for handling server UTC dates and local display
- */
-
-/**
- * Get user's timezone offset in minutes
- */
 export const getTimezoneOffset = () => {
     return new Date().getTimezoneOffset();
   };
   
-  /**
-   * Get user's timezone (e.g., "America/New_York")
-   */
   export const getUserTimezone = () => {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   };
   
   /**
-   * Convert a local date to UTC date string (for server communication)
-   * @param {string} localDateString - Date in YYYY-MM-DD format
-   * @returns {string} UTC date string in YYYY-MM-DD format
+   * @param {string} localDateString
+   * @returns {string} 
    */
   export const localDateToUTC = (localDateString) => {
     if (!localDateString) return '';
     
-    // Create date in local timezone at start of day
     const localDate = new Date(localDateString + 'T00:00:00');
     
-    // Convert to UTC and format as YYYY-MM-DD
     const utcDate = new Date(localDate.getTime() - (localDate.getTimezoneOffset() * 60000));
     return utcDate.toISOString().split('T')[0];
   };
   
   /**
-   * Convert UTC date string to local date string (for display)
-   * @param {string} utcDateString - UTC date in YYYY-MM-DD format
-   * @returns {string} Local date string in YYYY-MM-DD format
+   * @param {string} utcDateString
+   * @returns {string}
    */
   export const utcDateToLocal = (utcDateString) => {
     if (!utcDateString) return '';
     
-    // Create UTC date
     const utcDate = new Date(utcDateString + 'T00:00:00Z');
     
-    // Convert to local date
+
     const localDate = new Date(utcDate.getTime() + (utcDate.getTimezoneOffset() * 60000));
     
     const year = localDate.getFullYear();
@@ -56,9 +39,8 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Create a date in local timezone at start of day
-   * @param {string} dateString - Date in YYYY-MM-DD format
-   * @returns {Date} Date object in local timezone
+   * @param {string} dateString
+   * @returns {Date}
    */
   export const createLocalDate = (dateString) => {
     if (!dateString) return null;
@@ -66,9 +48,8 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Create a date in UTC timezone at start of day
-   * @param {string} dateString - Date in YYYY-MM-DD format
-   * @returns {Date} Date object in UTC timezone
+   * @param {string} dateString
+   * @returns {Date} 
    */
   export const createUTCDate = (dateString) => {
     if (!dateString) return null;
@@ -76,10 +57,9 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Format date for display in user's locale
-   * @param {string|Date} date - Date string or Date object
-   * @param {string} locale - Locale (default: 'en-US')
-   * @returns {string} Formatted date string
+   * @param {string|Date} date 
+   * @param {string} locale 
+   * @returns {string} 
    */
   export const formatDisplayDate = (date, locale = 'en-US') => {
     if (!date) return '';
@@ -95,9 +75,8 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Get minimum date (X days from today in local timezone)
-   * @param {number} daysFromToday - Number of days to add to today
-   * @returns {Date} Date object
+   * @param {number} daysFromToday
+   * @returns {Date}
    */
   export const getMinimumDate = (daysFromToday = 4) => {
     const today = new Date();
@@ -107,11 +86,10 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Check if a date is disabled based on min/max constraints
-   * @param {Date} date - Date to check
-   * @param {Date|string} minDate - Minimum allowed date
-   * @param {Date|string} maxDate - Maximum allowed date
-   * @returns {boolean} True if date is disabled
+   * @param {Date} date
+   * @param {Date|string} minDate
+   * @param {Date|string} maxDate
+   * @returns {boolean}
    */
   export const isDateDisabled = (date, minDate, maxDate) => {
     if (!date) return true;
@@ -139,9 +117,8 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Check if date is today in local timezone
-   * @param {Date} date - Date to check
-   * @returns {boolean} True if date is today
+   * @param {Date} date
+   * @returns {boolean}
    */
   export const isToday = (date) => {
     if (!date) return false;
@@ -150,9 +127,8 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Format date as YYYY-MM-DD string
-   * @param {Date} date - Date object
-   * @returns {string} Date string in YYYY-MM-DD format
+   * @param {Date} date
+   * @returns {string}
    */
   export const formatDateString = (date) => {
     if (!date) return '';
@@ -163,11 +139,10 @@ export const getTimezoneOffset = () => {
   };
   
   /**
-   * Validate date range (start must be before end, minimum duration)
-   * @param {string} startDate - Start date in YYYY-MM-DD format
-   * @param {string} endDate - End date in YYYY-MM-DD format
-   * @param {number} minDays - Minimum duration in days
-   * @returns {object} Validation result with errors
+   * @param {string} startDate
+   * @param {string} endDate
+   * @param {number} minDays
+   * @returns {object} 
    */
   export const validateDateRange = (startDate, endDate, minDays = 4) => {
     const errors = {};

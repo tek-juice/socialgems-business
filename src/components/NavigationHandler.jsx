@@ -5,14 +5,12 @@ const NavigationHandler = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Update tab manager when location changes
     const currentPath = location.pathname + location.search;
     
     if (window.tabManager) {
       window.tabManager.updateTabPath(currentPath);
     }
     
-    // Broadcast URL change to other tabs
     const channel = new BroadcastChannel('social_gems_tabs');
     channel.postMessage({
       type: 'URL_UPDATED',

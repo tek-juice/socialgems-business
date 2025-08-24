@@ -1,4 +1,3 @@
-// src/providers/dataProvider.js
 import { get, post, put, del, patch } from '../utils/service';
 
 export const dataProvider = {
@@ -70,7 +69,8 @@ export const dataProvider = {
 
   getApiUrl: () => {
     return window.location.hostname.includes('socialgems.me') 
-      ? 'https://api.socialgems.me/'
+      // ? 'https://api.socialgems.me/'
+      ? 'https://api-v2.socialgems.me/'
       : 'https://gems.tekjuice.xyz/';
   },
 

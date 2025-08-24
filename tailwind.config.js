@@ -8,11 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Direct color references for easy use
         primary: '#F9D769', 
         secondary: '#734D20',  
         
-        // Extended primary scale for more options
         'primary-scale': {
           50: '#FEF7E6',
           100: '#FDECC0',
@@ -27,7 +25,6 @@ export default {
           950: '#5A3C19',
         },
         
-        // Extended secondary scale for more options
         'secondary-scale': {
           50: '#F7F3ED',
           100: '#EDE4D3',
@@ -42,7 +39,6 @@ export default {
           950: '#1F110A',
         },
 
-        // Additional colors for animations
         background: "var(--background)",
         foreground: "var(--foreground)",
         skeleton: "var(--skeleton)",

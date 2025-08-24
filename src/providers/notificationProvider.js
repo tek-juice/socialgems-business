@@ -1,4 +1,3 @@
-// src/providers/notificationProvider.js
 import { toast } from 'sonner';
 
 export const notificationProvider = {

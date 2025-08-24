@@ -8,24 +8,20 @@ class CacheManager {
     this.lastActiveKey = 'lastActive';
   }
 
-  // Enhanced set with automatic backup
   set(key, data, expiry = null) {
     const item = {
       data,
       timestamp: Date.now(),
       expiry
     };
-    
-    // Store in memory cache
+
     this.memoryCache.set(key, item);
-    
-    // Store in localStorage with error handling
+
     try {
       localStorage.setItem(this.prefix + key, JSON.stringify(item));
       console.log('💾 [Cache] Saved to localStorage:', key, typeof data === 'object' ? Object.keys(data).length + ' items' : data);
     } catch (error) {
       console.warn('⚠️ [Cache] Failed to save to localStorage:', key, error);
-      // Fallback to sessionStorage
       try {
         sessionStorage.setItem(this.prefix + key, JSON.stringify(item));
         console.log('💾 [Cache] Fallback saved to sessionStorage:', key);
@@ -35,11 +31,9 @@ class CacheManager {
     }
   }
 
-  // Enhanced get with fallback chain
   get(key) {
     console.log('🔍 [Cache] Retrieving:', key);
-    
-    // Check memory cache first (fastest)
+
     if (this.memoryCache.has(key)) {
       const item = this.memoryCache.get(key);
       if (!item.expiry || Date.now() <= item.expiry) {
@@ -52,13 +46,11 @@ class CacheManager {
       }
     }
 
-    // Check localStorage
     try {
       const item = localStorage.getItem(this.prefix + key);
       if (item) {
         const parsed = JSON.parse(item);
         if (!parsed.expiry || Date.now() <= parsed.expiry) {
-          // Add back to memory cache
           this.memoryCache.set(key, parsed);
           console.log('✅ [Cache] Found in localStorage and restored to memory:', key);
           return parsed.data;
@@ -72,13 +64,11 @@ class CacheManager {
       console.warn('⚠️ [Cache] Error reading from localStorage:', key, error);
     }
 
-    // Check sessionStorage as fallback
     try {
       const item = sessionStorage.getItem(this.prefix + key);
       if (item) {
         const parsed = JSON.parse(item);
         if (!parsed.expiry || Date.now() <= parsed.expiry) {
-          // Add back to memory cache
           this.memoryCache.set(key, parsed);
           console.log('✅ [Cache] Found in sessionStorage and restored to memory:', key);
           return parsed.data;
@@ -116,11 +106,6 @@ class CacheManager {
     console.log('🧹 [Cache] Cleared all cache');
   }
 
-  // =============================================================================
-  // APP STATE MANAGEMENT
-  // =============================================================================
-
-  // Save complete app state
   saveAppState(state) {
     const appState = {
       selectedGroupId: state.selectedGroupId,
@@ -133,24 +118,19 @@ class CacheManager {
         height: window.innerHeight
       }
     };
-    
-    this.set(this.appStateKey, appState, Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+
+    this.set(this.appStateKey, appState, Date.now() + (7 * 24 * 60 * 60 * 1000));
     console.log('💾 [Cache] App state saved:', appState);
   }
 
-  // Restore complete app state
   getAppState() {
     const state = this.get(this.appStateKey);
     console.log('📱 [Cache] App state retrieved:', state);
     return state;
   }
 
-  // =============================================================================
-  // MESSAGE MANAGEMENT WITH READ STATUS
-  // =============================================================================
-
   setMessages(groupId, messages) {
-    this.set(`messages_${groupId}`, messages, Date.now() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+    this.set(`messages_${groupId}`, messages, Date.now() + (30 * 24 * 60 * 60 * 1000));
     console.log(`💬 [Cache] Saved ${messages.length} messages for group ${groupId}`);
   }
 
@@ -164,16 +144,15 @@ class CacheManager {
     const messages = this.getMessages(groupId);
     const updatedMessages = [...messages, message];
     this.setMessages(groupId, updatedMessages);
-    
-    // Update last activity
+
     this.updateLastActivity(groupId);
-    
+
     return updatedMessages;
   }
 
   updateMessage(groupId, messageId, updatedMessage) {
     const messages = this.getMessages(groupId);
-    const updatedMessages = messages.map(msg => 
+    const updatedMessages = messages.map(msg =>
       msg.messageId === messageId ? { ...msg, ...updatedMessage } : msg
     );
     this.setMessages(groupId, updatedMessages);
@@ -187,14 +166,10 @@ class CacheManager {
     return updatedMessages;
   }
 
-  // =============================================================================
-  // READ/UNREAD MESSAGE STATUS TRACKING
-  // =============================================================================
-
   saveMessageStatus(groupId, messageStatuses) {
     const allStatuses = this.get(this.messageStatusKey) || {};
     allStatuses[groupId] = messageStatuses;
-    this.set(this.messageStatusKey, allStatuses, Date.now() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+    this.set(this.messageStatusKey, allStatuses, Date.now() + (30 * 24 * 60 * 60 * 1000));
     console.log(`👁️ [Cache] Saved message statuses for group ${groupId}:`, messageStatuses);
   }
 
@@ -218,9 +193,9 @@ class CacheManager {
     const messages = this.getMessages(groupId);
     const statuses = {};
     const now = Date.now();
-    
+
     messages.forEach(msg => {
-      if (msg.senderId !== userId) { // Don't mark own messages as read
+      if (msg.senderId !== userId) {
         statuses[msg.messageId] = {
           isRead: true,
           readAt: now,
@@ -228,7 +203,7 @@ class CacheManager {
         };
       }
     });
-    
+
     this.saveMessageStatus(groupId, statuses);
     console.log(`✅ [Cache] Marked all messages as read in group ${groupId}`);
   }
@@ -236,13 +211,13 @@ class CacheManager {
   getUnreadMessages(groupId, userId) {
     const messages = this.getMessages(groupId);
     const statuses = this.getMessageStatus(groupId);
-    
+
     const unreadMessages = messages.filter(msg => {
-      if (msg.senderId === userId) return false; // Own messages don't count as unread
+      if (msg.senderId === userId) return false;
       const status = statuses[msg.messageId];
       return !status || !status.isRead;
     });
-    
+
     console.log(`📬 [Cache] Found ${unreadMessages.length} unread messages in group ${groupId}`);
     return unreadMessages;
   }
@@ -252,10 +227,6 @@ class CacheManager {
     return unreadMessages.length > 0 ? unreadMessages[0] : null;
   }
 
-  // =============================================================================
-  // SCROLL POSITION MANAGEMENT
-  // =============================================================================
-
   saveScrollPosition(groupId, scrollTop, scrollHeight) {
     const positions = this.get(this.scrollPositionKey) || {};
     positions[groupId] = {
@@ -263,7 +234,7 @@ class CacheManager {
       scrollHeight,
       timestamp: Date.now()
     };
-    this.set(this.scrollPositionKey, positions, Date.now() + (7 * 24 * 60 * 60 * 1000)); // 7 days
+    this.set(this.scrollPositionKey, positions, Date.now() + (7 * 24 * 60 * 60 * 1000));
     console.log(`📜 [Cache] Saved scroll position for group ${groupId}:`, { scrollTop, scrollHeight });
   }
 
@@ -274,14 +245,11 @@ class CacheManager {
     return position;
   }
 
-  // =============================================================================
-  // LAST ACTIVITY TRACKING
-  // =============================================================================
 
   updateLastActivity(groupId) {
     const activities = this.get(this.lastActiveKey) || {};
     activities[groupId] = Date.now();
-    this.set(this.lastActiveKey, activities, Date.now() + (30 * 24 * 60 * 60 * 1000)); // 30 days
+    this.set(this.lastActiveKey, activities, Date.now() + (30 * 24 * 60 * 60 * 1000));
     console.log(`⏰ [Cache] Updated last activity for group ${groupId}`);
   }
 
@@ -294,24 +262,21 @@ class CacheManager {
     const activities = this.get(this.lastActiveKey) || {};
     let mostRecentGroupId = null;
     let mostRecentTime = 0;
-    
+
     Object.entries(activities).forEach(([groupId, timestamp]) => {
       if (timestamp > mostRecentTime) {
         mostRecentTime = timestamp;
         mostRecentGroupId = groupId;
       }
     });
-    
+
     console.log(`⭐ [Cache] Most recently active group: ${mostRecentGroupId} at ${new Date(mostRecentTime)}`);
     return mostRecentGroupId;
   }
 
-  // =============================================================================
-  // STANDARD CACHE METHODS (Enhanced)
-  // =============================================================================
 
   setGroups(groups) {
-    this.set('groups', groups, Date.now() + (60 * 60 * 1000)); // 1 hour
+    this.set('groups', groups, Date.now() + (60 * 60 * 1000));
     console.log(`📂 [Cache] Saved ${groups.length} groups`);
   }
 
@@ -322,7 +287,7 @@ class CacheManager {
   }
 
   setUser(user) {
-    this.set('currentUser', user, Date.now() + (24 * 60 * 60 * 1000)); // 24 hours
+    this.set('currentUser', user, Date.now() + (24 * 60 * 60 * 1000));
     console.log('👤 [Cache] Saved current user:', user);
   }
 
@@ -332,9 +297,6 @@ class CacheManager {
     return user;
   }
 
-  // =============================================================================
-  // CACHE HEALTH & MAINTENANCE
-  // =============================================================================
 
   getCacheStats() {
     const stats = {
@@ -344,19 +306,16 @@ class CacheManager {
       totalSize: 0
     };
 
-    // Count localStorage entries
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith(this.prefix)) {
         stats.localStorageEntries++;
         try {
           stats.totalSize += localStorage.getItem(key).length;
         } catch (e) {
-          // Ignore errors
         }
       }
     });
 
-    // Count sessionStorage entries
     Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith(this.prefix)) {
         stats.sessionStorageEntries++;
@@ -371,7 +330,6 @@ class CacheManager {
     console.log('🧹 [Cache] Starting cleanup of expired entries...');
     let cleanedCount = 0;
 
-    // Clean memory cache
     this.memoryCache.forEach((item, key) => {
       if (item.expiry && Date.now() > item.expiry) {
         this.memoryCache.delete(key);
@@ -379,7 +337,6 @@ class CacheManager {
       }
     });
 
-    // Clean localStorage
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith(this.prefix)) {
         try {
@@ -389,7 +346,6 @@ class CacheManager {
             cleanedCount++;
           }
         } catch (e) {
-          // Remove corrupted entries
           localStorage.removeItem(key);
           cleanedCount++;
         }

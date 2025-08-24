@@ -70,7 +70,6 @@ const Sidebar = ({ isOpen, toggleSidebar, userType = 'client' }) => {
     }
   ], [campaignCount]);
 
-  // Fetch campaign count in background
   useEffect(() => {
     const fetchCampaignCount = async () => {
       try {

@@ -1,171 +1,154 @@
-// Enhanced timezone-aware date utilities
 export const createLocalDate = (dateString) => {
-    if (!dateString) return null;
-    return new Date(dateString + 'T00:00:00');
-  };
-  
-  export const createUTCDate = (dateString) => {
-    if (!dateString) return null;
-    return new Date(dateString + 'T00:00:00Z');
-  };
-  
-  export const formatDateString = (date) => {
-    if (!date) return '';
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-  
-  // Proper timezone conversion for server communication
-  export const localDateToUTC = (localDateString) => {
-    if (!localDateString) return '';
-    
-    // Create date in local timezone
-    const localDate = new Date(localDateString + 'T00:00:00');
-    
-    // Simply return the same date string since we want the same calendar date
-    // The server should handle this as UTC
-    const year = localDate.getFullYear();
-    const month = String(localDate.getMonth() + 1).padStart(2, '0');
-    const day = String(localDate.getDate()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}`;
-  };
-  
-  export const utcDateToLocal = (utcDateString) => {
-    if (!utcDateString) return '';
-    
-    // For display purposes, we want to show the same date
-    // regardless of timezone, so just return the date part
-    if (utcDateString.includes('T')) {
-      return utcDateString.split('T')[0];
+  if (!dateString) return null;
+  return new Date(dateString + 'T00:00:00');
+};
+
+export const createUTCDate = (dateString) => {
+  if (!dateString) return null;
+  return new Date(dateString + 'T00:00:00Z');
+};
+
+export const formatDateString = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const localDateToUTC = (localDateString) => {
+  if (!localDateString) return '';
+  const localDate = new Date(localDateString + 'T00:00:00');
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, '0');
+  const day = String(localDate.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+};
+
+export const utcDateToLocal = (utcDateString) => {
+  if (!utcDateString) return '';
+
+  if (utcDateString.includes('T')) {
+    return utcDateString.split('T')[0];
+  }
+
+  return utcDateString;
+};
+
+export const formatDisplayDate = (dateString) => {
+  if (!dateString) return '';
+  const date = createLocalDate(dateString);
+  if (!date) return '';
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+export const getMinimumDate = (daysFromToday = 4) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const minDate = new Date(today);
+  minDate.setDate(today.getDate() + daysFromToday);
+  return minDate;
+};
+
+export const isDateDisabled = (date, minDate, maxDate) => {
+  if (!date) return true;
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+
+  if (minDate) {
+    const minDateTime = typeof minDate === 'string'
+      ? createLocalDate(minDate)
+      : new Date(minDate);
+    minDateTime.setHours(0, 0, 0, 0);
+    if (checkDate < minDateTime) return true;
+  }
+
+  if (maxDate) {
+    const maxDateTime = typeof maxDate === 'string'
+      ? createLocalDate(maxDate)
+      : new Date(maxDate);
+    maxDateTime.setHours(0, 0, 0, 0);
+    if (checkDate > maxDateTime) return true;
+  }
+
+  return false;
+};
+
+export const isToday = (date) => {
+  if (!date) return false;
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+};
+
+export const validateDateRange = (startDate, endDate, minDays = 2) => {
+  const errors = {};
+
+  if (startDate) {
+    const start = createLocalDate(startDate);
+    const minStartDate = getMinimumDate(4);
+
+    if (start < minStartDate) {
+      errors.start_date = 'Campaign start date must be at least 3 days from today';
     }
-    
-    return utcDateString;
-  };
-  
-  export const formatDisplayDate = (dateString) => {
-    if (!dateString) return '';
-    const date = createLocalDate(dateString);
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-  
-  // More robust minimum date calculation
-  export const getMinimumDate = (daysFromToday = 4) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const minDate = new Date(today);
-    minDate.setDate(today.getDate() + daysFromToday);
-    return minDate;
-  };
-  
-  export const isDateDisabled = (date, minDate, maxDate) => {
-    if (!date) return true;
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    
-    if (minDate) {
-      const minDateTime = typeof minDate === 'string' 
-        ? createLocalDate(minDate) 
-        : new Date(minDate);
-      minDateTime.setHours(0, 0, 0, 0);
-      if (checkDate < minDateTime) return true;
-    }
-    
-    if (maxDate) {
-      const maxDateTime = typeof maxDate === 'string' 
-        ? createLocalDate(maxDate) 
-        : new Date(maxDate);
-      maxDateTime.setHours(0, 0, 0, 0);
-      if (checkDate > maxDateTime) return true;
-    }
-    
-    return false;
-  };
-  
-  export const isToday = (date) => {
-    if (!date) return false;
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-  
-  // Enhanced date range validation
-  export const validateDateRange = (startDate, endDate, minDays = 2) => {
-    const errors = {};
-    
-    if (startDate) {
-      const start = createLocalDate(startDate);
-      const minStartDate = getMinimumDate(4);
-  
-      if (start < minStartDate) {
-        errors.start_date = 'Campaign start date must be at least 3 days from today';
+  }
+
+  if (endDate && startDate) {
+    const start = createLocalDate(startDate);
+    const end = createLocalDate(endDate);
+
+    if (end <= start) {
+      errors.end_date = 'End date must be after start date';
+    } else {
+      const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
+      if (daysDiff < 2) {
+        errors.end_date = `Campaign must run for at least 1 day`;
       }
     }
-  
-    if (endDate && startDate) {
-      const start = createLocalDate(startDate);
-      const end = createLocalDate(endDate);
-  
-      if (end <= start) {
-        errors.end_date = 'End date must be after start date';
-      } else {
-        const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
-        if (daysDiff < 2) {
-          errors.end_date = `Campaign must run for at least 1 day`;
-        }
-      }
-    }
-  
-    return { isValid: Object.keys(errors).length === 0, errors };
-  };
-  
-  // Generate unique request ID
-  export const generateRequestId = () => {
-    const timestamp = Date.now().toString(16);
-    const randomBytes = new Uint8Array(16);
-    crypto.getRandomValues(randomBytes);
-    const randomHex = Array.from(randomBytes)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  
-    const combined = (timestamp + randomHex).substring(0, 32);
-    return `cp${combined}`;
-  };
-  
-  // Utility functions
-  export const countWords = (text) => {
-    return text
-      ? text
-          .trim()
-          .split(/\s+/)
-          .filter((word) => word.length > 0).length
-      : 0;
-  };
-  
-  // Helper function to safely convert to number with fallback
-  export const safeToNumber = (value, fallback = 0) => {
-    const num = Number(value);
-    return isNaN(num) ? fallback : num;
-  };
-  
-  // Helper function to safely call toFixed with fallback
-  export const safeToFixed = (value, decimals = 2, fallback = 0) => {
-    const num = safeToNumber(value, fallback);
-    return num.toFixed(decimals);
-  };
-  
-  // Constants - Updated calculation logic
-  export const INFLUENCER_BASE_RATE = 15; // $15 per influencer
-  export const PLATFORM_FEE = 50; // $50 platform fee
-  export const MIN_BUDGET_PER_INFLUENCER = 65; // $65 minimum per influencer (includes company fee)
-  
-  // Calculate minimum budget based on number of influencers
-  export const calculateMinimumBudget = (numberOfInfluencers) => {
-    return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
-  };
+  }
+
+  return { isValid: Object.keys(errors).length === 0, errors };
+};
+
+export const generateRequestId = () => {
+  const timestamp = Date.now().toString(16);
+  const randomBytes = new Uint8Array(16);
+  crypto.getRandomValues(randomBytes);
+  const randomHex = Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const combined = (timestamp + randomHex).substring(0, 32);
+  return `cp${combined}`;
+};
+
+export const countWords = (text) => {
+  return text
+    ? text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length
+    : 0;
+};
+
+export const safeToNumber = (value, fallback = 0) => {
+  const num = Number(value);
+  return isNaN(num) ? fallback : num;
+};
+
+export const safeToFixed = (value, decimals = 2, fallback = 0) => {
+  const num = safeToNumber(value, fallback);
+  return num.toFixed(decimals);
+};
+
+export const INFLUENCER_BASE_RATE = 15;
+export const PLATFORM_FEE = 50;
+export const MIN_BUDGET_PER_INFLUENCER = 65;
+
+export const calculateMinimumBudget = (numberOfInfluencers) => {
+  return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
+};

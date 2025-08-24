@@ -1,4 +1,3 @@
-// src/providers/authProvider.js
 import { post } from '../utils/service';
 
 export const authProvider = {

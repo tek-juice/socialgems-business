@@ -127,7 +127,6 @@ const Calendar = React.forwardRef(({
 
     const days = [];
 
-    // Previous month's days
     if (showOutsideDays) {
       const prevMonthLastDay = new Date(year, month, 0).getDate();
       for (let i = startingDayOfWeek - 1; i >= 0; i--) {
@@ -145,7 +144,6 @@ const Calendar = React.forwardRef(({
       }
     }
 
-    // Current month's days
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       days.push({
@@ -155,9 +153,8 @@ const Calendar = React.forwardRef(({
       });
     }
 
-    // Next month's days
     if (showOutsideDays) {
-      const remainingCells = 42 - days.length; // 6 rows * 7 days
+      const remainingCells = 42 - days.length;
       for (let day = 1; day <= remainingCells; day++) {
         const date = new Date(year, month + 1, day);
         days.push({
@@ -178,7 +175,6 @@ const Calendar = React.forwardRef(({
 
     return (
       <div key={monthOffset} className="w-full min-w-[280px]">
-        {/* Month Header */}
         <div className="relative mx-10 mb-4 flex h-10 items-center justify-center">
           {monthOffset === 0 && (
             <>
@@ -203,7 +199,6 @@ const Calendar = React.forwardRef(({
           </div>
         </div>
 
-        {/* Days of Week Header */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {DAYS_OF_WEEK.map((day) => (
             <div
@@ -215,7 +210,6 @@ const Calendar = React.forwardRef(({
           ))}
         </div>
 
-        {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1">
           {days.map((dayInfo, index) => {
             if (!dayInfo) {

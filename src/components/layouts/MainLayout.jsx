@@ -26,18 +26,15 @@ import { get, put } from "../../utils/service";
 import { assets } from "../../assets/assets";
 import { IoChatbubblesSharp } from "react-icons/io5";
 
-// Custom utility function
 function cn(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-// Business Verification Card Component
 const BusinessVerificationCard = ({
   userData,
   onNavigateToSettings,
   onClose,
 }) => {
-  // Get business verification status
   const getVerificationStatus = () => {
     if (!userData?.business_profile) {
       return "none";
@@ -116,7 +113,6 @@ const BusinessVerificationCard = ({
         <div
           className={`relative bg-secondary border ${cardContent.borderColor} shadow-[0_2px_20px_0_rgba(249,215,105,0.15)] rounded-xl p-5 overflow-hidden`}
         >
-          {/* Close button at top-right - fixed clickable area */}
           <button
             type="button"
             onClick={onClose}
@@ -126,7 +122,6 @@ const BusinessVerificationCard = ({
           </button>
 
           <div className="relative flex flex-col gap-2">
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col gap-2">
@@ -144,9 +139,7 @@ const BusinessVerificationCard = ({
               </div>
             </div>
 
-            {/* Action buttons - now below content */}
             <div className="flex items-center gap-2">
-              {/* Primary action button */}
               <button
                 type="button"
                 onClick={onNavigateToSettings}
@@ -179,7 +172,6 @@ const MainLayout = ({ userType = "client" }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // Check if we're on the groups page
   const isGroupsPage = location.pathname === "/groups";
 
   const {
@@ -208,9 +200,6 @@ const MainLayout = ({ userType = "client" }) => {
       }
     },
 
-    // =====================================
-    //    Timing
-    // =====================================
     staleTime: 0,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -249,7 +238,6 @@ const MainLayout = ({ userType = "client" }) => {
       return { previousUserData };
     },
     onError: (error, newUserData, context) => {
-      // Roll back on error
       queryClient.setQueryData(["userProfile"], context.previousUserData);
       toast.error("Failed to update profile");
       console.error("Update error:", error);
@@ -258,17 +246,14 @@ const MainLayout = ({ userType = "client" }) => {
       toast.success("Profile updated successfully");
     },
     onSettled: () => {
-      // Invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
     },
   });
 
-  // Helper function to update user profil
   const updateUserProfile = (updatedData) => {
     updateUserProfileMutation.mutate(updatedData);
   };
 
-  // Helper function to extract first name
   const getFirstName = (firstName, fullName) => {
     if (firstName) return firstName;
     if (!fullName || typeof fullName !== "string") return "User";
@@ -287,16 +272,13 @@ const MainLayout = ({ userType = "client" }) => {
       ? `${userData.firstName} ${userData.lastName}`
       : localStorage.getItem("name") || "User";
 
-  // Navigate to settings with business verification focus
   const handleNavigateToSettings = () => {
     navigate("/settings", { state: { focusBusinessVerification: true } });
   };
 
-  // Handle closing verification card
   const handleCloseVerificationCard = () => {
     setShowVerificationCard(false);
 
-    // Reappear after 5 seconds if not verified (but only for none/rejected status)
     if (userData?.business_profile?.verification_status !== "approved") {
       setTimeout(() => {
         setShowVerificationCard(true);
@@ -304,9 +286,7 @@ const MainLayout = ({ userType = "client" }) => {
     }
   };
 
-  // Enhanced logout function
   const handleLogout = () => {
-    // Clear all queries from cache
     queryClient.clear();
 
     localStorage.removeItem("isLoggedIn");
@@ -318,7 +298,6 @@ const MainLayout = ({ userType = "client" }) => {
     navigate("/login");
   };
 
-  // Toggle sidebar function
   const toggleSidebar = (newState, isManual = false) => {
     setSidebarOpen(newState);
     if (isManual) {
@@ -326,7 +305,6 @@ const MainLayout = ({ userType = "client" }) => {
     }
   };
 
-  // Floating action menu options
   const floatingMenuOptions = [
     {
       label: "Dashboard",
@@ -360,7 +338,6 @@ const MainLayout = ({ userType = "client" }) => {
     },
   ];
 
-  // Handle click outside user menu
   useEffect(() => {
     const handleClickOutside = (e) => {
       const userButton = document.querySelector(".user-button");
@@ -381,7 +358,6 @@ const MainLayout = ({ userType = "client" }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showUserMenu]);
 
-  // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
       const windowWidth = window.innerWidth;
@@ -398,7 +374,6 @@ const MainLayout = ({ userType = "client" }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, [manuallyToggled, isGroupsPage]);
 
-  // Close sidebar on mobile when route changes
   useEffect(() => {
     if (isMobile && !isGroupsPage) {
       setSidebarOpen(false);
@@ -406,19 +381,16 @@ const MainLayout = ({ userType = "client" }) => {
     }
   }, [location, isMobile, isGroupsPage]);
 
-  // Content class based on groups page or sidebar state
   const contentClass = isGroupsPage
     ? ""
     : sidebarOpen
     ? "md:ml-64"
     : "md:ml-16";
 
-  // Show floating menu when sidebar is closed, on mobile, or on groups page
   const showFloatingMenu = isMobile || !sidebarOpen || isGroupsPage;
 
-  // Check if business verification card should be shown - exclude certain pages
   const excludedPages = ["/groups", "/settings"];
-  // const excludedPages = ['/groups', '/settings', '/dashboard'];
+
   const shouldShowVerificationCard =
     !loading &&
     userData?.user_type === "brand" &&
@@ -441,7 +413,6 @@ const MainLayout = ({ userType = "client" }) => {
         )}
       </AnimatePresence>
 
-      {/* Conditionally render sidebar - not on groups page */}
       {!isGroupsPage && (
         <Sidebar
           isOpen={sidebarOpen}
@@ -456,12 +427,9 @@ const MainLayout = ({ userType = "client" }) => {
         } left-0`}
         style={{ backdropFilter: "blur(1px)" }}
       >
-        {/* Glass effect overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
 
-        {/* Left side controls */}
         <div className="relative z-10 flex items-center">
-          {/* Mobile logo (instead of menu toggle) */}
           <div className="md:hidden pl-4">
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -476,7 +444,6 @@ const MainLayout = ({ userType = "client" }) => {
             </motion.div>
           </div>
 
-          {/* Desktop expand button - only show when not on groups page */}
           <AnimatePresence>
             {!sidebarOpen && !isMobile && !isGroupsPage && (
               <motion.button
@@ -499,7 +466,6 @@ const MainLayout = ({ userType = "client" }) => {
             )}
           </AnimatePresence>
 
-          {/* Desktop logo on groups page */}
           {isGroupsPage && !isMobile && (
             <motion.div
               whileHover={{ scale: 1.05 }}
@@ -514,7 +480,6 @@ const MainLayout = ({ userType = "client" }) => {
           )}
         </div>
 
-        {/* Right side controls */}
         <div className="relative z-10 flex items-center space-x-4 px-4">
           {/* User menu */}
           <div className="relative">
@@ -528,7 +493,6 @@ const MainLayout = ({ userType = "client" }) => {
               aria-expanded={showUserMenu}
               disabled={loading}
             >
-              {/* User avatar */}
               <div className="relative w-8 h-8 flex-shrink-0">
                 {loading ? (
                   <div className="w-full h-full rounded-full bg-primary/20 animate-pulse"></div>
@@ -547,7 +511,7 @@ const MainLayout = ({ userType = "client" }) => {
                     <FiUser size={16} />
                   </motion.div>
                 )}
-                {/* Online indicator with subtle animation to show real-time connection */}
+
                 {!loading && (
                   <motion.span
                     className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white"
@@ -577,7 +541,6 @@ const MainLayout = ({ userType = "client" }) => {
               </div>
             </motion.button>
 
-            {/* User dropdown menu */}
             <AnimatePresence>
               {showUserMenu && !loading && (
                 <motion.div
@@ -591,11 +554,9 @@ const MainLayout = ({ userType = "client" }) => {
                   aria-orientation="vertical"
                   aria-labelledby="user-menu-button"
                 >
-                  {/* Glass effect overlay */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50"></div>
 
                   <div className="relative z-10 p-4 border-b border-white/20 bg-gradient-to-r from-primary/10 to-[#E8C547]/10 flex items-center">
-                    {/* User avatar in menu */}
                     <motion.div
                       className="relative mr-3 w-12 h-12 flex-shrink-0"
                       whileHover={{ scale: 1.05 }}
@@ -613,7 +574,6 @@ const MainLayout = ({ userType = "client" }) => {
                       )}
                     </motion.div>
 
-                    {/* User details */}
                     <div className="overflow-hidden">
                       <p className="text-sm font-medium text-secondary truncate max-w-[160px]">
                         {fullName}
@@ -628,7 +588,6 @@ const MainLayout = ({ userType = "client" }) => {
                     </div>
                   </div>
 
-                  {/* Menu items */}
                   <div className="relative z-10 py-1">
                     <motion.button
                       onClick={() => {
@@ -666,9 +625,7 @@ const MainLayout = ({ userType = "client" }) => {
         </div>
       </header>
 
-      {/* Main content area with proper layout flow */}
       <div className={`transition-all duration-300 ${contentClass} pt-16`}>
-        {/* Business Verification Card - Part of document flow */}
         <AnimatePresence mode="wait">
           {shouldShowVerificationCard && (
             <BusinessVerificationCard
@@ -679,13 +636,11 @@ const MainLayout = ({ userType = "client" }) => {
           )}
         </AnimatePresence>
 
-        {/* Main content - Remove padding for groups page on mobile */}
         <main className={cn(isGroupsPage && isMobile ? "" : "p-6")}>
           <Outlet />
         </main>
       </div>
 
-      {/* Floating Action Menu */}
       <AnimatePresence>
         {showFloatingMenu && (
           <FloatingActionMenu options={floatingMenuOptions} className="z-50" />

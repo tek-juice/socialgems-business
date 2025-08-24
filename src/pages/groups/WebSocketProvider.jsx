@@ -201,7 +201,6 @@ export const WebSocketProvider = ({ children }) => {
         try {
           const data = JSON.parse(event.data);
           
-          // Only log message-related events for testing
           if (['SEND_MESSAGE', 'MESSAGE_RECEIVED', 'DELETE_MESSAGE', 'MESSAGE_EDITED'].includes(data.type)) {
             console.log('📨 [WS] Message event:', data.type, data);
           }
@@ -367,7 +366,6 @@ export const WebSocketProvider = ({ children }) => {
       try {
         ws.send(JSON.stringify(message));
         
-        // Only log message sends for testing
         if (['SEND_MESSAGE', 'DELETE_MESSAGE'].includes(message.type)) {
           console.log('📤 [WS] Sent message:', message.type, message);
         }

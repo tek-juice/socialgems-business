@@ -46,14 +46,14 @@ import {
 } from 'date-fns';
 import { cn } from '../lib/utils';
 
-// Helper functions for HTML processing
+
 const decodeHtmlEntities = (text) => {
   const textArea = document.createElement('textarea');
   textArea.innerHTML = text;
   return textArea.value;
 };
 
-// Add this helper function before the CampaignCard component
+
 const truncateToWords = (text, maxWords = 2) => {
   if (!text) return '';
   const words = text.split(' ');
@@ -87,7 +87,7 @@ const truncateText = (text, maxLength = 100) => {
   return text.length <= maxLength ? text : text.substring(0, maxLength) + '...';
 };
 
-// Local Storage Keys
+
 const STORAGE_KEYS = {
   CURRENT_PAGE: 'campaigns_current_page',
   ITEMS_PER_PAGE: 'campaigns_items_per_page',
@@ -95,7 +95,7 @@ const STORAGE_KEYS = {
   COLUMN_FILTERS: 'campaigns_column_filters'
 };
 
-// Helper functions for localStorage
+
 const saveToStorage = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
@@ -114,7 +114,7 @@ const loadFromStorage = (key, defaultValue) => {
   }
 };
 
-// Delete Confirmation Modal Component
+
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) => {
   if (!isOpen) return null;
 
@@ -166,7 +166,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) 
   );
 };
 
-// Skeleton Loading Component
+
 const SkeletonCard = ({ isLastOdd = false }) => {
   return (
     <motion.div
@@ -210,7 +210,7 @@ const SkeletonCard = ({ isLastOdd = false }) => {
   );
 };
 
-// Campaign Card Component
+
 const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
   const endDate = new Date(campaign.end_date);
   const now = new Date();
@@ -234,12 +234,12 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
       )}
       onClick={() => onClick(campaign)}
     >
-      {/* Status badge at top right corner for all campaigns */}
+
       <div className="absolute top-3 right-3 z-10 flex gap-2">
         {getStatusBadge(campaign)}
       </div>
 
-      {/* Delete button */}
+
       <button
         onClick={handleDelete}
         className="absolute top-3 right-16 z-10 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-110 shadow-lg"
@@ -307,7 +307,7 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
   );
 };
 
-// AnimatedTabs Component
+
 const AnimatedTabs = ({ tabs, activeTab, onTabChange }) => {
   const containerRef = useRef(null);
   const activeTabRef = useRef(null);
@@ -373,7 +373,7 @@ const AnimatedTabs = ({ tabs, activeTab, onTabChange }) => {
   );
 };
 
-// Custom Components
+
 const Button = ({
   className,
   variant = "default",
@@ -434,7 +434,7 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
   );
 };
 
-// Pagination Components
+
 const Pagination = ({ className, ...props }) => (
   <nav
     role="navigation"
@@ -507,7 +507,6 @@ const PaginationEllipsis = ({ className, ...props }) => (
   </span>
 );
 
-// Filter Dropdown Menu Component
 const FilterDropdownMenu = ({ options, children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -564,16 +563,16 @@ const FilterDropdownMenu = ({ options, children, className }) => {
   );
 };
 
-// Keep your original getStatusName function unchanged
+
 const getStatusName = (campaign) => {
-  // Check explicit status first
+
   if (campaign.status === 'draft') return 'Draft';
   if (campaign.status === 'completed') return 'Closed';
   if (campaign.status === 'active') return 'Active';
   if (campaign.status === 'open_to_applications') return 'Open To Applications';
   if (campaign.closed_date) return 'Closed';
   
-  // Fall back to date-based logic
+
   const endDate = new Date(campaign.end_date);
   const startDate = new Date(campaign.start_date);
   const now = new Date();
@@ -601,7 +600,6 @@ const getStatusBadge = (campaign) => {
   }
 };
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -632,13 +630,13 @@ const Campaigns = () => {
   const [loading, setLoading] = useState(true);
   const [deletingCampaigns, setDeletingCampaigns] = useState(new Set());
   
-  // Delete confirmation modal state
+
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     campaign: null
   });
 
-  // Pagination state with localStorage persistence
+
   const [currentPage, setCurrentPage] = useState(() => 
     loadFromStorage(STORAGE_KEYS.CURRENT_PAGE, 1)
   );
@@ -646,7 +644,7 @@ const Campaigns = () => {
     loadFromStorage(STORAGE_KEYS.ITEMS_PER_PAGE, 6)
   );
 
-  // Filter state with localStorage persistence
+
   const [columnFilters, setColumnFilters] = useState(() => 
     loadFromStorage(STORAGE_KEYS.COLUMN_FILTERS, {
       status: 'all',
@@ -655,7 +653,7 @@ const Campaigns = () => {
     })
   );
 
-  // Status tabs state with localStorage persistence
+
   const [activeStatusTab, setActiveStatusTab] = useState(() => 
     loadFromStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, 'all')
   );
@@ -667,7 +665,7 @@ const Campaigns = () => {
     { label: "Closed", value: "closed" }
   ];
 
-  // Save to localStorage whenever state changes
+
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.CURRENT_PAGE, currentPage);
   }, [currentPage]);
@@ -684,7 +682,7 @@ const Campaigns = () => {
     saveToStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, activeStatusTab);
   }, [activeStatusTab]);
 
-  // Simplified campaign fetching - only brandCampaigns endpoint
+
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
@@ -695,7 +693,7 @@ const Campaigns = () => {
         return;
       }
       
-      // Filter out deleted campaigns and sort by creation date (most recent first)
+
       const activeCampaigns = response.data
         .filter(campaign => 
           campaign.status !== 'deleted' && 
@@ -805,26 +803,26 @@ const Campaigns = () => {
     fetchCampaigns();
   }, []);
 
-  // Handle status tab change
+
   const handleStatusTabChange = (status) => {
     setActiveStatusTab(status);
     setColumnFilters(prev => ({ ...prev, status: status }));
     setCurrentPage(1);
   };
 
-  // UPDATED: Enhanced handleViewCampaign to fetch detailed campaign data
+
   const handleViewCampaign = async (campaign) => {
     try {
-      // Show loading state
+
       toast.loading('Loading campaign details...', { id: 'campaign-loading' });
       
-      // Fetch detailed campaign data using the same endpoint as campaign details page
+
       const campaignResponse = await get(`campaigns/campaign/${campaign.campaign_id}`);
       
       if (campaignResponse?.status === 200 && campaignResponse?.data) {
         const detailedCampaignData = campaignResponse.data;
         
-        // Navigate with the detailed campaign data
+
         navigate(`/campaigns/${campaign.campaign_id}`, {
           state: { 
             campaign: detailedCampaignData,
@@ -835,7 +833,7 @@ const Campaigns = () => {
         toast.dismiss('campaign-loading');
         toast.success('Campaign loaded successfully');
       } else {
-        // Fallback: navigate with original campaign data if detailed fetch fails
+
         console.warn('Failed to fetch detailed campaign data, using fallback');
         navigate(`/campaigns/${campaign.campaign_id}`, {
           state: { 
@@ -850,7 +848,7 @@ const Campaigns = () => {
     } catch (error) {
       console.error('Error fetching campaign details:', error);
       
-      // Fallback: navigate with original campaign data if detailed fetch fails
+
       navigate(`/campaigns/${campaign.campaign_id}`, {
         state: { 
           campaign: campaign,
@@ -863,7 +861,7 @@ const Campaigns = () => {
     }
   };
 
-  // Filter campaigns with pagination
+
   const filteredCampaigns = useMemo(() => {
     const filtered = campaigns.filter(campaign => {
       if (campaign.status === 'deleted' || 
@@ -900,7 +898,7 @@ const Campaigns = () => {
     return filtered;
   }, [campaigns, activeStatusTab, columnFilters]);
 
-  // Pagination logic
+
   const totalItems = filteredCampaigns.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;

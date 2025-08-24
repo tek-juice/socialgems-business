@@ -1,17 +1,10 @@
 import MainLogo from './mainlogo.png'
 import Logo from './logo.png'
 
-// logo icon for signup 
 import LogoIcon from './LogoIcon.svg'
-
-// banner 
-// import banner from './SG-web-banner.webp'
-
-// import banner from './onboarding.jpg'
 
 import banner from './onboarding.png'
 
-// Socials 
 import tiktok from './tiktok.webp'
 import instagram from './instagram.webp'
 import facebook from './facbook.png'
