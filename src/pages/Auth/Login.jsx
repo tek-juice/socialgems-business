@@ -340,7 +340,7 @@ const Login = () => {
 
       {/* Desktop Layout - 80vh and 80vw with Shadow */}
       <div className="min-h-screen w-full hidden xl:flex items-center justify-center bg-gray-100">
-        <div className="w-[90vw] h-[80vh] flex shadow-2xl rounded-2xl overflow-hidden bg-white">
+        <div className="h-screen w-screen flex overflow-hidden bg-white">
           
           {/* LEFT SIDE - Image Section */}
           <div className="w-1/2 relative overflow-hidden">
@@ -477,7 +477,7 @@ const Login = () => {
                   <div className="flex justify-end">
                     <button 
                       type="button"
-                      className="text-xs text-primary hover:underline font-medium"
+                      className="text-xs text-secondary hover:underline font-medium"
                       onClick={() => setShowForgotPassword(true)}
                     >
                       Forgot password?

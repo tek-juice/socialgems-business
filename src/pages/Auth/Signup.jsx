@@ -1151,7 +1151,7 @@ const Signup = () => {
                 <button
                   type="button"
                   onClick={() => setIsTermsModalOpen(true)}
-                  className="text-primary hover:underline font-medium"
+                  className="text-secondary hover:underline font-medium"
                 >
                   Terms and Conditions
                 </button>
@@ -1419,7 +1419,7 @@ const Signup = () => {
 
       {/* Desktop Layout - 80vh and 80vw with Shadow */}
       <div className="min-h-screen w-full hidden xl:flex items-center justify-center bg-gray-100">
-        <div className="w-[90vw] h-[80vh] flex shadow-2xl rounded-2xl overflow-hidden bg-white">
+        <div className="w-screen h-screen flex overflow-hidden bg-white">
           
           {/* LEFT SIDE - Image Section */}
           <div className="w-1/2 relative overflow-hidden">
