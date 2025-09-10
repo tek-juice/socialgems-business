@@ -77,6 +77,8 @@ const AuthUtils = {
   },
 };
 
+// COMMENTED OUT - Tab Manager functionality for duplicate tab detection
+/*
 class TabManager {
   constructor() {
     this.tabId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -224,12 +226,13 @@ class TabManager {
         newTabId: newTabId,
       });
 
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("Social Gems", {
-          body: "Switched to existing tab",
-          icon: "/favicon.ico",
-        });
-      }
+      // COMMENTED OUT - Push notification for tab switching
+      // if ("Notification" in window && Notification.permission === "granted") {
+      //   new Notification("Social Gems", {
+      //     body: "Switched to existing tab",
+      //     icon: "/favicon.ico",
+      //   });
+      // }
     }
 
     if (type === "USER_LOGGED_OUT") {
@@ -308,6 +311,7 @@ class TabManager {
 }
 
 const tabManager = new TabManager();
+*/
 
 function NavigationHandler() {
   const location = useLocation();
@@ -324,11 +328,12 @@ function NavigationHandler() {
       return;
     }
 
-    try {
-      tabManager.updateTabPath(currentPath);
-    } catch (error) {
-      console.warn("Error updating tab path:", error);
-    }
+    // COMMENTED OUT - Tab manager path updates
+    // try {
+    //   tabManager.updateTabPath(currentPath);
+    // } catch (error) {
+    //   console.warn("Error updating tab path:", error);
+    // }
   }, [location.pathname, location.search, navigate]);
 
   return null;
@@ -342,7 +347,8 @@ function PaymentRoute() {
 function ProtectedRoute({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  // COMMENTED OUT - Tab duplicate redirect functionality
+  // const [shouldRedirect, setShouldRedirect] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -373,6 +379,8 @@ function ProtectedRoute({ children }) {
     return () => clearInterval(authCheckInterval);
   }, []);
 
+  // COMMENTED OUT - Tab manager registration and duplicate handling
+  /*
   useEffect(() => {
     if (isLoggedIn && !loading) {
       const currentPath = location.pathname + location.search;
@@ -395,6 +403,7 @@ function ProtectedRoute({ children }) {
       }
     }
   }, [location.pathname, location.search, isLoggedIn, loading, navigate]);
+  */
 
   useEffect(() => {
     const handleStorageChange = (e) => {
@@ -415,9 +424,10 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (shouldRedirect) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  // COMMENTED OUT - Auto redirect for duplicate tabs
+  // if (shouldRedirect) {
+  //   return <Navigate to="/dashboard" replace />;
+  // }
 
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 }
@@ -449,9 +459,10 @@ function AuthRoute({ children }) {
 
 function App() {
   useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
+    // COMMENTED OUT - Notification permission request
+    // if ("Notification" in window && Notification.permission === "default") {
+    //   Notification.requestPermission();
+    // }
 
     if (
       !AuthUtils.isAuthenticated() &&
@@ -460,11 +471,12 @@ function App() {
       window.location.href = "/login";
     }
 
-    return () => {
-      if (tabManager) {
-        tabManager.cleanup();
-      }
-    };
+    // COMMENTED OUT - Tab manager cleanup
+    // return () => {
+    //   if (tabManager) {
+    //     tabManager.cleanup();
+    //   }
+    // };
   }, []);
 
   return (

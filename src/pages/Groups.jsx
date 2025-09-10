@@ -1430,7 +1430,7 @@ const GroupsWithWebSocket = () => {
             {groups.length} groups • {selectedGroup ? `${messages.length} messages` : 'Select a group to chat'}
           </p>
 
-          {/* Web socket connection  */}
+          {/* Web socket connection - COMMENTED OUT */}
           {/* {isConnected && (
             <div className="flex items-center justify-center gap-1 mt-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -1650,7 +1650,8 @@ const GroupsWithWebSocket = () => {
                 Connect with your team and collaborate seamlessly.<br />
                 Select a group from the sidebar to start chatting.
               </p>
-              {!isConnected && (
+              {/* COMMENTED OUT - WebSocket connection error message */}
+              {/* {!isConnected && (
                 <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-200">
                   <p className="text-xs text-red-600">
                     <FiWifiOff className="w-4 h-4 inline mr-2" />
@@ -1660,7 +1661,7 @@ const GroupsWithWebSocket = () => {
                     WebSocket Status: {connectionStatus}
                   </p>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         )}
