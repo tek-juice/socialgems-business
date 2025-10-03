@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { FiUser, FiExternalLink, FiActivity, FiCheck } from "react-icons/fi";
 
@@ -8,6 +8,7 @@ import { FaCheckCircle } from "react-icons/fa";
 import { formatDate } from "./utils";
 
 export const TasksReport = ({ actionedInfluencers }) => {
+  // Initialize with all member IDs expanded by default
   const [expandedMembers, setExpandedMembers] = useState([]);
   const [expandedTasks, setExpandedTasks] = useState({});
   const [imageErrors, setImageErrors] = useState({});
@@ -32,6 +33,14 @@ export const TasksReport = ({ actionedInfluencers }) => {
       // Filter out "Unknown User" or empty names
       return influencerName && influencerName !== "Unknown User";
     }) || [];
+
+  // Set all members as expanded by default when component mounts or members change
+  useEffect(() => {
+    if (membersWithTasks.length > 0) {
+      const allMemberIds = membersWithTasks.map(member => member.user_id);
+      setExpandedMembers(allMemberIds);
+    }
+  }, [membersWithTasks]);
 
   const unknownUsersCount =
     actionedInfluencers?.filter((member) => {
@@ -60,11 +69,12 @@ export const TasksReport = ({ actionedInfluencers }) => {
     );
   }
 
+  // Toggle function - now only closes (removes from expanded) when clicked
   const toggleMemberExpansion = (userId) => {
     setExpandedMembers((prev) =>
       prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
+        ? prev.filter((id) => id !== userId) // Remove if already expanded (close it)
+        : [...prev, userId] // Add if not expanded (open it)
     );
   };
 
