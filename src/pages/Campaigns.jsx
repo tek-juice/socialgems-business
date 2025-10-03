@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { 
-  FiEye, 
-  FiEdit, 
-  FiTrash2, 
+import { useState, useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  FiEye,
+  FiEdit,
+  FiTrash2,
   FiCalendar,
   FiClock,
   FiTarget,
@@ -25,12 +25,12 @@ import {
   FiUsers,
   FiBarChart,
   FiCheck,
-  FiUserPlus
-} from 'react-icons/fi';
-import { get, post } from '../utils/service';
-import { toast } from 'sonner';
-import { EmptyState } from '../components/ui/Campaigns/No-Data/empty-state';
-import { 
+  FiUserPlus,
+} from "react-icons/fi";
+import { get, post } from "../utils/service";
+import { toast } from "sonner";
+import { EmptyState } from "../components/ui/Campaigns/No-Data/empty-state";
+import {
   addMonths,
   endOfMonth,
   startOfMonth,
@@ -42,65 +42,79 @@ import {
   isSameDay,
   addDays,
   min,
-  max
-} from 'date-fns';
-import { cn } from '../lib/utils';
-
+  max,
+} from "date-fns";
+import { cn } from "../lib/utils";
 
 const decodeHtmlEntities = (text) => {
-  const textArea = document.createElement('textarea');
+  const textArea = document.createElement("textarea");
   textArea.innerHTML = text;
   return textArea.value;
 };
 
-
 const truncateToWords = (text, maxWords = 2) => {
-  if (!text) return '';
-  const words = text.split(' ');
+  if (!text) return "";
+  const words = text.split(" ");
   if (words.length <= maxWords) return text;
-  return words.slice(0, maxWords).join(' ') + '...';
+  return words.slice(0, maxWords).join(" ") + "...";
 };
 
 const formatHtmlContent = (htmlContent) => {
-  if (!htmlContent) return '';
-  
+  if (!htmlContent) return "";
+
   let decodedContent = decodeHtmlEntities(htmlContent);
-  
-  decodedContent = decodedContent.replace(/<h>/g, '<h3 class="text-xs font-bold text-gray-900 mt-4 mb-2 first:mt-0">');
-  decodedContent = decodedContent.replace(/<\/h>/g, '</h3>');
-  
-  decodedContent = decodedContent.replace(/<li>/g, '<div class="flex items-start gap-2 mb-1"><span class="text-xs text-gray-600 mt-0.5">•</span><span class="text-xs text-gray-700 flex-1">');
-  decodedContent = decodedContent.replace(/<\/li>/g, '</span></div>');
-  
-  decodedContent = decodedContent.replace(/<p>/g, '<p class="text-xs text-gray-700 mb-2">');
-  
-  decodedContent = decodedContent.replace(/<strong>/g, '<strong class="font-semibold text-gray-900">');
-  
-  decodedContent = decodedContent.replace(/<p class="text-xs text-gray-700 mb-2"><br><\/p>/g, '');
-  decodedContent = decodedContent.replace(/<p class="text-xs text-gray-700 mb-2">\s*<\/p>/g, '');
-  
+
+  decodedContent = decodedContent.replace(
+    /<h>/g,
+    '<h3 class="text-xs font-bold text-gray-900 mt-4 mb-2 first:mt-0">'
+  );
+  decodedContent = decodedContent.replace(/<\/h>/g, "</h3>");
+
+  decodedContent = decodedContent.replace(
+    /<li>/g,
+    '<div class="flex items-start gap-2 mb-1"><span class="text-xs text-gray-600 mt-0.5">•</span><span class="text-xs text-gray-700 flex-1">'
+  );
+  decodedContent = decodedContent.replace(/<\/li>/g, "</span></div>");
+
+  decodedContent = decodedContent.replace(
+    /<p>/g,
+    '<p class="text-xs text-gray-700 mb-2">'
+  );
+
+  decodedContent = decodedContent.replace(
+    /<strong>/g,
+    '<strong class="font-semibold text-gray-900">'
+  );
+
+  decodedContent = decodedContent.replace(
+    /<p class="text-xs text-gray-700 mb-2"><br><\/p>/g,
+    ""
+  );
+  decodedContent = decodedContent.replace(
+    /<p class="text-xs text-gray-700 mb-2">\s*<\/p>/g,
+    ""
+  );
+
   return decodedContent;
 };
 
 const truncateText = (text, maxLength = 100) => {
-  if (!text) return '';
-  return text.length <= maxLength ? text : text.substring(0, maxLength) + '...';
+  if (!text) return "";
+  return text.length <= maxLength ? text : text.substring(0, maxLength) + "...";
 };
-
 
 const STORAGE_KEYS = {
-  CURRENT_PAGE: 'campaigns_current_page',
-  ITEMS_PER_PAGE: 'campaigns_items_per_page',
-  ACTIVE_STATUS_TAB: 'campaigns_active_status_tab',
-  COLUMN_FILTERS: 'campaigns_column_filters'
+  CURRENT_PAGE: "campaigns_current_page",
+  ITEMS_PER_PAGE: "campaigns_items_per_page",
+  ACTIVE_STATUS_TAB: "campaigns_active_status_tab",
+  COLUMN_FILTERS: "campaigns_column_filters",
 };
-
 
 const saveToStorage = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error('Error saving to localStorage:', error);
+    console.error("Error saving to localStorage:", error);
   }
 };
 
@@ -109,13 +123,17 @@ const loadFromStorage = (key, defaultValue) => {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.error('Error loading from localStorage:', error);
+    console.error("Error loading from localStorage:", error);
     return defaultValue;
   }
 };
 
-
-const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) => {
+const DeleteConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  campaignTitle,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -128,7 +146,7 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) 
           className="absolute inset-0 bg-black bg-opacity-50"
           onClick={onClose}
         />
-        
+
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -141,10 +159,11 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) 
               Delete campaign
             </h3>
             <p className="text-gray-600 text-xs mb-6">
-              Are you sure you want to delete "{campaignTitle}"?<br />
+              Are you sure you want to delete "{campaignTitle}"?
+              <br />
               This action is not reversible.
             </p>
-            
+
             <div className="flex gap-3 justify-center">
               <button
                 onClick={onClose}
@@ -165,7 +184,6 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, campaignTitle }) 
     </AnimatePresence>
   );
 };
-
 
 const SkeletonCard = ({ isLastOdd = false }) => {
   return (
@@ -210,7 +228,6 @@ const SkeletonCard = ({ isLastOdd = false }) => {
   );
 };
 
-
 const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
   const endDate = new Date(campaign.end_date);
   const now = new Date();
@@ -220,7 +237,7 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
     e.stopPropagation();
     onDelete(campaign);
   };
-  
+
   return (
     <motion.div
       layout
@@ -234,11 +251,9 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
       )}
       onClick={() => onClick(campaign)}
     >
-
       <div className="absolute top-3 right-3 z-10 flex gap-2">
         {getStatusBadge(campaign)}
       </div>
-
 
       <button
         onClick={handleDelete}
@@ -253,9 +268,9 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
           <div
             className="w-full h-full bg-cover bg-center"
             style={{
-              backgroundImage: campaign.image_urls 
-                ? `url(${campaign.image_urls})` 
-                : 'linear-gradient(135deg, #F9D769 0%, #E8C547 100%)'
+              backgroundImage: campaign.image_urls
+                ? `url(${campaign.image_urls})`
+                : "linear-gradient(135deg, #F9D769 0%, #E8C547 100%)",
             }}
           >
             {!campaign.image_urls && (
@@ -267,28 +282,30 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
         </div>
 
         <div className="flex-1 p-4 flex flex-col justify-between">
-          <div>
-            <div className="mb-2 pr-20">
-              <h3 className="font-semibold text-sm md:text-base text-secondary truncate">
-              {truncateToWords(campaign.title, 2)}
-              </h3>
-            </div>
-            <div 
-              className="text-xs text-gray-600 mb-3 line-clamp-2"
-              dangerouslySetInnerHTML={{
-                __html: formatHtmlContent(truncateText(campaign.description, 150))
-              }}
-            />
-          </div>
+        <div>
+  <div className="mb-2 pr-20">
+    <h3 className="font-semibold text-sm md:text-base text-secondary break-all break-words overflow-wrap-break-word word-break-break-all">
+      {truncateToWords(campaign.title, 2)}
+    </h3>
+  </div>
+  <div
+    className="text-xs text-gray-600 mb-3 line-clamp-2 whitespace-pre-line break-all break-words overflow-wrap-break-word word-break-break-all"
+    dangerouslySetInnerHTML={{
+      __html: formatHtmlContent(
+        truncateText(campaign.description, 150)
+      ),
+    }}
+  />
+</div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-gray-500">
               <FiClock className="w-3 h-3" />
               <span className="text-xs">
-                {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
+                {daysLeft > 0 ? `${daysLeft} days left` : "Ended"}
               </span>
             </div>
-            
+
             <Button
               variant="default"
               size="sm"
@@ -307,7 +324,6 @@ const CampaignCard = ({ campaign, onClick, onDelete, isLastOdd = false }) => {
   );
 };
 
-
 const AnimatedTabs = ({ tabs, activeTab, onTabChange }) => {
   const containerRef = useRef(null);
   const activeTabRef = useRef(null);
@@ -325,9 +341,9 @@ const AnimatedTabs = ({ tabs, activeTab, onTabChange }) => {
         const clipRight = offsetLeft + offsetWidth + 16;
 
         container.style.clipPath = `inset(0 ${Number(
-          100 - (clipRight / container.offsetWidth) * 100,
+          100 - (clipRight / container.offsetWidth) * 100
         ).toFixed()}% 0 ${Number(
-          (clipLeft / container.offsetWidth) * 100,
+          (clipLeft / container.offsetWidth) * 100
         ).toFixed()}% round 17px)`;
       }
     }
@@ -372,7 +388,6 @@ const AnimatedTabs = ({ tabs, activeTab, onTabChange }) => {
     </div>
   );
 };
-
 
 const Button = ({
   className,
@@ -433,7 +448,6 @@ const Badge = ({ className, children, variant = "default", ...props }) => {
     </div>
   );
 };
-
 
 const Pagination = ({ className, ...props }) => (
   <nav
@@ -563,23 +577,20 @@ const FilterDropdownMenu = ({ options, children, className }) => {
   );
 };
 
-
 const getStatusName = (campaign) => {
-
-  if (campaign.status === 'draft') return 'Draft';
-  if (campaign.status === 'completed') return 'Closed';
-  if (campaign.status === 'active') return 'Active';
-  if (campaign.status === 'open_to_applications') return 'Open To Applications';
-  if (campaign.closed_date) return 'Closed';
-  
+  if (campaign.status === "draft") return "Draft";
+  if (campaign.status === "completed") return "Closed";
+  if (campaign.status === "active") return "Active";
+  if (campaign.status === "open_to_applications") return "Open To Applications";
+  if (campaign.closed_date) return "Closed";
 
   const endDate = new Date(campaign.end_date);
   const startDate = new Date(campaign.start_date);
   const now = new Date();
-  
-  if (now < startDate) return 'Open to Applications';
-  if (now > endDate) return 'Completed';
-  return 'Active';
+
+  if (now < startDate) return "Open to Applications";
+  if (now > endDate) return "Completed";
+  return "Active";
 };
 
 const getStatusBadge = (campaign) => {
@@ -629,42 +640,37 @@ const Campaigns = () => {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingCampaigns, setDeletingCampaigns] = useState(new Set());
-  
 
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
-    campaign: null
+    campaign: null,
   });
 
-
-  const [currentPage, setCurrentPage] = useState(() => 
+  const [currentPage, setCurrentPage] = useState(() =>
     loadFromStorage(STORAGE_KEYS.CURRENT_PAGE, 1)
   );
-  const [itemsPerPage, setItemsPerPage] = useState(() => 
+  const [itemsPerPage, setItemsPerPage] = useState(() =>
     loadFromStorage(STORAGE_KEYS.ITEMS_PER_PAGE, 6)
   );
 
-
-  const [columnFilters, setColumnFilters] = useState(() => 
+  const [columnFilters, setColumnFilters] = useState(() =>
     loadFromStorage(STORAGE_KEYS.COLUMN_FILTERS, {
-      status: 'all',
-      budget: 'all',
-      duration: 'all'
+      status: "all",
+      budget: "all",
+      duration: "all",
     })
   );
 
-
-  const [activeStatusTab, setActiveStatusTab] = useState(() => 
-    loadFromStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, 'all')
+  const [activeStatusTab, setActiveStatusTab] = useState(() =>
+    loadFromStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, "all")
   );
 
   const statusTabs = [
     { label: "All", value: "all" },
     { label: "Draft", value: "draft" },
     { label: "Active", value: "active" },
-    { label: "Closed", value: "closed" }
+    { label: "Closed", value: "closed" },
   ];
-
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.CURRENT_PAGE, currentPage);
@@ -682,24 +688,23 @@ const Campaigns = () => {
     saveToStorage(STORAGE_KEYS.ACTIVE_STATUS_TAB, activeStatusTab);
   }, [activeStatusTab]);
 
-
   const fetchCampaigns = async () => {
     try {
       setLoading(true);
-      
-      const response = await get('campaigns/brandCampaigns');
+
+      const response = await get("campaigns/brandCampaigns");
       if (!response?.data) {
         setCampaigns([]);
         return;
       }
-      
 
       const activeCampaigns = response.data
-        .filter(campaign => 
-          campaign.status !== 'deleted' && 
-          campaign.status !== 'Deleted' &&
-          !campaign.deleted_at &&
-          !campaign.is_deleted
+        .filter(
+          (campaign) =>
+            campaign.status !== "deleted" &&
+            campaign.status !== "Deleted" &&
+            !campaign.deleted_at &&
+            !campaign.is_deleted
         )
         .sort((a, b) => {
           const dateA = new Date(a.created_on || a.start_date || 0);
@@ -708,9 +713,8 @@ const Campaigns = () => {
         });
 
       setCampaigns(activeCampaigns);
-      
     } catch (error) {
-      toast.error('Failed to fetch campaigns');
+      toast.error("Failed to fetch campaigns");
       setCampaigns([]);
     } finally {
       setLoading(false);
@@ -720,7 +724,7 @@ const Campaigns = () => {
   const handleDeleteRequest = (campaign) => {
     setDeleteModal({
       isOpen: true,
-      campaign: campaign
+      campaign: campaign,
     });
   };
 
@@ -728,40 +732,56 @@ const Campaigns = () => {
     if (!deleteModal.campaign) return;
 
     const campaignId = deleteModal.campaign.campaign_id;
-    
+
     try {
-      setDeletingCampaigns(prev => new Set([...prev, campaignId]));
-      
-      const response = await post('campaigns/deleteCampaign', {
-        campaign_id: campaignId
+      setDeletingCampaigns((prev) => new Set([...prev, campaignId]));
+
+      const response = await post("campaigns/deleteCampaign", {
+        campaign_id: campaignId,
       });
-      
-      setCampaigns(prevCampaigns => {
-        const updatedCampaigns = prevCampaigns.filter(campaign => campaign.campaign_id !== campaignId);
-        
-        const filteredAfterDeletion = updatedCampaigns.filter(campaign => {
+
+      setCampaigns((prevCampaigns) => {
+        const updatedCampaigns = prevCampaigns.filter(
+          (campaign) => campaign.campaign_id !== campaignId
+        );
+
+        const filteredAfterDeletion = updatedCampaigns.filter((campaign) => {
           const campaignStatus = getStatusName(campaign).toLowerCase();
-          const matchesTabStatus = 
-            activeStatusTab === 'all' ? true :
-            activeStatusTab === 'closed' ? (campaign.status === 'completed' || campaign.closed_date) :
-            activeStatusTab === campaignStatus || 
-            (activeStatusTab === 'draft' && campaign.status === 'draft');
+          const matchesTabStatus =
+            activeStatusTab === "all"
+              ? true
+              : activeStatusTab === "closed"
+              ? campaign.status === "completed" || campaign.closed_date
+              : activeStatusTab === campaignStatus ||
+                (activeStatusTab === "draft" && campaign.status === "draft");
 
-          const matchesColumnBudget = 
-            !columnFilters.budget || columnFilters.budget === 'all' ? true :
-            columnFilters.budget === 'with-budget' ? !!campaign.budget :
-            columnFilters.budget === 'no-budget' ? !campaign.budget :
-            true;
+          const matchesColumnBudget =
+            !columnFilters.budget || columnFilters.budget === "all"
+              ? true
+              : columnFilters.budget === "with-budget"
+              ? !!campaign.budget
+              : columnFilters.budget === "no-budget"
+              ? !campaign.budget
+              : true;
 
-          const campaignDuration = differenceInDays(new Date(campaign.end_date), new Date(campaign.start_date));
-          const matchesColumnDuration = 
-            !columnFilters.duration || columnFilters.duration === 'all' ? true :
-            columnFilters.duration === 'short' ? campaignDuration <= 30 :
-            columnFilters.duration === 'medium' ? campaignDuration > 30 && campaignDuration <= 90 :
-            columnFilters.duration === 'long' ? campaignDuration > 90 :
-            true;
+          const campaignDuration = differenceInDays(
+            new Date(campaign.end_date),
+            new Date(campaign.start_date)
+          );
+          const matchesColumnDuration =
+            !columnFilters.duration || columnFilters.duration === "all"
+              ? true
+              : columnFilters.duration === "short"
+              ? campaignDuration <= 30
+              : columnFilters.duration === "medium"
+              ? campaignDuration > 30 && campaignDuration <= 90
+              : columnFilters.duration === "long"
+              ? campaignDuration > 90
+              : true;
 
-          return matchesTabStatus && matchesColumnBudget && matchesColumnDuration;
+          return (
+            matchesTabStatus && matchesColumnBudget && matchesColumnDuration
+          );
         });
 
         const maxPage = Math.ceil(filteredAfterDeletion.length / itemsPerPage);
@@ -770,24 +790,23 @@ const Campaigns = () => {
         } else if (filteredAfterDeletion.length === 0) {
           setCurrentPage(1);
         }
-        
+
         return updatedCampaigns;
       });
-      
-      toast.success('Campaign deleted successfully');
-      
+
+      toast.success("Campaign deleted successfully");
     } catch (error) {
-      toast.error('Failed to delete campaign. Please try again.');
+      toast.error("Failed to delete campaign. Please try again.");
     } finally {
-      setDeletingCampaigns(prev => {
+      setDeletingCampaigns((prev) => {
         const newSet = new Set(prev);
         newSet.delete(campaignId);
         return newSet;
       });
-      
+
       setDeleteModal({
         isOpen: false,
-        campaign: null
+        campaign: null,
       });
     }
   };
@@ -795,7 +814,7 @@ const Campaigns = () => {
   const handleDeleteCancel = () => {
     setDeleteModal({
       isOpen: false,
-      campaign: null
+      campaign: null,
     });
   };
 
@@ -803,101 +822,110 @@ const Campaigns = () => {
     fetchCampaigns();
   }, []);
 
-
   const handleStatusTabChange = (status) => {
     setActiveStatusTab(status);
-    setColumnFilters(prev => ({ ...prev, status: status }));
+    setColumnFilters((prev) => ({ ...prev, status: status }));
     setCurrentPage(1);
   };
 
-
   const handleViewCampaign = async (campaign) => {
     try {
+      toast.loading("Loading campaign details...", { id: "campaign-loading" });
 
-      toast.loading('Loading campaign details...', { id: 'campaign-loading' });
-      
+      const campaignResponse = await get(
+        `campaigns/campaign/${campaign.campaign_id}`
+      );
 
-      const campaignResponse = await get(`campaigns/campaign/${campaign.campaign_id}`);
-      
       if (campaignResponse?.status === 200 && campaignResponse?.data) {
         const detailedCampaignData = campaignResponse.data;
-        
 
         navigate(`/campaigns/${campaign.campaign_id}`, {
-          state: { 
+          state: {
             campaign: detailedCampaignData,
-            isDraft: detailedCampaignData.status === 'draft'
-          }
+            isDraft: detailedCampaignData.status === "draft",
+          },
         });
-        
-        toast.dismiss('campaign-loading');
-        toast.success('Campaign loaded successfully');
-      } else {
 
-        console.warn('Failed to fetch detailed campaign data, using fallback');
+        toast.dismiss("campaign-loading");
+        toast.success("Campaign loaded successfully");
+      } else {
+        console.warn("Failed to fetch detailed campaign data, using fallback");
         navigate(`/campaigns/${campaign.campaign_id}`, {
-          state: { 
+          state: {
             campaign: campaign,
-            isDraft: campaign.status === 'draft'
-          }
+            isDraft: campaign.status === "draft",
+          },
         });
-        
-        toast.dismiss('campaign-loading');
-        toast.info('Campaign loaded (using cached data)');
+
+        toast.dismiss("campaign-loading");
+        toast.info("Campaign loaded (using cached data)");
       }
     } catch (error) {
-      console.error('Error fetching campaign details:', error);
-      
+      console.error("Error fetching campaign details:", error);
 
       navigate(`/campaigns/${campaign.campaign_id}`, {
-        state: { 
+        state: {
           campaign: campaign,
-          isDraft: campaign.status === 'draft'
-        }
+          isDraft: campaign.status === "draft",
+        },
       });
-      
-      toast.dismiss('campaign-loading');
-      toast.error('Failed to load full campaign details, showing basic information');
+
+      toast.dismiss("campaign-loading");
+      toast.error(
+        "Failed to load full campaign details, showing basic information"
+      );
     }
   };
 
-
   const filteredCampaigns = useMemo(() => {
-    const filtered = campaigns.filter(campaign => {
-      if (campaign.status === 'deleted' || 
-          campaign.status === 'Deleted' || 
-          campaign.deleted_at || 
-          campaign.is_deleted) {
+    const filtered = campaigns.filter((campaign) => {
+      if (
+        campaign.status === "deleted" ||
+        campaign.status === "Deleted" ||
+        campaign.deleted_at ||
+        campaign.is_deleted
+      ) {
         return false;
       }
 
       const campaignStatus = getStatusName(campaign).toLowerCase();
-      const matchesTabStatus = 
-        activeStatusTab === 'all' ? true :
-        activeStatusTab === 'closed' ? (campaign.status === 'completed' || campaign.closed_date) :
-        activeStatusTab === campaignStatus || 
-        (activeStatusTab === 'draft' && campaign.status === 'draft');
+      const matchesTabStatus =
+        activeStatusTab === "all"
+          ? true
+          : activeStatusTab === "closed"
+          ? campaign.status === "completed" || campaign.closed_date
+          : activeStatusTab === campaignStatus ||
+            (activeStatusTab === "draft" && campaign.status === "draft");
 
-      const matchesColumnBudget = 
-        !columnFilters.budget || columnFilters.budget === 'all' ? true :
-        columnFilters.budget === 'with-budget' ? !!campaign.budget :
-        columnFilters.budget === 'no-budget' ? !campaign.budget :
-        true;
+      const matchesColumnBudget =
+        !columnFilters.budget || columnFilters.budget === "all"
+          ? true
+          : columnFilters.budget === "with-budget"
+          ? !!campaign.budget
+          : columnFilters.budget === "no-budget"
+          ? !campaign.budget
+          : true;
 
-      const campaignDuration = differenceInDays(new Date(campaign.end_date), new Date(campaign.start_date));
-      const matchesColumnDuration = 
-        !columnFilters.duration || columnFilters.duration === 'all' ? true :
-        columnFilters.duration === 'short' ? campaignDuration <= 30 :
-        columnFilters.duration === 'medium' ? campaignDuration > 30 && campaignDuration <= 90 :
-        columnFilters.duration === 'long' ? campaignDuration > 90 :
-        true;
+      const campaignDuration = differenceInDays(
+        new Date(campaign.end_date),
+        new Date(campaign.start_date)
+      );
+      const matchesColumnDuration =
+        !columnFilters.duration || columnFilters.duration === "all"
+          ? true
+          : columnFilters.duration === "short"
+          ? campaignDuration <= 30
+          : columnFilters.duration === "medium"
+          ? campaignDuration > 30 && campaignDuration <= 90
+          : columnFilters.duration === "long"
+          ? campaignDuration > 90
+          : true;
 
       return matchesTabStatus && matchesColumnBudget && matchesColumnDuration;
     });
 
     return filtered;
   }, [campaigns, activeStatusTab, columnFilters]);
-
 
   const totalItems = filteredCampaigns.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -921,10 +949,10 @@ const Campaigns = () => {
   };
 
   const handleCreateCampaign = () => {
-    navigate('/campaigns/create');
+    navigate("/campaigns/create");
   };
 
-if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen">
         <div className="border-b border-secondary py-4 mb-5">
@@ -938,8 +966,8 @@ if (loading) {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                onClick={handleCreateCampaign} 
+              <Button
+                onClick={handleCreateCampaign}
                 size="sm"
                 className="bg-primary hover:bg-[#E8C547] text-secondary font-medium"
               >
@@ -978,12 +1006,7 @@ if (loading) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               {Array.from({ length: 6 }, (_, index) => {
                 const isLastOdd = 6 % 2 !== 0 && index === 6 - 1;
-                return (
-                  <SkeletonCard
-                    key={index}
-                    isLastOdd={isLastOdd}
-                  />
-                );
+                return <SkeletonCard key={index} isLastOdd={isLastOdd} />;
               })}
             </div>
           </motion.div>
@@ -1011,7 +1034,7 @@ if (loading) {
         isOpen={deleteModal.isOpen}
         onClose={handleDeleteCancel}
         onConfirm={handleDeleteConfirm}
-        campaignTitle={deleteModal.campaign?.title || ''}
+        campaignTitle={deleteModal.campaign?.title || ""}
       />
 
       <div className="border-b border-secondary py-4 mb-5">
@@ -1025,8 +1048,8 @@ if (loading) {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button 
-              onClick={handleCreateCampaign} 
+            <Button
+              onClick={handleCreateCampaign}
               size="sm"
               className="bg-primary hover:bg-[#E8C547] text-secondary font-medium"
             >
@@ -1044,8 +1067,8 @@ if (loading) {
         className="mx-auto"
       >
         <motion.div variants={itemVariants} className="mb-6">
-          <AnimatedTabs 
-            tabs={statusTabs} 
+          <AnimatedTabs
+            tabs={statusTabs}
             activeTab={activeStatusTab}
             onTabChange={handleStatusTabChange}
           />
@@ -1059,20 +1082,30 @@ if (loading) {
               <FilterDropdownMenu
                 options={[
                   {
-                    label: 'All Budgets',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, budget: 'all' })),
-                    checked: !columnFilters.budget || columnFilters.budget === 'all'
+                    label: "All Budgets",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({ ...prev, budget: "all" })),
+                    checked:
+                      !columnFilters.budget || columnFilters.budget === "all",
                   },
                   {
-                    label: 'With Budget',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, budget: 'with-budget' })),
-                    checked: columnFilters.budget === 'with-budget'
+                    label: "With Budget",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        budget: "with-budget",
+                      })),
+                    checked: columnFilters.budget === "with-budget",
                   },
                   {
-                    label: 'No Budget',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, budget: 'no-budget' })),
-                    checked: columnFilters.budget === 'no-budget'
-                  }
+                    label: "No Budget",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        budget: "no-budget",
+                      })),
+                    checked: columnFilters.budget === "no-budget",
+                  },
                 ]}
                 className="text-secondary border-primary/50 hover:bg-primary/20"
               >
@@ -1082,25 +1115,43 @@ if (loading) {
               <FilterDropdownMenu
                 options={[
                   {
-                    label: 'All Durations',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, duration: 'all' })),
-                    checked: !columnFilters.duration || columnFilters.duration === 'all'
+                    label: "All Durations",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        duration: "all",
+                      })),
+                    checked:
+                      !columnFilters.duration ||
+                      columnFilters.duration === "all",
                   },
                   {
-                    label: 'Short (≤30 days)',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, duration: 'short' })),
-                    checked: columnFilters.duration === 'short'
+                    label: "Short (≤30 days)",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        duration: "short",
+                      })),
+                    checked: columnFilters.duration === "short",
                   },
                   {
-                    label: 'Medium (31-90 days)',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, duration: 'medium' })),
-                    checked: columnFilters.duration === 'medium'
+                    label: "Medium (31-90 days)",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        duration: "medium",
+                      })),
+                    checked: columnFilters.duration === "medium",
                   },
                   {
-                    label: 'Long (>90 days)',
-                    onClick: () => setColumnFilters(prev => ({ ...prev, duration: 'long' })),
-                    checked: columnFilters.duration === 'long'
-                  }
+                    label: "Long (>90 days)",
+                    onClick: () =>
+                      setColumnFilters((prev) => ({
+                        ...prev,
+                        duration: "long",
+                      })),
+                    checked: columnFilters.duration === "long",
+                  },
                 ]}
                 className="text-secondary border-primary/50 hover:bg-primary/20"
               >
@@ -1129,7 +1180,9 @@ if (loading) {
             <AnimatePresence mode="wait">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {currentItems.map((campaign, index) => {
-                  const isLastOdd = currentItems.length % 2 !== 0 && index === currentItems.length - 1;
+                  const isLastOdd =
+                    currentItems.length % 2 !== 0 &&
+                    index === currentItems.length - 1;
                   return (
                     <CampaignCard
                       key={campaign.campaign_id}
@@ -1153,13 +1206,12 @@ if (loading) {
                     No Campaigns Available
                   </h3>
                   <p className="text-sm text-gray-600 max-w-md">
-                    Your campaign portfolio is empty. Create your first campaign to start tracking your marketing initiatives and drive business growth.
+                    Your campaign portfolio is empty. Create your first campaign
+                    to start tracking your marketing initiatives and drive
+                    business growth.
                   </p>
                 </div>
-                <Button 
-                  onClick={handleCreateCampaign}
-                  className="mt-4"
-                >
+                <Button onClick={handleCreateCampaign} className="mt-4">
                   <FiPlus className="w-4 h-4 mr-2" />
                   Launch Your First Campaign
                 </Button>
@@ -1171,8 +1223,8 @@ if (loading) {
         <motion.div variants={itemVariants}>
           <div className="flex flex-row flex-wrap pt-4 items-center justify-between w-full">
             <div className="text-xs text-gray-600">
-              Showing {Math.min(startIndex + 1, totalItems)} to {Math.min(endIndex, totalItems)} of{" "}
-              {totalItems} campaigns
+              Showing {Math.min(startIndex + 1, totalItems)} to{" "}
+              {Math.min(endIndex, totalItems)} of {totalItems} campaigns
             </div>
 
             {totalPages > 1 && (
@@ -1220,9 +1272,7 @@ if (loading) {
                   <PaginationItem>
                     <PaginationNext
                       onClick={() =>
-                        handlePageChange(
-                          Math.min(totalPages, currentPage + 1)
-                        )
+                        handlePageChange(Math.min(totalPages, currentPage + 1))
                       }
                       disabled={currentPage === totalPages}
                     />
