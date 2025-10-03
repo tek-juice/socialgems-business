@@ -38,11 +38,12 @@ export default function CampaignModals({
   selectedMember,
   selectedInvite,
   campaign,
-  campaignId, // Add this prop
+  campaignId,
   stats,
   isProcessing,
   industries,
   countries,
+  actionedMembers,
   
   // New handlers for UserProfileModal
   getInfluencerDetails,
@@ -65,6 +66,7 @@ export default function CampaignModals({
         isOpen={userProfileModal}
         onClose={() => setUserProfileModal(false)}
         member={selectedMember}
+        actionedMembers={actionedMembers}
         onPayClick={(member) => {
           setSelectedMember(member);
           setUserProfileModal(false);
@@ -79,7 +81,7 @@ export default function CampaignModals({
         industries={industries}
         countries={countries}
         getInfluencerDetails={getInfluencerDetails}
-        campaignId={campaignId || campaign?.campaign_id} // Pass the campaign ID
+        campaignId={campaignId || campaign?.campaign_id}
       />
 
       {/* Payment Modals */}
@@ -360,86 +362,86 @@ export default function CampaignModals({
       {/* Cancel Invite Modal */}
       {cancelInviteModal && (
         <Modal
-        isOpen={cancelInviteModal}
-        onClose={() => !isProcessing && setCancelInviteModal(false)}
-        title="Cancel Invitation"
-      >
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-              <FiXCircle className="w-6 h-6 text-red-600" />
+          isOpen={cancelInviteModal}
+          onClose={() => !isProcessing && setCancelInviteModal(false)}
+          title="Cancel Invitation"
+        >
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <FiXCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900">Cancel Invitation</h4>
+                <p className="text-xs text-gray-600">This action cannot be undone</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Cancel Invitation</h4>
-              <p className="text-xs text-gray-600">This action cannot be undone</p>
+            <p className="text-gray-700 mb-6">
+              Cancel invitation for Invite #{selectedInvite?.influencer_rank}? This invitation will be permanently removed.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setCancelInviteModal(false)}
+                disabled={isProcessing}
+                className="flex-1 shadow-sm"
+              >
+                Keep Invitation
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => onCancelInvite(selectedInvite)}
+                disabled={isProcessing}
+                className="flex-1 shadow-lg"
+              >
+                {isProcessing ? 'Cancelling...' : 'Cancel Invitation'}
+              </Button>
             </div>
           </div>
-          <p className="text-gray-700 mb-6">
-            Cancel invitation for Invite #{selectedInvite?.influencer_rank}? This invitation will be permanently removed.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setCancelInviteModal(false)}
-              disabled={isProcessing}
-              className="flex-1 shadow-sm"
-            >
-              Keep Invitation
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => onCancelInvite(selectedInvite)}
-              disabled={isProcessing}
-              className="flex-1 shadow-lg"
-            >
-              {isProcessing ? 'Cancelling...' : 'Cancel Invitation'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    )}
+        </Modal>
+      )}
 
-    {/* Activate Campaign Modal */}
-    {activateCampaignModal && (
-      <Modal
-        isOpen={activateCampaignModal}
-        onClose={() => !isProcessing && setActivateCampaignModal(false)}
-        title="Activate Campaign"
-      >
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-              <FiPlay className="w-6 h-6 text-green-600" />
+      {/* Activate Campaign Modal */}
+      {activateCampaignModal && (
+        <Modal
+          isOpen={activateCampaignModal}
+          onClose={() => !isProcessing && setActivateCampaignModal(false)}
+          title="Activate Campaign"
+        >
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <FiPlay className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900">Activate Campaign</h4>
+                <p className="text-xs text-gray-600">This will make the campaign live and start sending invites</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900">Activate Campaign</h4>
-              <p className="text-xs text-gray-600">This will make the campaign live and start sending invites</p>
+            <p className="text-gray-700 mb-6">
+              Are you sure you want to activate "{campaign?.title}"? This will start the campaign and begin sending invites to eligible influencers.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setActivateCampaignModal(false)}
+                disabled={isProcessing}
+                className="flex-1 shadow-sm"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="success"
+                onClick={onActivateCampaign}
+                disabled={isProcessing}
+                className="flex-1 shadow-lg"
+              >
+                {isProcessing ? 'Activating...' : 'Activate Campaign'}
+              </Button>
             </div>
           </div>
-          <p className="text-gray-700 mb-6">
-            Are you sure you want to activate "{campaign?.title}"? This will start the campaign and begin sending invites to eligible influencers.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setActivateCampaignModal(false)}
-              disabled={isProcessing}
-              className="flex-1 shadow-sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="success"
-              onClick={onActivateCampaign}
-              disabled={isProcessing}
-              className="flex-1 shadow-lg"
-            >
-              {isProcessing ? 'Activating...' : 'Activate Campaign'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
-    )}
-  </>
-);
+        </Modal>
+      )}
+    </>
+  );
 }

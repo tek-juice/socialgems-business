@@ -13,6 +13,8 @@ import {
   FiMail,
   FiChevronDown,
   FiExternalLink,
+  FiCheck,
+  FiX,
 } from 'react-icons/fi';
 
 import { MdTask, MdArrowBackIosNew } from "react-icons/md";
@@ -28,11 +30,12 @@ import CampaignOverview from './CampaignOverview';
 import CampaignActionButtons from './CampaignActionButtons';
 import CampaignModals from './CampaignModals';
 import CampaignPreviewButtons from './CampaignPreviewButtons';
+import { TasksReport } from './TasksReport';
 
 // Import utilities
 import { formatDate, formatHtmlContent, getActionStatusBadge } from './utils';
 
-// TasksAccordion Component - Updated to ensure tasks are always visible
+// TasksAccordion Component
 export const TasksAccordion = ({ tasks }) => {
   const [openItem, setOpenItem] = useState(null);
   const contentRefs = useRef({});
@@ -52,7 +55,6 @@ export const TasksAccordion = ({ tasks }) => {
     );
   }
 
-  // Get unique tasks based on task_id, with fallback for different id fields
   const uniqueTasks = tasks.reduce((acc, task) => {
     const taskId = task.task_id || task.id || task.campaign_task_id || `task-${acc.length}`;
     if (!acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
@@ -86,7 +88,6 @@ export const TasksAccordion = ({ tasks }) => {
               </div>
             </button>
             
-            {/* Content wrapper with smooth animation */}
             <div
               style={{
                 height: isOpen ? 'auto' : 0,
@@ -153,7 +154,6 @@ export const TasksAccordion = ({ tasks }) => {
   );
 };
 
-// TaskCard Component for alternative display
 export const TaskCard = ({ task }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
@@ -261,7 +261,6 @@ export default function CampaignDetailsPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   
-  // Campaign state
   const [campaign, setCampaign] = useState(state?.campaign || null);
   const [loading, setLoading] = useState(!state?.campaign);
   const [actionedMembers, setActionedMembers] = useState([]);
@@ -273,11 +272,9 @@ export default function CampaignDetailsPage() {
   const [tasksLoading, setTasksLoading] = useState(false);
   const [sentInvitesLoading, setSentInvitesLoading] = useState(false);
 
-  // Static data state
   const [industries, setIndustries] = useState([]);
   const [countries, setCountries] = useState([]);
 
-  // Modal states
   const [selectedMember, setSelectedMember] = useState(null);
   const [selectedInvite, setSelectedInvite] = useState(null);
   const [userProfileModal, setUserProfileModal] = useState(false);
@@ -287,28 +284,23 @@ export default function CampaignDetailsPage() {
   const [cancelInviteModal, setCancelInviteModal] = useState(false);
   const [activateCampaignModal, setActivateCampaignModal] = useState(false);
 
-  // Application processing states
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedApplications, setSelectedApplications] = useState(new Set());
 
-  // Refs for scroll synchronization
   const leftColumnRef = useRef(null);
   const rightColumnRef = useRef(null);
   const [scrollSync, setScrollSync] = useState({ leftTaller: false, rightTaller: false });
 
-  // Helper function to get country name from ISO code
   const getCountryName = useCallback((isoCode) => {
     if (!countries.length || !isoCode) return isoCode || 'Unknown';
     const country = countries.find(c => c.iso_code === isoCode);
     return country ? country.name : isoCode;
   }, [countries]);
 
-  // Function to check campaign influencer limits
   const getCampaignInfluencerInfo = useCallback(() => {
     if (!campaign) return { maxInfluencers: 0, currentAccepted: 0, canAcceptMore: false, remainingSlots: 0 };
     
     const maxInfluencers = campaign.number_of_influencers || 0;
-    // Count members who have been accepted via application processing
     const currentAccepted = actionedMembers.filter(m => m.application_status === 'accepted').length;
     const remainingSlots = maxInfluencers - currentAccepted;
     const canAcceptMore = remainingSlots > 0;
@@ -321,7 +313,6 @@ export default function CampaignDetailsPage() {
     };
   }, [campaign, actionedMembers]);
 
-  // Check if maximum influencers reached
   const isMaxInfluencersReached = useMemo(() => {
     const influencerInfo = getCampaignInfluencerInfo();
     const maxReached = !influencerInfo.canAcceptMore && influencerInfo.maxInfluencers > 0;
@@ -329,7 +320,6 @@ export default function CampaignDetailsPage() {
     return maxReached;
   }, [getCampaignInfluencerInfo]);
 
-  // Get campaign status - CORRECTED: Removed "planned", added "open_to_applications"
   const getCampaignStatus = useCallback(() => {
     if (!campaign) return 'unknown';
     if (isDraft || campaign.status === 'draft') return 'draft';
@@ -347,13 +337,11 @@ export default function CampaignDetailsPage() {
     return 'unknown';
   }, [campaign, isDraft]);
 
-  // FIXED: Only draft campaigns can be edited
   const canEditCampaign = useMemo(() => {
     if (!campaign) return false;
     return getCampaignStatus() === 'draft';
   }, [campaign, getCampaignStatus]);
 
-  // Keep your existing logic for other actions - CORRECTED: Removed "planned"
   const canActivateCampaign = useMemo(() => {
     if (!campaign) return false;
     const status = getCampaignStatus();
@@ -366,13 +354,11 @@ export default function CampaignDetailsPage() {
     return status === 'active';
   }, [campaign, getCampaignStatus]);
 
-  // FIXED: Only draft campaigns can have members added
   const canAddMembers = useMemo(() => {
     if (!campaign) return false;
     return getCampaignStatus() === 'draft';
   }, [campaign, getCampaignStatus]);
 
-  // Filter sent invites for current campaign - only non-accepted and non-expired invites
   const sentInvites = useMemo(() => {
     if (!campaign?.campaign_id || !allSentInvites.length) return [];
     
@@ -387,7 +373,6 @@ export default function CampaignDetailsPage() {
     return filtered;
   }, [allSentInvites, campaign?.campaign_id]);
 
-  // Calculate sent invites stats from actual data
   const sentInvitesStats = useMemo(() => {
     if (!campaign?.campaign_id || !allSentInvites.length) {
       return { totalInvites: 0, pendingInvites: 0, rejectedInvites: 0 };
@@ -404,7 +389,6 @@ export default function CampaignDetailsPage() {
     return stats;
   }, [allSentInvites, campaign?.campaign_id]);
 
-  // Check if campaign has any invites (sent or accepted)
   const campaignHasInvites = useMemo(() => {
     if (!campaign?.campaign_id || !allSentInvites.length) return false;
     
@@ -413,33 +397,22 @@ export default function CampaignDetailsPage() {
     return hasInvites;
   }, [allSentInvites, campaign?.campaign_id]);
 
-  // Helper function to get influencer details - UPDATED FOR NEW RESPONSE STRUCTURE
   const getInfluencerDetails = useCallback(async (userId) => {
     try {
       const response = await get(`users/influencerDetails/${userId}`);
       
       if (response?.status === 200 && response?.data) {
-        // Transform the response to include additional computed fields
         const influencerData = {
-          // Original response data
           ...response.data,
-          
-          // Computed fields for compatibility
           full_name: response.data.name,
           country_name: getCountryName(response.data.location),
-          
-          // Social media stats with proper formatting
           total_followers: Object.values(response.data.socialStats || {}).reduce((sum, count) => {
             return sum + (typeof count === 'number' ? count : 0);
           }, 0),
-          
-          // Review statistics
           total_reviews: response.data.reviews?.length || 0,
           average_rating: response.data.reviews?.length > 0 
             ? response.data.reviews.reduce((sum, review) => sum + review.rating, 0) / response.data.reviews.length 
             : 0,
-          
-          // Formatted social stats for display
           formatted_social_stats: Object.entries(response.data.socialStats || {}).map(([platform, count]) => ({
             platform: platform.toLowerCase(),
             followers: count,
@@ -455,16 +428,13 @@ export default function CampaignDetailsPage() {
     }
   }, [getCountryName]);
 
-  // Function to fetch campaign applications - MATCH API STRUCTURE EXACTLY
   const fetchCampaignApplications = useCallback(async (campaignId) => {
     try {
       const response = await get(`campaigns/get-applications/${campaignId}`);
       
       if (response?.status === 200 && response?.data) {
-        // Transform the API response to match your exact data structure
         const transformedData = response.data.map(member => {
           return {
-            // Original fields from API exactly as they are
             campaign_id: member.campaign_id,
             user_id: member.user_id,
             influencer_rating: member.influencer_rating,
@@ -476,23 +446,15 @@ export default function CampaignDetailsPage() {
             invited_on: member.invited_on,
             invite_status: member.invite_status,
             application_status: member.application_status,
-            
-            // Additional computed fields for component compatibility
             id: member.user_id,
-            invite_id: member.user_id, // For backward compatibility
+            invite_id: member.user_id,
             full_name: `${member.first_name} ${member.last_name}`,
             username: member.username || `${member.first_name.toLowerCase()}_${member.last_name.toLowerCase()}`,
             country_name: getCountryName(member.iso_code),
-            
-            // Status mappings
             action_status: member.application_status === 'submitted' ? 'completed' : 
                          member.application_status === 'accepted' ? 'completed' : 'pending',
             pay_status: member.application_status === 'accepted' ? 'not_paid' : 'pending',
-            
-            // FIXED: Ensure tasks array is properly set
             tasks: Array.isArray(member.tasks) ? member.tasks : [],
-            
-            // Create userProfile object for backward compatibility
             userProfile: {
               profile_pic: member.profile_pic,
               first_name: member.first_name,
@@ -515,7 +477,6 @@ export default function CampaignDetailsPage() {
     }
   }, [getCountryName]);
 
-  // Function to fetch actioned influencers with tasks
   const fetchActionedInfluencers = useCallback(async (campaignId) => {
     try {
       const response = await get(`campaigns/getActionedInfluencers/${campaignId}`);
@@ -523,7 +484,6 @@ export default function CampaignDetailsPage() {
       if (response?.status === 200 && response?.data) {
         setActionedInfluencers(response.data);
         
-        // Extract all tasks from the actioned influencers response
         const allTasksFromInfluencers = [];
         response.data.forEach((influencer) => {
           if (influencer.tasks && Array.isArray(influencer.tasks)) {
@@ -533,7 +493,6 @@ export default function CampaignDetailsPage() {
           }
         });
         
-        // Remove duplicate tasks and set them
         const uniqueTasks = allTasksFromInfluencers.reduce((acc, task) => {
           const taskId = task.task_id || task.id || task.campaign_task_id;
           if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
@@ -542,7 +501,6 @@ export default function CampaignDetailsPage() {
           return acc;
         }, []);
         
-        // Set the tasks from actioned influencers
         if (uniqueTasks.length > 0) {
           setCampaignTasks(uniqueTasks);
         }
@@ -558,24 +516,20 @@ export default function CampaignDetailsPage() {
     }
   }, []);
 
-  // UPDATED: Enhanced task computation to properly use the right endpoints
   const allTasks = useMemo(() => {
     let computedTasks = [];
     const currentStatus = getCampaignStatus();
     
     if (currentStatus === 'draft') {
-      // For draft campaigns, get tasks from the main campaign response (campaign.tasks)
       if (campaign?.tasks && Array.isArray(campaign.tasks) && campaign.tasks.length > 0) {
         computedTasks = campaign.tasks;
       } else if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
         computedTasks = campaignTasks;
       }
     } else {
-      // For non-draft campaigns, get tasks from getActionedInfluencers endpoint
       if (campaignTasks && Array.isArray(campaignTasks) && campaignTasks.length > 0) {
         computedTasks = campaignTasks;
       } else {
-        // Extract tasks from actionedInfluencers as fallback
         const allMemberTasks = [];
         actionedInfluencers.forEach((member) => {
           if (member.tasks && Array.isArray(member.tasks) && member.tasks.length > 0) {
@@ -586,7 +540,6 @@ export default function CampaignDetailsPage() {
         });
         
         if (allMemberTasks.length > 0) {
-          // Remove duplicate tasks by task_id
           const uniqueTasks = allMemberTasks.reduce((acc, task) => {
             const taskId = task.task_id || task.id || task.campaign_task_id;
             if (taskId && !acc.find(t => (t.task_id || t.id || t.campaign_task_id) === taskId)) {
@@ -600,7 +553,6 @@ export default function CampaignDetailsPage() {
       }
     }
     
-    // Ensure tasks is always an array
     if (!Array.isArray(computedTasks)) {
       computedTasks = [];
     }
@@ -608,7 +560,6 @@ export default function CampaignDetailsPage() {
     return computedTasks;
   }, [campaign?.tasks, campaignTasks, actionedInfluencers, getCampaignStatus]);
 
-  // Calculate stats - USE ACTIONED INFLUENCERS (the accepted users) ONLY
   const stats = {
     totalMembers: actionedInfluencers.length,
     completedActions: actionedInfluencers.filter(m => m.action_status === 'started' || m.action_status === 'completed').length,
@@ -617,13 +568,11 @@ export default function CampaignDetailsPage() {
     totalAmount: actionedInfluencers.reduce((sum, m) => sum + parseFloat(m.payable_amount || 0), 0)
   };
 
-  // Get user avatars - USE ACTIONED INFLUENCERS (the accepted users) ONLY
   const hasActiveInfluencers = actionedInfluencers && actionedInfluencers.length > 0;
   const influencerAvatars = hasActiveInfluencers 
     ? actionedInfluencers.map(user => user.userProfile?.profile_pic).filter(Boolean)
     : [];
 
-  // Filter pending applications - don't show them if max is reached
   const pendingApplications = useMemo(() => {
     const pending = actionedMembers.filter(m => 
       m.application_status === 'submitted' || 
@@ -635,7 +584,6 @@ export default function CampaignDetailsPage() {
     return filteredPending;
   }, [actionedMembers, isMaxInfluencersReached]);
 
-  // Professional scroll synchronization logic - moved after allTasks definition
   useEffect(() => {
     const calculateScrollBehavior = () => {
       if (!leftColumnRef.current || !rightColumnRef.current) return;
@@ -643,27 +591,24 @@ export default function CampaignDetailsPage() {
       const leftHeight = leftColumnRef.current.scrollHeight;
       const rightHeight = rightColumnRef.current.scrollHeight;
       
-      const leftTaller = leftHeight > rightHeight + 200; // 200px threshold
-      const rightTaller = rightHeight > leftHeight + 200; // 200px threshold
+      const leftTaller = leftHeight > rightHeight + 200;
+      const rightTaller = rightHeight > leftHeight + 200;
       
       setScrollSync({ leftTaller, rightTaller });
     };
 
-    // Calculate on mount and when content changes
     calculateScrollBehavior();
     
-    // Recalculate on window resize
     const handleResize = () => {
       setTimeout(calculateScrollBehavior, 100);
     };
     
     window.addEventListener('resize', handleResize);
     
-    // Recalculate when tasks accordion opens/closes
     const taskButtons = document.querySelectorAll('[data-task-toggle]');
     taskButtons.forEach(button => {
       button.addEventListener('click', () => {
-        setTimeout(calculateScrollBehavior, 350); // After animation
+        setTimeout(calculateScrollBehavior, 350);
       });
     });
 
@@ -672,7 +617,6 @@ export default function CampaignDetailsPage() {
     };
   }, [campaign, actionedInfluencers, allTasks, hasActiveInfluencers]);
 
-  // Fetch industries and countries data
   useEffect(() => {
     const fetchStaticData = async () => {
       try {
@@ -696,13 +640,11 @@ export default function CampaignDetailsPage() {
     fetchStaticData();
   }, []);
 
-  // CORRECTED: Fetch all sent invites using your existing get() utility
   useEffect(() => {
     const fetchSentInvites = async () => {
       try {
         setSentInvitesLoading(true);
         
-        // FIXED: Use your existing get() utility function instead of fetch()
         const response = await get('campaigns/sentInvites');
         
         if (response?.status === 200 && response?.data) {
@@ -720,7 +662,6 @@ export default function CampaignDetailsPage() {
     fetchSentInvites();
   }, []);
 
-  // FIXED: Enhanced campaign and task fetching logic to use the CORRECT endpoint
   useEffect(() => {
     document.title = campaign ? `${campaign.title} | Campaign Details` : 'Campaign Details | Social Gems Admin';
     
@@ -734,26 +675,21 @@ export default function CampaignDetailsPage() {
         setTasksLoading(true);
         
         if (!campaign) {
-          // FIXED: Use the correct endpoint pattern campaigns/campaign/${id}
           try {
             const campaignResponse = await get(`campaigns/campaign/${id}`);
             
             if (campaignResponse?.status === 200 && campaignResponse?.data) {
               const campaignData = campaignResponse.data;
               
-              // Set campaign data
               setCampaign(campaignData);
               
-              // Determine if it's a draft based on status
               const isDraftCampaign = campaignData.status === 'draft';
               setIsDraft(isDraftCampaign);
               
-              // Set tasks from the campaign response
               if (campaignData.tasks && Array.isArray(campaignData.tasks)) {
                 setCampaignTasks(campaignData.tasks);
               }
               
-              // For non-draft campaigns, also fetch actioned influencers
               if (!isDraftCampaign) {
                 try {
                   await fetchActionedInfluencers(campaignData.campaign_id);
@@ -787,16 +723,13 @@ export default function CampaignDetailsPage() {
     fetchCampaignAndTasks();
   }, [id, campaign, fetchActionedInfluencers, navigate]);
 
-  // Always fetch applications, then filter in UI based on max reached
   useEffect(() => {
     const fetchApplicationsAndActionedInfluencers = async () => {
       if (campaign?.campaign_id) {
-        // Always fetch actioned influencers first (for non-draft campaigns)
         if (!isDraft) {
           await fetchActionedInfluencers(campaign.campaign_id);
         }
         
-        // ALWAYS fetch applications if campaign has invites (needed to calculate max reached)
         if (campaignHasInvites) {
           const applicationsData = await fetchCampaignApplications(campaign.campaign_id);
           if (applicationsData && applicationsData.length > 0) {
@@ -810,19 +743,16 @@ export default function CampaignDetailsPage() {
       }
     };
 
-    if (allSentInvites.length >= 0) { // Changed from > 0 to >= 0 to handle empty arrays
-      fetchApplicationsAndActionedInfluencers();
+    if (allSentInvites.length >= 0) {fetchApplicationsAndActionedInfluencers();
     }
   }, [campaign?.campaign_id, allSentInvites, campaignHasInvites, isDraft, fetchCampaignApplications, fetchActionedInfluencers]);
 
-  // Handle edit campaign with proper date and task formatting
   const handleEditCampaign = useCallback(() => {
     if (!canEditCampaign) {
       toast.error('This campaign cannot be edited');
       return;
     }
 
-    // Helper function to format date to YYYY-MM-DD
     const formatDateForInput = (dateString) => {
       if (!dateString) return '';
       
@@ -840,14 +770,12 @@ export default function CampaignDetailsPage() {
       }
     };
 
-    // Helper function to properly format tasks for the form
     const formatTasksForForm = (tasks) => {
       if (!tasks || !Array.isArray(tasks)) {
         return [];
       }
       
       return tasks.map((task) => {
-        // Handle different possible property names from API
         const formattedTask = {
           task: task.task || task.title || task.name || '',
           description: task.description || '',
@@ -861,10 +789,8 @@ export default function CampaignDetailsPage() {
       });
     };
 
-    // Get tasks from the computed allTasks
     const tasksToUse = allTasks && allTasks.length > 0 ? allTasks : [];
 
-    // Use the existing campaign data that's already loaded
     const editData = {
       campaign_id: campaign.campaign_id,
       title: campaign.title || '',
@@ -881,19 +807,17 @@ export default function CampaignDetailsPage() {
       tasks: formatTasksForForm(tasksToUse)
     };
     
-    // Navigate to create campaign with edit data - FIXED FOR HASHROUTER
     navigate('/campaigns/create', {
       state: {
         mode: 'edit',
         editCampaignData: editData,
-        openOnStep: 0 // Start from step 0 for editing
+        openOnStep: 0
       }
     });
     
     toast.success('Opening campaign editor...');
   }, [campaign, allTasks, canEditCampaign, navigate]);
 
-  // Handle add members with pre-filled filter data (only for draft campaigns)
   const handleAddMembers = useCallback(() => {
     if (!campaign) return;
     
@@ -902,7 +826,6 @@ export default function CampaignDetailsPage() {
       return;
     }
     
-    // Prepare filter data from current campaign
     const filterData = {
       campaignId: campaign.campaign_id,
       brandBudget: campaign.budget || 250,
@@ -914,18 +837,16 @@ export default function CampaignDetailsPage() {
       minLevelId: campaign.min_level_id || 3
     };
     
-    // FIXED FOR HASHROUTER
     navigate('/campaigns/create', { 
       state: { 
         mode: 'addMembers',
-        openOnStep: 1, // Step 1 is the filter step (0-indexed)
+        openOnStep: 1,
         existingCampaign: campaign,
         prefilledFilterData: filterData
       } 
     });
   }, [campaign, navigate, canAddMembers]);
 
-  // Handle activate campaign
   const handleActivateCampaign = useCallback(async () => {
     if (!canActivateCampaign) {
       toast.error('This campaign cannot be activated');
@@ -954,7 +875,6 @@ export default function CampaignDetailsPage() {
     }
   }, [campaign, canActivateCampaign]);
 
-  // Handle batch process applications - USING CORRECT USER_ID
   const handleBatchProcessApplications = async (data) => {
     setIsProcessing(true);
     try {
@@ -963,7 +883,6 @@ export default function CampaignDetailsPage() {
       if (response?.status === 200 || response?.status === 204) {
         toast.success('Applications processed successfully!');
         
-        // Refresh both applications and actioned influencers
         await fetchActionedInfluencers(campaign.campaign_id);
         
         if (campaignHasInvites) {
@@ -973,13 +892,11 @@ export default function CampaignDetailsPage() {
           }
         }
         
-        // Refresh sent invites as well
         const invitesResponse = await get('campaigns/sentInvites');
         if (invitesResponse?.status === 200 && invitesResponse?.data) {
           setAllSentInvites(invitesResponse.data);
         }
         
-        // Clear selections and exit multi-select mode
         setSelectedApplications(new Set());
         setMultiSelectMode(false);
       } else {
@@ -992,7 +909,6 @@ export default function CampaignDetailsPage() {
     }
   };
 
-  // Handle accept single application from modal
   const handleAcceptApplicationFromModal = useCallback((member) => {
     const influencerInfo = getCampaignInfluencerInfo();
     
@@ -1007,11 +923,9 @@ export default function CampaignDetailsPage() {
       rejected_applications: []
     });
     
-    // Close the modal after accepting
     setUserProfileModal(false);
   }, [campaign, getCampaignInfluencerInfo, handleBatchProcessApplications]);
 
-  // Handle reject single application from modal
   const handleRejectApplicationFromModal = useCallback((member) => {
     handleBatchProcessApplications({
       campaign_id: campaign.campaign_id,
@@ -1019,17 +933,13 @@ export default function CampaignDetailsPage() {
       rejected_applications: [member.user_id]
     });
     
-    // Close the modal after rejecting
     setUserProfileModal(false);
   }, [campaign, handleBatchProcessApplications]);
 
-  // FIXED: Enhanced back navigation for HashRouter
   const handleBackNavigation = useCallback(() => {
-    // Try to go back in history first
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      // Fallback to campaigns page
       navigate('/campaigns', { replace: true });
     }
   }, [navigate]);
@@ -1043,7 +953,6 @@ export default function CampaignDetailsPage() {
               <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
               <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
             </div>
-            {/* Grid Layout for Loading */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <SkeletonCard />
@@ -1108,7 +1017,6 @@ export default function CampaignDetailsPage() {
           background: rgba(255, 255, 255, 0.9);
         }
 
-        /* Professional Scroll Synchronization Styles */
         .scroll-sync-container {
           position: relative;
         }
@@ -1161,7 +1069,6 @@ export default function CampaignDetailsPage() {
           }
         }
 
-        /* Rich text preview styles */
         .rich-text-preview h {
           font-size: 14px;
           font-weight: 600;
@@ -1214,8 +1121,6 @@ export default function CampaignDetailsPage() {
       <div className="w-full min-h-screen">
         <div className="container mx-auto">
           <div className="flex flex-col gap-6">
-
-            {/* Back Button with Campaign Title - FIXED FOR HASHROUTER */}
             <div className="flex items-center gap-4">
               <button
                 onClick={handleBackNavigation}
@@ -1232,13 +1137,8 @@ export default function CampaignDetailsPage() {
               </p>
             </div>
 
-            {/* Professional Scroll Synchronized Grid Layout */}
             <div className="scroll-sync-container grid grid-cols-1 lg:grid-cols-3 gap-8">
-              
-              {/* Left Side (70%) - Takes 2/3 width */}
               <div ref={leftColumnRef} className="column-left lg:col-span-2 space-y-8">
-                
-                {/* Campaign Hero Card (image without title) */}
                 <CampaignHeroCard 
                   campaign={campaign}
                   stats={stats}
@@ -1247,7 +1147,6 @@ export default function CampaignDetailsPage() {
                   formatDate={formatDate}
                 />
 
-                {/* Action Buttons - Moved below the image */}
                 <CampaignActionButtons
                   campaign={campaign}
                   isDraft={isDraft}
@@ -1266,7 +1165,6 @@ export default function CampaignDetailsPage() {
                   onDeleteCampaign={() => setDeleteCampaignModal(true)}
                 />
 
-                {/* Campaign Participants - ONLY SHOW ACCEPTED INFLUENCERS */}
                 {hasActiveInfluencers && (
                   <div className="w-full bg-green-50 border border-green-200 p-4 rounded-xl">
                     <div className="flex items-center gap-3">
@@ -1282,12 +1180,10 @@ export default function CampaignDetailsPage() {
                   </div>
                 )}
 
-                {/* Campaign Description */}
                 {campaign.description && (
                   <CampaignDescription description={campaign.description} />
                 )}
 
-                {/* Campaign Tasks Accordion - Only show if tasks exist or loading */}
                 {(tasksLoading || (allTasks && allTasks.length > 0)) && (
                   <div className='border border-gray-100 rounded-xl overflow-hidden'>
                     <div className="flex items-center gap-3 p-3 bg-gray-100 border-b border-b-gray-200">
@@ -1299,7 +1195,6 @@ export default function CampaignDetailsPage() {
                       </div>
                     </div>
 
-                    {/* Enhanced Tasks Display - Always show */}
                     {tasksLoading ? (
                       <div className="flex items-center justify-center py-8">
                         <div className="w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -1311,24 +1206,34 @@ export default function CampaignDetailsPage() {
                   </div>
                 )}
 
+                {hasActiveInfluencers && actionedInfluencers.length > 0 && (
+                  <div className='border border-gray-100 rounded-xl overflow-hidden'>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 border-b border-b-gray-200">
+                      <div>
+                        <h3 className="text-lg sm:text-xl tracking-tight font-semibold text-gray-900">
+                          Task Submissions by Influencers
+                        </h3>
+                        <p className="text-xs text-gray-600 mt-1">
+                          View completed tasks and submitted URLs
+                        </p>
+                      </div>
+                    </div>
+                    <TasksReport actionedInfluencers={actionedInfluencers} />
+                  </div>
+                )}
               </div>
 
-              {/* Right Side (30%) - ONLY OBJECTIVE, STATS, AND QUICK ACTIONS */}
               <div ref={rightColumnRef} className="column-right lg:col-span-1 space-y-8 h-fit">
-                
-                {/* Campaign Objective */}
                 {campaign.objective && (
                   <CampaignObjective objective={campaign.objective} />
                 )}
 
-                {/* Campaign Overview (contains stats) */}
                 <CampaignOverview 
                   campaign={campaign} 
                   stats={stats} 
                   sentInvitesStats={sentInvitesStats} 
                 />
 
-                {/* Quick Actions Buttons */}
                 <CampaignPreviewButtons
                   actionedInfluencers={actionedInfluencers}
                   pendingApplications={pendingApplications}
@@ -1350,7 +1255,6 @@ export default function CampaignDetailsPage() {
                       
                       toast.success('Invite resent successfully!');
                       
-                      // Refresh sent invites
                       const response = await get('campaigns/sentInvites');
                       if (response?.status === 200 && response?.data) {
                         setAllSentInvites(response.data);
@@ -1380,11 +1284,8 @@ export default function CampaignDetailsPage() {
                     }
                   }}
                 />
-
               </div>
-
             </div>
-
           </div>
         </div>
 
@@ -1411,6 +1312,7 @@ export default function CampaignDetailsPage() {
           isProcessing={isProcessing}
           industries={industries}
           countries={countries}
+          actionedMembers={actionedMembers}
           
           getInfluencerDetails={getInfluencerDetails}
           
@@ -1427,7 +1329,6 @@ export default function CampaignDetailsPage() {
               toast.success('Invite resent successfully!');
               setResendInviteModal(false);
               
-              // Refresh sent invites
               const response = await get('campaigns/sentInvites');
               if (response?.status === 200 && response?.data) {
                 setAllSentInvites(response.data);
