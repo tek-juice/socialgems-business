@@ -579,10 +579,10 @@ const FilterDropdownMenu = ({ options, children, className }) => {
 
 const getStatusName = (campaign) => {
   if (campaign.status === "draft") return "Draft";
-  if (campaign.status === "completed") return "Closed";
+  if (campaign.status === "completed") return "Completed";
   if (campaign.status === "active") return "Active";
   if (campaign.status === "open_to_applications") return "Open To Applications";
-  if (campaign.closed_date) return "Closed";
+  if (campaign.closed_date) return "Completed";
 
   const endDate = new Date(campaign.end_date);
   const startDate = new Date(campaign.start_date);
