@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { FiUser, FiExternalLink, FiActivity, FiCheck } from "react-icons/fi";
 
@@ -18,9 +18,9 @@ export const TasksReport = ({ actionedInfluencers }) => {
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
       : false;
 
-  // Filter members who have tasks AND filter out unknown users
-  const membersWithTasks =
-    actionedInfluencers?.filter((member) => {
+  // Use useMemo to prevent recreation on every render
+  const membersWithTasks = useMemo(() => {
+    return actionedInfluencers?.filter((member) => {
       if (!member.tasks || member.tasks.length === 0) return false;
 
       const influencerName =
@@ -33,6 +33,7 @@ export const TasksReport = ({ actionedInfluencers }) => {
       // Filter out "Unknown User" or empty names
       return influencerName && influencerName !== "Unknown User";
     }) || [];
+  }, [actionedInfluencers]); // Only recreate when actionedInfluencers changes
 
   // Set all members as expanded by default when component mounts or members change
   useEffect(() => {
@@ -40,10 +41,10 @@ export const TasksReport = ({ actionedInfluencers }) => {
       const allMemberIds = membersWithTasks.map(member => member.user_id);
       setExpandedMembers(allMemberIds);
     }
-  }, [membersWithTasks]);
+  }, [membersWithTasks]); // Now this is stable
 
-  const unknownUsersCount =
-    actionedInfluencers?.filter((member) => {
+  const unknownUsersCount = useMemo(() => {
+    return actionedInfluencers?.filter((member) => {
       if (!member.tasks || member.tasks.length === 0) return false;
 
       const influencerName =
@@ -55,6 +56,7 @@ export const TasksReport = ({ actionedInfluencers }) => {
 
       return !influencerName || influencerName === "Unknown User";
     })?.length || 0;
+  }, [actionedInfluencers]);
 
   if (membersWithTasks.length === 0 && unknownUsersCount === 0) {
     return (

@@ -145,10 +145,42 @@ export const safeToFixed = (value, decimals = 2, fallback = 0) => {
   return num.toFixed(decimals);
 };
 
-export const INFLUENCER_BASE_RATE = 15;
-export const PLATFORM_FEE = 50;
-export const MIN_BUDGET_PER_INFLUENCER = 65;
+// export const INFLUENCER_BASE_RATE = 15;
+// export const PLATFORM_FEE = 50;
+// export const MIN_BUDGET_PER_INFLUENCER = 65;
 
-export const calculateMinimumBudget = (numberOfInfluencers) => {
-  return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
+// export const calculateMinimumBudget = (numberOfInfluencers) => {
+//   return (numberOfInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE;
+// };
+
+// This is based on the nendpoint for settings (Not to be chnaged but had to comment the other just to keep it intact )
+export const calculateMinimumBudget = (numberOfInfluencers, settings) => {
+  if (!settings) return numberOfInfluencers * 20;
+  
+  const baseRate = settings.min_amount || 20;
+  const creationFee = settings.creation_fee || 5;
+  const feeType = settings.creation_fee_type || 'percentage';
+  
+  const subtotal = numberOfInfluencers * baseRate;
+  const fee = feeType === 'percentage' 
+    ? (subtotal * creationFee) / 100 
+    : creationFee;
+  
+  return subtotal + fee;
+};
+
+// Minimum influnecer fee and the rest must also not be chnaged for now 
+export const getMinBudgetPerInfluencer = (settings) => {
+  return settings?.min_amount || 20;
+};
+
+export const calculatePlatformFee = (subtotal, settings) => {
+  if (!settings) return 0;
+  
+  const creationFee = settings.creation_fee || 5;
+  const feeType = settings.creation_fee_type || 'percentage';
+  
+  return feeType === 'percentage' 
+    ? (subtotal * creationFee) / 100 
+    : creationFee;
 };

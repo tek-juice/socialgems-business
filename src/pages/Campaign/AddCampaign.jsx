@@ -60,11 +60,47 @@ import {
   countWords,
   safeToNumber,
   safeToFixed,
-  calculateMinimumBudget,
-  INFLUENCER_BASE_RATE,
-  PLATFORM_FEE,
-  MIN_BUDGET_PER_INFLUENCER,
 } from "./CreateCampaign/utils";
+
+const calculateMinimumBudget = (numberOfInfluencers, settings) => {
+  if (!settings) return numberOfInfluencers * 21; 
+  
+  const baseRate = settings.min_amount || 20;
+  const creationFee = settings.creation_fee || 5;
+  const feeType = settings.creation_fee_type || 'percentage';
+  
+  const subtotal = numberOfInfluencers * baseRate;
+  const fee = feeType === 'percentage' 
+    ? (subtotal * creationFee) / 100 
+    : creationFee;
+  
+  return subtotal + fee;
+};
+
+const getMinBudgetPerInfluencer = (settings) => {
+  if (!settings) return 21; // fallback
+  
+  const baseRate = settings.min_amount || 20;
+  const creationFee = settings.creation_fee || 5;
+  const feeType = settings.creation_fee_type || 'percentage';
+  
+  const fee = feeType === 'percentage' 
+    ? (baseRate * creationFee) / 100 
+    : creationFee;
+  
+  return baseRate + fee;
+};
+
+const calculatePlatformFee = (subtotal, settings) => {
+  if (!settings) return subtotal * 0.05;
+  
+  const creationFee = settings.creation_fee || 5;
+  const feeType = settings.creation_fee_type || 'percentage';
+  
+  return feeType === 'percentage' 
+    ? (subtotal * creationFee) / 100 
+    : creationFee;
+};
 
 // Payment Status Banner Component
 const PaymentStatusBanner = ({ status, refId, sessionId, onClose, onRetry }) => {
@@ -785,7 +821,7 @@ const CustomDatePickerModal = ({
   };
 
   const navigateMonth = (direction) => {
-    setDisplayDate(prev => {
+    setDisplayDate(prev =>{
       const newDate = new Date(prev);
       newDate.setMonth(newDate.getMonth() + direction);
       return newDate;
@@ -1180,8 +1216,11 @@ const CustomDatePicker = (props) => {
 };
 
 // Budget validation modal
-const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget, numberOfInfluencers }) => {
+const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget, numberOfInfluencers, campaignSettings }) => {
   const shortfall = requiredBudget - currentBudget;
+  const baseRate = campaignSettings?.min_amount || 20;
+  const subtotal = numberOfInfluencers * baseRate;
+  const platformFee = calculatePlatformFee(subtotal, campaignSettings);
 
   if (!isOpen) return null;
 
@@ -1208,7 +1247,7 @@ const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget,
             Budget Insufficient
           </h3>
           <p className="text-sm text-gray-600 mb-4">
-            Your budget does not fit the number of influencers selected. Try increasing your budget by ${shortfall}.
+            Your budget does not fit the number of influencers selected. Try increasing your budget by ${shortfall.toFixed(2)}.
           </p>
           <div className="bg-gray-50 rounded-lg p-3 mb-6 text-left">
             <div className="flex justify-between text-sm mb-2">
@@ -1216,16 +1255,24 @@ const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget,
               <span className="font-medium">{numberOfInfluencers}</span>
             </div>
             <div className="flex justify-between text-sm mb-2">
-              <span>Current Budget:</span>
-              <span className="font-medium">${currentBudget}</span>
+              <span>Base Rate (${baseRate} × {numberOfInfluencers}):</span>
+              <span className="font-medium">${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm mb-2">
+              <span>Platform Fee ({campaignSettings?.creation_fee}{campaignSettings?.creation_fee_type === 'percentage' ? '%' : ''}):</span>
+              <span className="font-medium">${platformFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-2 border-t pt-2">
               <span>Required Budget:</span>
-              <span className="font-medium">${requiredBudget}</span>
+              <span className="font-medium">${requiredBudget.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Current Budget:</span>
+              <span className="font-medium">${currentBudget.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm font-semibold text-orange-600 border-t border-gray-200 pt-2">
               <span>Shortfall:</span>
-              <span>${shortfall}</span>
+              <span>${shortfall.toFixed(2)}</span>
             </div>
           </div>
           <button
@@ -1240,17 +1287,19 @@ const BudgetValidationModal = ({ isOpen, onClose, requiredBudget, currentBudget,
   );
 };
 
-// Enhanced NumberInput component for budget
 const BudgetInput = ({
   value,
   onChange,
   label,
   helperText,
   className = "",
+  campaignSettings,
 }) => {
   const [displayValue, setDisplayValue] = useState(value.toString());
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
+
+  const MIN_BUDGET = getMinBudgetPerInfluencer(campaignSettings);
 
   useEffect(() => {
     setDisplayValue(value.toString());
@@ -1262,8 +1311,8 @@ const BudgetInput = ({
   };
 
   const validateBudget = (budget) => {
-    if (budget < MIN_BUDGET_PER_INFLUENCER) {
-      return `Minimum budget is $${MIN_BUDGET_PER_INFLUENCER}`;
+    if (budget < MIN_BUDGET) {
+      return `Minimum budget is $${MIN_BUDGET}`;
     }
     return null;
   };
@@ -1294,12 +1343,12 @@ const BudgetInput = ({
   const handleBlur = () => {
     if (
       displayValue === "" ||
-      parseFloat(displayValue) < MIN_BUDGET_PER_INFLUENCER
+      parseFloat(displayValue) < MIN_BUDGET
     ) {
-      setError(`Minimum budget is $${MIN_BUDGET_PER_INFLUENCER}`);
+      setError(`Minimum budget is $${MIN_BUDGET}`);
       triggerShake();
-      setDisplayValue(MIN_BUDGET_PER_INFLUENCER.toString());
-      onChange(MIN_BUDGET_PER_INFLUENCER);
+      setDisplayValue(MIN_BUDGET.toString());
+      onChange(MIN_BUDGET);
 
       setTimeout(() => setError(""), 3000);
     }
@@ -1320,7 +1369,7 @@ const BudgetInput = ({
             ? "border-red-500 focus:border-red-500"
             : "border-gray-300 focus:border-primary-scale-400"
         } ${isShaking ? "animate-shake" : ""} ${className}`}
-        placeholder={`${MIN_BUDGET_PER_INFLUENCER}`}
+        placeholder={`${MIN_BUDGET}`}
       />
       {error && (
         <p className="text-xs text-red-500 mt-1 animate-pulse">{error}</p>
@@ -1340,6 +1389,7 @@ const InfluencersInput = ({
   helperText,
   className = "",
   currentBudget,
+  campaignSettings,
 }) => {
   const [displayValue, setDisplayValue] = useState(value.toString());
   const [error, setError] = useState("");
@@ -1396,7 +1446,7 @@ const InfluencersInput = ({
     }
 
     const numInfluencers = parseInt(displayValue);
-    const requiredBudget = calculateMinimumBudget(numInfluencers);
+    const requiredBudget = calculateMinimumBudget(numInfluencers, campaignSettings);
     
     if (currentBudget < requiredBudget) {
       triggerShake();
@@ -1435,9 +1485,10 @@ const InfluencersInput = ({
           <BudgetValidationModal
             isOpen={showBudgetModal}
             onClose={() => setShowBudgetModal(false)}
-            requiredBudget={calculateMinimumBudget(parseInt(displayValue))}
+            requiredBudget={calculateMinimumBudget(parseInt(displayValue), campaignSettings)}
             currentBudget={currentBudget}
             numberOfInfluencers={parseInt(displayValue)}
+            campaignSettings={campaignSettings}
           />
         )}
       </AnimatePresence>
@@ -1528,6 +1579,41 @@ const CreateCampaign = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Add campaign settings state
+  const [campaignSettings, setCampaignSettings] = useState(null);
+  const [loadingSettings, setLoadingSettings] = useState(true);
+
+  // Fetch campaign settings on mount
+  useEffect(() => {
+    const fetchCampaignSettings = async () => {
+      try {
+        setLoadingSettings(true);
+        const response = await get("campaigns/campaignSettings");
+        if (response?.status === 200 && response?.data?.[0]) {
+          setCampaignSettings(response.data[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching campaign settings:", error);
+        // Use fallback settings
+        setCampaignSettings({
+          min_amount: 20,
+          creation_fee: 5,
+          creation_fee_type: 'percentage'
+        });
+      } finally {
+        setLoadingSettings(false);
+      }
+    };
+
+    fetchCampaignSettings();
+  }, []);
+
+  // Calculate MIN_BUDGET_PER_INFLUENCER dynamically
+  const MIN_BUDGET_PER_INFLUENCER = useMemo(() => 
+    getMinBudgetPerInfluencer(campaignSettings),
+    [campaignSettings]
+  );
 
   // Enhanced state persistence for all steps
   const [persistedCampaignState, setPersistedCampaignState] = useLocalStorage(
@@ -1996,7 +2082,7 @@ const CreateCampaign = () => {
 
       toast.success("Campaign data loaded for editing");
     }
-  }, [mode, editCampaignData, socialSites]); // Added socialSites dependency
+  }, [mode, editCampaignData, socialSites, MIN_BUDGET_PER_INFLUENCER]);
 
   // Add effect to handle add members mode
   useEffect(() => {
@@ -2039,7 +2125,7 @@ const CreateCampaign = () => {
 
       toast.success("Ready to add more members to your campaign");
     }
-  }, [mode, state]);
+  }, [mode, state, MIN_BUDGET_PER_INFLUENCER]);
 
   // Date validation functions - UPDATED with timezone awareness
   const getMinStartDate = () => {
@@ -2238,14 +2324,12 @@ const CreateCampaign = () => {
     }
   };
 
-  // Handle influencer mismatch - Proceed with available influencers (FULL DATA)
 const handleProceedWithAvailable = useCallback(async () => {
   try {
     setLoading(true);
     
     const availableInfluencers = safeToNumber(eligibilityData?.totalCount, 0);
     
-    // Handle image upload if there's a new image
     let campaignImageUrl = campaignData.contentUrl;
     if (campaignData.content) {
       console.log("Uploading new image...");
@@ -2263,7 +2347,6 @@ const handleProceedWithAvailable = useCallback(async () => {
       }
     }
     
-    // Send full campaign data like regular edit
     const updatePayload = {
       campaign_id: draftCampaignId || campaignData.campaign_id,
       title: campaignData.title,
@@ -2272,7 +2355,7 @@ const handleProceedWithAvailable = useCallback(async () => {
       start_date: localDateToUTC(campaignData.start_date),
       end_date: localDateToUTC(campaignData.end_date),
       budget: brandBudget,
-      number_of_influencers: availableInfluencers, // Use available count instead of requested
+      number_of_influencers: availableInfluencers,
       ...(campaignImageUrl && { campaign_image: campaignImageUrl }),
       tasks: campaignData.tasks.map((task) => ({
         task: task.task,
@@ -2289,17 +2372,17 @@ const handleProceedWithAvailable = useCallback(async () => {
     const updateResponse = await patch("campaigns/edit", updatePayload);
 
     if (updateResponse?.status === 200) {
-      // Update local state
       setNumberOfInfluencers(availableInfluencers);
       
-      // Update eligibility data with safe conversions
+      const newTotalBudget = calculateMinimumBudget(availableInfluencers, campaignSettings);
+      
       setEligibilityData(prev => ({
         ...prev,
-        budget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
-        totalBudget: (availableInfluencers * INFLUENCER_BASE_RATE) + PLATFORM_FEE,
+        budget: newTotalBudget,
+        totalBudget: newTotalBudget,
+        eligibleCount: availableInfluencers,
       }));
 
-      // Update original data reference like in updateExistingCampaign
       setOriginalData({
         title: campaignData.title,
         description: campaignData.description,
@@ -2327,11 +2410,11 @@ const handleProceedWithAvailable = useCallback(async () => {
   eligibilityData,
   campaignData,
   brandBudget,
+  campaignSettings,
   setOriginalData,
   localDateToUTC,
 ]);
 
-  // Handle influencer mismatch - Go back to edit
   const handleGoBackToEdit = useCallback(() => {
     setActiveStep(0);
     toast.info("Please adjust the number of influencers and try again");
@@ -2609,7 +2692,7 @@ const handleProceedWithAvailable = useCallback(async () => {
         toast.error(errorMessage);
         return;
       }
-  
+
       if (brandBudget < MIN_BUDGET_PER_INFLUENCER) {
         const errorMessage = `Minimum budget requirement is $${MIN_BUDGET_PER_INFLUENCER}`;
         setError(errorMessage);
@@ -2907,6 +2990,7 @@ const handleProceedWithAvailable = useCallback(async () => {
     eligibilityData,
     mode,
     setPersistedCampaignState,
+    MIN_BUDGET_PER_INFLUENCER,
   ]);
 
   const nextStep = useCallback(async () => {
@@ -3018,6 +3102,7 @@ const handleProceedWithAvailable = useCallback(async () => {
     hasUnsavedChanges,
     campaignCreatedOnce,
     draftCampaignId,
+    MIN_BUDGET_PER_INFLUENCER,
   ]);
 
   const prevStep = useCallback(() => {
@@ -3071,9 +3156,10 @@ const handleProceedWithAvailable = useCallback(async () => {
     dateErrors,
     brandBudget,
     mode,
+    MIN_BUDGET_PER_INFLUENCER,
   ]);
 
-  if (isInitialLoading || loadingWallet) {
+  if (isInitialLoading || loadingWallet || loadingSettings) {
     return <LoadingSkeleton />;
   }
 
@@ -3212,6 +3298,7 @@ const handleProceedWithAvailable = useCallback(async () => {
                         value={brandBudget}
                         onChange={setBrandBudget}
                         label="Campaign Budget (USD)"
+                        campaignSettings={campaignSettings}
                       />
 
                       <InfluencersInput
@@ -3219,6 +3306,7 @@ const handleProceedWithAvailable = useCallback(async () => {
                         onChange={setNumberOfInfluencers}
                         currentBudget={brandBudget}
                         label="Number of Influencers"
+                        campaignSettings={campaignSettings}
                       />
                     </div>
                   </div>
@@ -3420,169 +3508,209 @@ const handleProceedWithAvailable = useCallback(async () => {
         );
 
       case 2:
-        return (
-          <div className="mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <CardTitle className="text-xs flex items-center gap-3">
-                    <FiTrendingUp className="w-5 h-5 text-green-500" />
-                    Campaign Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-xs font-medium text-gray-600 mb-1">
-                        Title
-                      </div>
-                      <div className="text-xs font-semibold text-gray-900">
-                        {campaignData.title}
-                      </div>
+  return (
+    <div className="mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="text-xs flex items-center gap-3">
+              <FiTrendingUp className="w-5 h-5 text-green-500" />
+              Campaign Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-xs font-medium text-gray-600 mb-1">
+                  Title
+                </div>
+                <div className="text-xs font-semibold text-gray-900">
+                  {campaignData.title}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-xs font-medium text-gray-600 mb-1">
+                  Objective
+                </div>
+                <div className="text-xs text-gray-800">
+                  {campaignData.objective}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-xs font-medium text-gray-600 mb-1">
+                    Start Date
+                  </div>
+                  <div className="text-xs text-gray-800 font-medium">
+                    {formatDisplayDate(campaignData.start_date)}
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="text-xs font-medium text-gray-600 mb-1">
+                    End Date
+                  </div>
+                  <div className="text-xs text-gray-800 font-medium">
+                    {formatDisplayDate(campaignData.end_date)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="text-xs flex items-center gap-3">
+              <FiDollarSign className="w-5 h-5 text-green-500" />
+              Investment Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {eligibilityData && campaignSettings && (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">
+                        Number of influencers
+                      </span>
+                      <span className="text-xs font-semibold text-gray-900">
+                        {safeToNumber(eligibilityData.eligibleCount)}
+                      </span>
+                    </div>
+                    {/* <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">
+                        Base Amount ({safeToNumber(eligibilityData.eligibleCount)} × ${campaignSettings.min_amount})
+                      </span>
+                      <span className="text-xs font-semibold text-gray-900">
+                        ${(safeToNumber(eligibilityData.eligibleCount) * (campaignSettings.min_amount || 20)).toFixed(2)}
+                      </span>
+                    </div> */}
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">
+                        Campaign Budget
+                      </span>
+                      <span className="text-xs font-semibold text-gray-900">
+                      ${safeToFixed(eligibilityData.budget, 2)} USD
+                      </span>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <div className="text-xs font-medium text-gray-600 mb-1">
-                        Objective
-                      </div>
-                      <div className="text-xs text-gray-800">
-                        {campaignData.objective}
-                      </div>
-                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-gray-600">
+                        Platform Fee ({campaignSettings.creation_fee}{campaignSettings.creation_fee_type === 'percentage' ? '%' : ''})
+                      </span>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="text-xs font-medium text-gray-600 mb-1">
-                          Start Date
-                        </div>
-                        <div className="text-xs text-gray-800 font-medium">
-                          {formatDisplayDate(campaignData.start_date)}
-                        </div>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="text-xs font-medium text-gray-600 mb-1">
-                          End Date
-                        </div>
-                        <div className="text-xs text-gray-800 font-medium">
-                          {formatDisplayDate(campaignData.end_date)}
-                        </div>
-                      </div>
+                      <span className="text-xs font-semibold text-gray-900">
+                        ${calculatePlatformFee(
+                          safeToNumber(eligibilityData.eligibleCount) * (campaignSettings.min_amount || 20),
+                          campaignSettings
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center border-t pt-2">
+                      <span className="text-xs text-gray-600 font-semibold">
+                        Total Budget
+                      </span>
+                      <span className="text-xl font-bold text-green-600">
+  {(() => {
+    const budget = safeToNumber(eligibilityData.budget);
+    const platformFee =
+      campaignSettings.creation_fee_type === 'percentage'
+        ? (budget * safeToNumber(campaignSettings.creation_fee)) / 100
+        : safeToNumber(campaignSettings.creation_fee);
+
+    const total = budget + platformFee;
+    return `$${total.toFixed(2)} USD`;
+  })()}
+</span>
+
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card className="shadow-lg border-0">
-                <CardHeader>
-                  <CardTitle className="text-xs flex items-center gap-3">
-                    <FiDollarSign className="w-5 h-5 text-green-500" />
-                    Investment Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {eligibilityData && (
-                    <div className="space-y-4">
-                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">
-                              Number of influencers
-                            </span>
-                            <span className="text-xs font-semibold text-gray-900">
-                              {safeToNumber(eligibilityData.eligibleCount)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">
-                              Total Budget (includes fees)
-                            </span>
-                            <span className="text-xl font-bold text-green-600">
-                              ${safeToFixed(eligibilityData.budget, 0)} USD
-                            </span>
-                          </div>
-                        </div>
+                <div className="bg-black rounded-lg p-4 border border-black">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-xs text-white font-medium">
+                      Wallet Balance
+                    </span>
+                    <span
+                      className={`text-xs font-bold ${
+                        walletBalance < safeToNumber(eligibilityData.budget)
+                          ? "text-red-400"
+                          : "text-green-400"
+                      }`}
+                    >
+                      ${safeToFixed(walletBalance, 2)}
+                    </span>
+                  </div>
+
+                  {walletBalance < safeToNumber(eligibilityData.budget) && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FiAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                        <span className="font-medium text-red-700 text-xs">
+                          Insufficient Funds
+                        </span>
                       </div>
-
-                      <div className="bg-black rounded-lg p-4 border border-black">
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs text-white font-medium">
-                            Wallet Balance
-                          </span>
-                          <span
-                            className={`text-xs font-bold ${
-                              walletBalance < safeToNumber(eligibilityData.budget)
-                                ? "text-red-400"
-                                : "text-green-400"
-                            }`}
-                          >
-                            ${safeToFixed(walletBalance, 2)}
-                          </span>
-                        </div>
-
-                        {walletBalance < safeToNumber(eligibilityData.budget) && (
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FiAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-                              <span className="font-medium text-red-700 text-xs">
-                                Insufficient Funds
-                              </span>
-                            </div>
-                            <p className="text-xs text-red-600 mb-3">
-                              Need $
-                              {safeToFixed(
-                                safeToNumber(eligibilityData.budget) -
-                                  walletBalance,
-                                2
-                              )}{" "}
-                              more to launch.
-                            </p>
-                            <button
-                              onClick={handleAddFundsRedirect}
-                              className="bg-primary-scale-400 text-black px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors w-full"
-                            >
-                              Add Funds
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      <p className="text-xs text-red-600 mb-3">
+                        Need $
+                        {safeToFixed(
+                          safeToNumber(eligibilityData.budget) -
+                            walletBalance,
+                          2
+                        )}{" "}
+                        more to launch.
+                      </p>
+                      <button
+                        onClick={handleAddFundsRedirect}
+                        className="bg-primary-scale-400 text-black px-3 py-2 rounded-lg text-xs font-medium hover:bg-primary-scale-500 transition-colors w-full"
+                      >
+                        Add Funds
+                      </button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <button
-                onClick={prevStep}
-                className="flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
-              >
-                <FiEdit className="w-4 h-4" />
-                Edit filters
-              </button>
+      <div className="grid grid-cols-2 gap-4 mt-8">
+        <button
+          onClick={prevStep}
+          className="flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium"
+        >
+          <FiEdit className="w-4 h-4" />
+          Edit filters
+        </button>
 
-              <button
-                onClick={handleCreateCampaign}
-                disabled={
-                  loading ||
-                  walletBalance < safeToNumber(eligibilityData?.budget, 0)
-                }
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    {mode === "addMembers" ? "Add Members" : "Continue"}
-                    <FiArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        );
+        <button
+          onClick={handleCreateCampaign}
+          disabled={
+            loading ||
+            walletBalance < safeToNumber(eligibilityData?.budget, 0)
+          }
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-primary-scale-400 text-black rounded-lg hover:bg-primary-scale-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
+        >
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+              Processing...
+            </>
+          ) : (
+            <>
+              {mode === "addMembers" ? "Add Members" : "Continue"}
+              <FiArrowRight className="w-4 h-4" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
 
       case 3:
         return (
