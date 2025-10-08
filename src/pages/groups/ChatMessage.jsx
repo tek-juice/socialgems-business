@@ -112,7 +112,7 @@ const ChatMessage = ({ message, isOwn, showAvatar, showSenderName, currentUser, 
                   <img 
                     src={message.media.media_url} 
                     alt="Shared image"
-                    className="rounded-xl max-w-full h-auto cursor-pointer border border-primary/10"
+                    className="rounded-xl max-w-full max-h-[300px] cursor-pointer border border-primary/10  overflow-hidden flex items-center justify-center"
                     onClick={() => window.open(message.media.media_url, '_blank')}
                   />
                   {message.status === 'SENDING' && (
@@ -123,8 +123,8 @@ const ChatMessage = ({ message, isOwn, showAvatar, showSenderName, currentUser, 
                 </div>
               )}
               {message.media.media_type === 'VIDEO' && (
-                <div className="relative rounded-xl overflow-hidden">
-                  <CustomVideoPlayer
+                <div className="relative rounded-xl max-h-[300px] overflow-hidden flex items-center justify-center">
+                <CustomVideoPlayer
                     src={message.media.media_url}
                     isFullScreen={isFullScreenVideo}
                     onToggleFullScreen={() => setIsFullScreenVideo(!isFullScreenVideo)}

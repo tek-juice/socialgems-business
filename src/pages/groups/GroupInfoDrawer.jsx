@@ -166,7 +166,7 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
         <p className="text-xs text-secondary/70">Since • {createdDate}</p>
       </div>
 
-      <div className="flex gap-2">
+      {/* <div className="flex gap-2">
         {isAdmin && (
           <button 
             onClick={() => setShowAddMembersModal(true)}
@@ -176,7 +176,7 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
             <span className="text-xs font-medium">Add Members</span>
           </button>
         )}
-      </div>
+      </div> */}
 
       {group.description && (
         <div className="bg-primary/5 rounded-xl p-3">
@@ -190,14 +190,14 @@ const GroupInfoDrawer = ({ isOpen, onClose, group, currentUser, onGroupUpdated, 
         </div>
       )}
 
-      {group.rules && (
+      {/* {group.rules && (
         <div className="bg-primary/5 rounded-xl p-3">
           <h3 className="text-xs font-semibold text-secondary mb-2">Rules</h3>
           <p className="text-xs text-secondary/80 leading-relaxed whitespace-pre-wrap">
             {group.rules}
           </p>
         </div>
-      )}
+      )} */}
 
       <div className="space-y-3">
         {/* <div className="flex items-center gap-3">
