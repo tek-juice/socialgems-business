@@ -19,6 +19,7 @@ import { MdCampaign } from "react-icons/md";
 
 import { Badge, Button } from "./UIComponents";
 import { TasksAccordion } from "./TasksAccordion";
+import { TasksReport } from './TasksReport';
 import { formatDate } from "./utils";
 import { get, post } from "../../../utils/service";
 import { toast } from "sonner";
@@ -206,7 +207,8 @@ export const UserProfileModal = ({
   industries,
   countries,
   getInfluencerDetails,
-  campaignId, // Add this prop to pass campaign_id
+  campaignId,
+  actionedMembers, // Add this prop
 }) => {
   const [showFullBio, setShowFullBio] = useState(false);
   const [influencerDetails, setInfluencerDetails] = useState(null);
@@ -243,7 +245,7 @@ export const UserProfileModal = ({
           setSocialSites(response.data);
         }
       } catch (error) {
-        console.error("❌ Error fetching social sites:", error);
+        console.error("Error fetching social sites:", error);
       }
     };
 
@@ -256,10 +258,9 @@ export const UserProfileModal = ({
       if (isOpen && member?.user_id) {
         setLoading(true);
         setError(null);
-        setImageError(false); // Reset image error state
+        setImageError(false);
 
         try {
-          // Direct API call if getInfluencerDetails is not available
           let details = null;
 
           if (getInfluencerDetails) {
@@ -276,7 +277,7 @@ export const UserProfileModal = ({
 
           setInfluencerDetails(details);
         } catch (error) {
-          console.error("❌ Error fetching influencer details:", error);
+          console.error("Error fetching influencer details:", error);
           setError("Failed to load influencer details");
         } finally {
           setLoading(false);
@@ -330,7 +331,6 @@ export const UserProfileModal = ({
         setReviewRating(0);
         setReviewText("");
         
-        // Optionally refresh influencer details to show new review
         if (getInfluencerDetails) {
           const updatedDetails = await getInfluencerDetails(member.user_id);
           setInfluencerDetails(updatedDetails);
@@ -339,7 +339,7 @@ export const UserProfileModal = ({
         toast.error("Failed to submit review");
       }
     } catch (error) {
-      console.error("❌ Error submitting review:", error);
+      console.error("Error submitting review:", error);
       toast.error("Failed to submit review. Please try again.");
     } finally {
       setSubmittingReview(false);
@@ -401,7 +401,7 @@ export const UserProfileModal = ({
         count,
         icon: getSocialIcon(platform),
       }))
-      .slice(0, 4); // Show max 4 platforms
+      .slice(0, 4);
   };
 
   const activeSocialStats = getActiveSocialStats();
@@ -417,22 +417,18 @@ export const UserProfileModal = ({
     const location = influencerDetails.location;
     const countryName = getCountryName(location);
     
-    // If we have both address and country
     if (address && address.trim() && countryName) {
       return `${address.trim()}, ${countryName}`;
     }
     
-    // If we only have address
     if (address && address.trim()) {
       return address.trim();
     }
     
-    // If we only have country
     if (countryName) {
       return countryName;
     }
     
-    // If we have location ISO code but no country name found
     if (location && location.trim()) {
       return location.trim();
     }
@@ -442,7 +438,6 @@ export const UserProfileModal = ({
 
   // Get profile picture with fallback handling
   const getProfilePicture = () => {
-    // Try member profile pic first, then userProfile, then fallback
     const profileData = member.userProfile || member;
     return member.profile_pic || 
            profileData.profile_pic || 
@@ -452,12 +447,10 @@ export const UserProfileModal = ({
 
   // Shared content component
   const ProfileContent = () => {
-    // Show skeleton loading while loading
     if (loading) {
       return <ProfileLoadingSkeleton />;
     }
 
-    // Show error state
     if (error && !loading) {
       return (
         <div className="p-6">
@@ -480,7 +473,6 @@ export const UserProfileModal = ({
         <div className="p-6 bg-white">
           <div className="flex items-center gap-4">
             <div className="relative">
-              {/* Profile Picture with Placeholder */}
               {getProfilePicture() && !imageError ? (
                 <img
                   src={getProfilePicture()}
@@ -516,7 +508,6 @@ export const UserProfileModal = ({
                 </span>
               )}
 
-              {/* Category Tags */}
               {influencerDetails?.categories &&
                 Array.isArray(influencerDetails.categories) &&
                 influencerDetails.categories.length > 0 && (
@@ -535,7 +526,7 @@ export const UserProfileModal = ({
           </div>
         </div>
 
-        {/* Stats Grid - Only show if we have influencer details */}
+        {/* Stats Grid */}
         {influencerDetails && (
           <div className="mx-6 py-4 bg-yellow-50 rounded-lg border border-primary-scale-200">
             <div className="grid grid-cols-3 gap-4">
@@ -629,7 +620,7 @@ export const UserProfileModal = ({
           </div>
         )}
 
-        {/* Enhanced Location Section */}
+        {/* Location Section */}
         {influencerDetails && getLocationDisplay() && (
           <div className="mx-6 py-4 border-t border-gray-100">
             <div className="flex items-center gap-2 mb-3">
@@ -644,7 +635,7 @@ export const UserProfileModal = ({
           </div>
         )}
 
-        {/* Reviews Section - Show if there are reviews OR if we can write a review */}
+        {/* Reviews Section */}
         {(hasReviews || campaignId) && (
           <div className="mx-6 py-4 border-t border-gray-100">
             <div className="flex items-center justify-between mb-4">
@@ -669,7 +660,6 @@ export const UserProfileModal = ({
               <div className="mb-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <h4 className="text-sm font-medium text-gray-900 mb-3">Write a Review</h4>
                 
-                {/* Rating Stars */}
                 <div className="mb-3">
                   <p className="text-xs text-gray-600 mb-2">Rating</p>
                   <div className="flex gap-1">
@@ -691,7 +681,6 @@ export const UserProfileModal = ({
                   </div>
                 </div>
 
-                {/* Review Text */}
                 <div className="mb-3">
                   <p className="text-xs text-gray-600 mb-2">Review</p>
                   <textarea
@@ -707,7 +696,6 @@ export const UserProfileModal = ({
                   </p>
                 </div>
 
-                {/* Submit Buttons */}
                 <div className="flex gap-2">
                   <button
                     onClick={handleSubmitReview}
@@ -730,7 +718,6 @@ export const UserProfileModal = ({
               </div>
             )}
 
-            {/* Show existing reviews if they exist */}
             {hasReviews && (
               <div className="space-y-4">
                 {influencerDetails.reviews
@@ -738,8 +725,8 @@ export const UserProfileModal = ({
                   .map((review, index) => (
                     <div key={index} className="p-4 bg-gray-100 rounded-xl">
                       <div className="flex items-start gap-3 mb-2">
-                        <div className="flex-1  border-b border-gray-300">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex-1 border-b border-gray-300">
+                          <div className="flex items-center justify-between mb-3">
                             <div className="flex gap-2 items-center">
                               <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                 <FiUser className="w-4 h-4 text-gray-600" />
@@ -820,14 +807,13 @@ export const UserProfileModal = ({
                       </p>
 
                       <p className="text-xs mt-2 text-gray-700">
-                      {formatDate(review.date)}
+                        {formatDate(review.date)}
                       </p>
                     </div>
                   ))}
               </div>
             )}
 
-            {/* Show message when no reviews exist but review form is available */}
             {!hasReviews && !showReviewForm && campaignId && (
               <div className="text-center py-6">
                 <FiStar className="w-8 h-8 text-gray-300 mx-auto mb-2" />
@@ -848,6 +834,19 @@ export const UserProfileModal = ({
               </h3>
             </div>
             <TasksAccordion tasks={member.tasks} />
+          </div>
+        )}
+
+        {/* Tasks Report Section */}
+        {actionedMembers && actionedMembers.length > 0 && (
+          <div className="px-6 py-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-4">
+              <FiActivity className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-semibold text-gray-900">
+                All Members Tasks Report
+              </h3>
+            </div>
+            <TasksReport actionedMembers={actionedMembers} />
           </div>
         )}
       </div>
@@ -889,7 +888,7 @@ export const UserProfileModal = ({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 shadow-xl backdrop-blur-sm rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition-all duration-200 "
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/90 shadow-xl backdrop-blur-sm rounded-full flex items-center justify-center text-gray-600 hover:bg-white transition-all duration-200"
           >
             <FiX className="w-4 h-4" />
           </button>

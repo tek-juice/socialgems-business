@@ -31,21 +31,21 @@ export default function CampaignDescription({ description }) {
       </div>
 
       {!expanded ? (
-        <p className="leading-relaxed max-w-none prose prose-sm text-xs">
+        <div className="break-words overflow-wrap-break-word word-break-break-all leading-relaxed max-w-none prose prose-sm text-xs">
           {preview.text}{' '}
           {preview.isTruncated && (
             <button
               onClick={() => setExpanded(true)}
-              className="text-secondary text-xs font-bold"
+              className="text-secondary text-xs font-bold whitespace-nowrap"
             >
               Read More
             </button>
           )}
-        </p>
+        </div>
       ) : (
         <div>
           <div
-            className="leading-relaxed max-w-none prose prose-sm text-xs"
+            className="break-words overflow-wrap-break-word word-break-break-all leading-relaxed max-w-none prose prose-sm text-xs"
             dangerouslySetInnerHTML={{ __html: description }}
           />
           <button

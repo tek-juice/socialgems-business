@@ -185,7 +185,7 @@ const AddFundsModal = ({ isOpen, onClose, onSubmit, loading }) => {
               className="w-full h-12 px-3 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="CARD">Credit/Debit Card</option>
-              {/* <option value="MOBILE">Mobile Money</option> */}
+              <option value="MOBILE">Mobile Money</option>
             </select>
           </div>
 
